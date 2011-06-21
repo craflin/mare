@@ -1,0 +1,29 @@
+
+targets = {
+  TestTarget1 = cppLink + {
+    output = "$(buildDir)/test.target1"
+    files = {
+      "src/**.cpp" = cppCompile
+    }
+  }
+}
+
+CXX = "g++-4"
+
+configurations = { Debug, Release }
+buildDir = "$(configuration)"
+
+cppCompile = {
+  input = "$(file)"
+  output = "$(buildDir)/$(patsubst %.cpp,%.o,$(subst ../,,$(file))) $(buildDir)/$(patsubst %.cpp,%.d,$(subst ../,,$(file)))"
+  command = "$(CXX) -MMD -o $(firstword $(output)) -c $(firstword $(input)) $(CXXFLAGS) $(patsubst %,-D%,$(defines)) $(patsubst %,-I%,$(includePaths))"
+  //message = "$(subst ../,,$(file))"
+}
+
+cppLink = {
+  input = "$(foreach file,$(files),$(buildDir)/$(patsubst %.cpp,%.o,$(subst ../,,$(file))))"
+  output = "$(target)"
+  command = "$(CXX) -o $(output) $(input) $(LDFLAGS) $(patsubst %,-L%,$(libPaths)) $(patsubst %,-l%,$(libs))"
+  //message = "Linking $(target)..."
+  // preMessage = "--- Building $(target) ($(configuration)) ---"
+}

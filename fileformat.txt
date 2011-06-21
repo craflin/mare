@@ -1,0 +1,34 @@
+
+mare s0:
+
+file ::= { statement } EOF 
+statement ::= assignment { ( ',' | ';' ) }
+assignment ::= ( string | quotedstring ) [ '=' concatination ]
+
+concatination ::= value { '+' value }
+value ::= '{' { statement } '}' | string | quotedstring
+
+mare s1:
+
+file ::= { statement } EOF
+statements ::= '{' { statement } '}' | statement 
+statement ::= ( 'if' condition statements [ 'else' statements ] | assignment ) { ( ',' | ';' ) }
+assignment ::= ( string | quotedstring ) [ '=' expression ]
+
+expression ::= concatination [ '?' expression ':' expression ]
+concatination ::= value { '+' value }
+value ::= '{' { statement } '}' | string | quotedstring
+
+condition ::= orformula [ '?' condition ':' condition ]
+orformula ::= andformula { '||' andformula }
+andformula ::= comparison { '&&' comparison }
+comparison ::= relation { ( '==' | '!=' ) relation }
+relation ::= plusformula { ( '<' | '>' | '<=' | '>=' ) plusformula }
+plusformula ::= multformula { ( '+' | '-' ) multformula }
+multformula ::= factor { ( '*' | '/' | '%' ) factor }
+factor ::= '+' factor | '-' factor | '!' factor | literal
+literal ::= 'true' | 'false' | '(' condition ')' | string | quotedstring
+
+mare s2:
+
+functions and loops?
