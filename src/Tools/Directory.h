@@ -39,6 +39,10 @@ public:
 
   static void findFiles(const String& pattern, List<String>& files);
 
+  static bool exists(const String& dir);
+
+  static bool create(const String& dir);
+
 private:
 
 #ifdef _WIN32

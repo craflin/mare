@@ -7,6 +7,7 @@
 #include "Tools/Words.h"
 #include "Tools/String.h"
 #include "Tools/File.h"
+#include "Tools/Directory.h"
 #include "Tools/Map.h"
 #include "Tools/Process.h"
 #include "Tools/Win32/getopt.h"
@@ -307,6 +308,10 @@ public:
       pid = 0;
       return true;
     }
+
+    // create output directories
+    for(const List<String>::Node* i = output.getFirst(); i; i = i->getNext())
+      Directory::create(File::getDirname(i->data));
 
     pid = process.start(command);
     if(!pid)

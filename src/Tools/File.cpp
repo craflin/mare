@@ -85,25 +85,24 @@ int File::read(char* buffer, int len)
 #endif
 }
 
+String File::getDirname(const String& file)
+{
+  const char* start = file.getData();
+  const char* pos = &start[file.getLength() - 1];
+  for(; pos >= start; --pos)
+    if(*pos == '\\' || *pos == '/')
+      return file.substr(0, pos - start);
+  return String(".");
+}
+
 String File::getBasename(const String& file)
 {
-  struct Str
-  {
-    static const char* rpbrk(const char* data, const char* chrs)
-    {
-      const char* next = strpbrk(data, chrs);
-      const char* max = 0;
-      while(next)
-      {
-        max = next;
-        next = strpbrk(max + 1, chrs);
-      }
-      return max;
-    }
-  };
-  const char* str = file.getData();
-  const char* end = Str::rpbrk(str, "\\/");
-  return end ? file.substr(end - str + 1) : file;
+  const char* start = file.getData();
+  const char* pos = &start[file.getLength() - 1];
+  for(; pos >= start; --pos)
+    if(*pos == '\\' || *pos == '/')
+      return file.substr(pos - start + 1);
+  return file;
 }
 
 bool File::getWriteTime(const String& file, long long& writeTime)

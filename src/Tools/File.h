@@ -20,6 +20,7 @@ public:
 
   inline const Error& getErrno() {return error;}
 
+  static String getDirname(const String& file);
   static String getBasename(const String& file);
 
   static bool getWriteTime(const String& file, long long& writeTime);

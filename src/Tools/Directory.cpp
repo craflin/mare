@@ -8,10 +8,15 @@
 #include <cstring>
 #ifdef _WIN32
 #include <windows.h>
+#else
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #endif
 
 #include "Directory.h"
 #include "List.h"
+#include "Map.h"
 
 Directory::Directory()
 {
@@ -163,4 +168,60 @@ void Directory::findFiles(const String& pattern, List<String>& files)
     ff.files = &files;
     ff.handlePath(String(), chunks.getFirst()->data, chunks.getFirst()->getNext());
   }
+}
+
+bool Directory::exists(const String& dir)
+{
+#ifdef _WIN32
+  WIN32_FIND_DATAA wfd;
+  HANDLE hFind = FindFirstFileA(dir.getData(), &wfd);
+  if(hFind == INVALID_HANDLE_VALUE) 
+    return false;
+  bool isDir = (wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY;
+  FindClose(hFind);
+  return isDir;
+#else
+  struct stat buf;
+  if(stat(dir.getData(), &buf) != 0)
+    return false;
+  return S_ISDIR(buf.st_mode);
+#endif
+}
+
+bool Directory::create(const String& dir)
+{
+  static Map<String, bool> createdDirs;
+  Map<String, bool>::Node* i  = createdDirs.find(dir);
+  if(i)
+    return i->data;
+
+  if(exists(dir))
+  {
+    createdDirs.append(dir, true);
+    return true;
+  }
+  
+  
+  const char* start = dir.getData();
+  const char* pos = &start[dir.getLength() - 1];
+  for(; pos >= start; --pos)
+    if(*pos == '\\' || *pos == '/')
+    {
+      if(!create(dir.substr(0, pos - start)))
+      {
+        createdDirs.append(dir, false);
+        return false;
+      }
+      break;
+    }
+  ++pos;
+  bool result = false;
+  if(*pos)
+#ifdef _WIN32
+    result = CreateDirectory(dir.getData(), NULL) == TRUE;
+#else
+    result = mkdir(dir.getData(), S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) == 0;
+#endif
+  createdDirs.append(dir, result);
+  return result;
 }
