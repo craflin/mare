@@ -122,8 +122,8 @@ void Parser::nextToken()
             nextChar();
             if(currentChar == -1)
               goto handleNextChar;
-            static const char backslashChars[] = "rnt\"";
-            static const char backslashTranslation[] = "\r\n\t\"";
+            static const char backslashChars[] = "rnt\"\\";
+            static const char backslashTranslation[] = "\r\n\t\"\\";
             const char* str = strchr(backslashChars, currentChar);
             if(str)
               value.append(backslashTranslation[str - backslashChars]);

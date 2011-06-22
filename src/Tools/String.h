@@ -46,6 +46,7 @@ public:
 
   String substr(int start, int length = -1) const;
 
+  bool patmatch(const String& pattern) const;
   bool patsubst(const String& pattern, const String& replace);
 
   int subst(const String& from, const String& to);

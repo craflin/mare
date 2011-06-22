@@ -2,6 +2,7 @@
 #include <cstring>
 #include <cassert>
 
+#include "Tools/File.h"
 #include "Tools/Directory.h"
 #include "Tools/Words.h"
 #include "Namespace.h"
@@ -112,6 +113,52 @@ String Namespace::evaluateString(const String& string)
         if(*input == ',') ++input;
         Words::append(words, output);
       }
+      else if(cmd == "filter" || cmd == "filter-out")
+      {
+        String pattern, text;
+        handle(engine, input, pattern, ",)"); if(*input == ',') ++input;
+        handle(engine, input, text, ",)"); if(*input == ',') ++input;
+
+        List<String> patternwords, words;
+        Words::split(pattern, patternwords);
+        Words::split(text, words);
+        if(cmd == "filter")
+          for(List<String>::Node* i = words.getFirst(), * next; i; i = next)
+          {
+            next = i->getNext();
+            for(List<String>::Node* j = patternwords.getFirst(); j; j = j->getNext())
+              if(i->data.patmatch(j->data))
+                goto keepWord;
+            words.remove(i);
+          keepWord: ;
+          }
+        else
+          for(List<String>::Node* i = words.getFirst(), * next; i; i = next)
+          {
+            next = i->getNext();
+            for(List<String>::Node* j = patternwords.getFirst(); j; j = j->getNext())
+              if(i->data.patmatch(j->data))
+              {
+                words.remove(i);
+                break;
+              }
+          }
+        Words::append(words, output);
+      }
+      else if(cmd == "readfile")
+      {
+        String filepath;
+        handle(engine, input, filepath, ",)"); if(*input == ',') ++input;
+
+        File file;
+        if(file.open(filepath))
+        {
+          char buffer[2048];
+          int i;
+          while((i = file.read(buffer, sizeof(buffer))) > 0)
+            output.append(buffer, i);
+        }
+      }
     }
     static void handleVariable(Engine& engine, const String& variable, String& output)
     {
@@ -173,7 +220,11 @@ void Namespace::addVariableRaw(const String& key, Script* value)
   assert(!key.isEmpty());
   Map<String, Script*>::Node* node = variables.find(key);
   if(node)
+  {
+    if(node->data)
+      delete node->data;
     node->data = value;
+  }
   else
     variables.append(key, value);
 }
