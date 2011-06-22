@@ -3,7 +3,7 @@ BUILDDIR := Debug
 TARGET := $(BUILDDIR)/mare
 FILES := $(shell find src -name \*.cpp)
 OBJECTS := $(foreach file,$(patsubst %.cpp,%.o,$(FILES)),$(BUILDDIR)/$(file))
-DIRS := $(foreach object,$(OBJECTS),$(dir $(object)))
+DIRS := $(dir $(OBJECTS))
 
 .PHONY: all clean prebuild
 
