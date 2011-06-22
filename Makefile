@@ -3,14 +3,13 @@ BUILDDIR := Debug
 TARGET := $(BUILDDIR)/mare
 FILES := $(shell find src -name \*.cpp)
 OBJECTS := $(foreach file,$(patsubst %.cpp,%.o,$(FILES)),$(BUILDDIR)/$(file))
-DIRS := $(dir $(OBJECTS))
 
 .PHONY: all clean prebuild
 
 all: $(TARGET)
 
 prebuild:
-	@mkdir -p $(DIRS)
+	@mkdir -p $(dir $(OBJECTS))
 
 $(BUILDDIR)/%.o: %.cpp | prebuild
 	@echo "$<"
@@ -21,7 +20,7 @@ $(TARGET): $(OBJECTS) | prebuild
 	@$(CXX) -o $@ $(OBJECTS)
 
 clean:
-	-@$(RM) $(OBJECTS) $(TARGET)
+	-@$(RM) $(OBJECTS) $(patsubst %.o,%.d,$(OBJECTS)) $(TARGET)
 
 -include $(patsubst %.o,%.d,$(OBJECTS))
 
