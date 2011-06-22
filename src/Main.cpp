@@ -384,6 +384,12 @@ public:
           Rule* dependency = outputToRule.lookup(i->data);
           if(dependency)
           {
+            if(dependency == &rule)
+            {
+              // TODO: warning
+              continue;
+            }
+
             // activate target?
             if(!dependency->target->active)
             {
