@@ -5,28 +5,28 @@
 #include "Tools/Scope.h"
 
 class Engine;
-class ValueStatement;
+class Script;
 
 class Namespace : public Scope
 {
 public:
-  Namespace(Engine* engine, ValueStatement* statement, const String& name) : engine(engine), statement(statement), name(name), compiled(false) {}
+  Namespace(Engine* engine, Script* script, const String& name) : engine(engine), script(script), name(name), compiled(false) {}
   
-  bool resolve(const String& name, ValueStatement*& statement);
+  bool resolve(const String& name, Script*& script);
   void getKeys(List<String>& keys);
   String getFirstKey();
   inline Engine& getEngine() {return *engine;}
 
-  void addVariable(const String& key, ValueStatement* value);
-  void addVariableRaw(const String& key, ValueStatement* value);
+  void addVariable(const String& key, Script* value);
+  void addVariableRaw(const String& key, Script* value);
   void addDefaultVariableRaw(const String& key, const String& value);
 
 private:
   Engine* engine;
-  ValueStatement* statement;
+  Script* script;
   String name;
   bool compiled;
-  Map<String, ValueStatement*> variables;
+  Map<String, Script*> variables;
 
   void compile();
   String evaluateString(const String& string);

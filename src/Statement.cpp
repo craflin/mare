@@ -2,24 +2,7 @@
 #include "Statement.h"
 #include "Namespace.h"
 #include "Engine.h"
-
-void ValueStatement::execute(Namespace& space)
-{
-  if(executing)
-    return; // cycling references
-  executing = true;
-  statement->execute(space);
-  executing = false;
-}
-
-void StringValueStatement::execute(Namespace& space)
-{
-  if(executing)
-    return; // cycling references
-  executing = true;
-  space.addVariable(value, 0);
-  executing = false;
-}
+#include "Script.h"
 
 void BlockStatement::execute(Namespace& space)
 {
@@ -45,7 +28,7 @@ void StringStatement::execute(Namespace& space)
 
 void ReferenceStatement::execute(Namespace& space)
 {
-  Statement* statement = space.getEngine().resolveReference(variable);
-  if(statement)
-    statement->execute(space);
+  Script* script = space.getEngine().resolveReference(variable);
+  if(script)
+    script->execute(space);
 }

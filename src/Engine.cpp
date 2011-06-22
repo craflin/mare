@@ -8,7 +8,7 @@ bool Engine::load(const String& file, ErrorHandler errorHandler, void* userData)
   if(!namespaces.isEmpty())
     return false;
   Parser parser(*this);
-  ValueStatement* root = parser.parse(file, errorHandler, userData);
+  Script* root = parser.parse(file, errorHandler, userData);
   if(!root)
     return false;
   namespaces.append(Namespace(this, root, String()));
@@ -18,16 +18,16 @@ bool Engine::load(const String& file, ErrorHandler errorHandler, void* userData)
 bool Engine::enter(const String& key, bool allowInheritance)
 {
   List<Namespace>::Node* i = namespaces.getLast();
-  ValueStatement* statement;
-  if(i->data.resolve(key, statement))
+  Script* script;
+  if(i->data.resolve(key, script))
     goto success;
   if(allowInheritance)
     for(i = i->getPrevious(); i; i = i->getPrevious())
-      if(i->data.resolve(key, statement))
+      if(i->data.resolve(key, script))
         goto success;
   return false;
 success:
-  namespaces.append(Namespace(this, statement, key));
+  namespaces.append(Namespace(this, script, key));
   return true;
 }
 
@@ -36,12 +36,12 @@ void Engine::enterNew()
   namespaces.append(Namespace(this, 0, String()));
 }
 
-ValueStatement* Engine::resolveReference(const String& key)
+Script* Engine::resolveReference(const String& key)
 {
-  ValueStatement* statement;
+  Script* script;
   for(List<Namespace>::Node* i = namespaces.getLast()->getPrevious(); i; i = i->getPrevious())
-    if(i->data.resolve(key, statement))
-      return statement;
+    if(i->data.resolve(key, script))
+      return script;
   return 0;
 }
 

@@ -7,6 +7,7 @@
 #include "Namespace.h"
 #include "Statement.h"
 #include "Engine.h"
+#include "Script.h"
 
 String Namespace::evaluateString(const String& string)
 {
@@ -127,7 +128,7 @@ String Namespace::evaluateString(const String& string)
   return result;
 }
 
-void Namespace::addVariable(const String& key, ValueStatement* value)
+void Namespace::addVariable(const String& key, Script* value)
 {
   // evaluate variables
   String evaluatedKey = evaluateString(key);
@@ -167,10 +168,10 @@ void Namespace::addVariable(const String& key, ValueStatement* value)
     */
 }
 
-void Namespace::addVariableRaw(const String& key, ValueStatement* value)
+void Namespace::addVariableRaw(const String& key, Script* value)
 {
   assert(!key.isEmpty());
-  Map<String, ValueStatement*>::Node* node = variables.find(key);
+  Map<String, Script*>::Node* node = variables.find(key);
   if(node)
     node->data = value;
   else
@@ -179,18 +180,17 @@ void Namespace::addVariableRaw(const String& key, ValueStatement* value)
 
 void Namespace::addDefaultVariableRaw(const String& key, const String& value)
 {
-  ValueStatement* statement = new StringValueStatement(*this, value);
-  addVariableRaw(key, statement);
+  Script* script = new StringScript(*this, value);
+  addVariableRaw(key, script);
 }
 
-
-bool Namespace::resolve(const String& name, ValueStatement*& statement)
+bool Namespace::resolve(const String& name, Script*& script)
 {
   compile();
-  Map<String, ValueStatement*>::Node* i = variables.find(name);
+  Map<String, Script*>::Node* i = variables.find(name);
   if(!i)
     return false;
-  statement = i->data;
+  script = i->data;
   return true;
 }
 
@@ -198,14 +198,14 @@ void Namespace::getKeys(List<String>& keys)
 {
   compile();
   keys.clear();
-  for(Map<String, ValueStatement*>::Node* node = variables.getFirst(); node; node = node->getNext())
+  for(Map<String, Script*>::Node* node = variables.getFirst(); node; node = node->getNext())
     keys.append(node->key);
 }
 
 String Namespace::getFirstKey()
 {
   compile();
-  Map<String, ValueStatement*>::Node* node = variables.getFirst();
+  Map<String, Script*>::Node* node = variables.getFirst();
   if(node)
     return node->key;
   return String();
@@ -215,7 +215,7 @@ void Namespace::compile()
 {
   if(compiled)
     return;
-  if(statement)
-    statement->execute(*this);
+  if(script)
+    script->execute(*this);
   compiled = true;
 }

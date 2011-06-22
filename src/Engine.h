@@ -6,6 +6,8 @@
 #include "Tools/Scope.h"
 #include "Namespace.h"
 
+class Script;
+
 class Engine : public Scope
 {
 public:
@@ -16,9 +18,8 @@ public:
 
   bool enter(const String& key, bool allowInheritance = true);
   void enterNew();
-  //inline String getNode() const {return currentNode.name;}
-  //String getParentNode() const;
-  ValueStatement* resolveReference(const String& key);
+
+  Script* resolveReference(const String& key);
 
   bool leave();
   void getKeys(List<String>& keys);
