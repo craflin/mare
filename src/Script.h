@@ -32,10 +32,10 @@ private:
 class StringScript : public Script
 {
 public:
+  String value;
+
   StringScript(Scope& scope, const String& value) : Script(scope), value(value) {}
 
 private:
-  String value;
-
   virtual void execute(Namespace& space);
 };

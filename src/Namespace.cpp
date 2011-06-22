@@ -231,8 +231,22 @@ void Namespace::addVariableRaw(const String& key, Script* value)
 
 void Namespace::addDefaultVariableRaw(const String& key, const String& value)
 {
-  Script* script = new StringScript(*this, value);
-  addVariableRaw(key, script);
+  assert(!key.isEmpty());
+  Map<String, Script*>::Node* node = variables.find(key);
+  if(node)
+  {
+    StringScript* script = dynamic_cast<StringScript*>(node->data);
+    if(script)
+      script->value = value;
+    else
+    {
+      if(node->data)
+        delete node->data;
+      node->data = new StringScript(*this, value);
+    }
+  }
+  else
+    variables.append(key, new StringScript(*this, value));
 }
 
 bool Namespace::resolve(const String& name, Script*& script)
