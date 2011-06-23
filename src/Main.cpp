@@ -45,20 +45,21 @@ static void showUsage(const char* executable)
   puts("");
   puts("Options:");
   puts("");
-  puts("    -c <config>");
+  puts("    -c <config>, --config=<config>");
   puts("        Use <config> as active configuration.");
   puts("");
   puts("    -d");
   puts("        Print debugging information while processing normally.");
   puts("");
-  puts("    -f <file>");
+  puts("    -f <file>, --file=<file>");
   puts("        Use <file> as a marefile.");
   puts("");
-  puts("    -h"); // puts("    -h, --help");
+  puts("    -h, --help");
   puts("        Display this help message.");
   puts("");
-  puts("    -v"); // puts("    -v, --version");
+  puts("    -v, --version");
   puts("        Display version information.");
+  // TODO: you can set various options with a meaning defined by the marefile simply by adding variable=value or --variable=value to the command line
   puts("");
   exit(EXIT_SUCCESS);
 }
@@ -82,8 +83,15 @@ int main(int argc, char* argv[])
 
   // parse args
   {
-    int c;
-    while((c = getopt(argc, argv, "c:df:hv")) != -1)
+    int c, option_index;
+    static struct option long_options[] = {
+      {"file", required_argument , 0, 'f'},
+      {"config", required_argument , 0, 'c'},
+      {"help", no_argument , 0, 'h'},
+      {"version", no_argument , 0, 'v'},
+      {0, 0, 0, 0}
+    };
+    while((c = getopt_long(argc, argv, "c:df:hv", long_options, &option_index)) != -1)
       switch(c)
       {
       case 'c':
