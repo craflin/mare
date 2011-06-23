@@ -529,5 +529,5 @@ static bool build(Engine& engine, const List<String>& inputTargets)
   }
 
   ruleSet.resolveDependencies();
-  return ruleSet.build(1/*4*/);
+  return ruleSet.build(Process::getProcessorCount());
 }

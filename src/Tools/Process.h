@@ -21,6 +21,8 @@ public:
 
   static unsigned int waitOne();
 
+  static unsigned  int getProcessorCount();
+
 private:
 #ifdef _WIN32
   void* hProcess;

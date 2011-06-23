@@ -111,3 +111,16 @@ unsigned int Process::waitOne()
   return GetProcessId(handle);
 #endif
 }
+
+unsigned  int Process::getProcessorCount()
+{
+#ifdef _WIN32
+  SYSTEM_INFO si;
+  GetSystemInfo(&si);
+  return si.dwNumberOfProcessors;
+#elif defined(__linux__)
+  return sysconf(_SC_NPROCESSORS_CONF);
+#else
+  return 1;
+#endif
+}
