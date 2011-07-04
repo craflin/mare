@@ -5,14 +5,14 @@
 #include <cstring>
 #include <malloc.h>
 
-#include "Engine.h"
-#include "Tools/Words.h"
-#include "Tools/String.h"
-#include "Tools/File.h"
-#include "Tools/Directory.h"
-#include "Tools/Map.h"
-#include "Tools/Process.h"
-#include "Tools/Win32/getopt.h"
+#include "../libmare/Engine.h"
+#include "../libmare/Tools/Words.h"
+#include "../libmare/Tools/String.h"
+#include "../libmare/Tools/File.h"
+#include "../libmare/Tools/Directory.h"
+#include "../libmare/Tools/Map.h"
+#include "../libmare/Tools/Process.h"
+#include "../libmare/Tools/Win32/getopt.h"
 
 static const char* VERSION   = "0.1";
 static const char* COPYRIGHT = "Copyright (C) 2011 Colin Graf";
