@@ -1,80 +1,83 @@
 
+#include <cassert>
+
 #include "Engine.h"
 #include "Namespace.h"
 #include "Parser.h"
 
 bool Engine::load(const String& file, ErrorHandler errorHandler, void* userData)
 {
-  if(!namespaces.isEmpty())
+  if(currentSpace)
     return false;
   Parser parser(*this);
   Script* root = parser.parse(file, errorHandler, userData);
   if(!root)
     return false;
-  namespaces.append(Namespace(this, root, String()));
+  currentSpace = new Namespace(*this, 0, this, root);
+  assert(currentSpace);
   return true;
 }
 
 bool Engine::enter(const String& key, bool allowInheritance)
 {
-  List<Namespace>::Node* i = namespaces.getLast();
-  Script* script;
-  if(i->data.resolve(key, script))
-    goto success;
-  if(allowInheritance)
-    for(i = i->getPrevious(); i; i = i->getPrevious())
-      if(i->data.resolve(key, script))
-        goto success;
+  Namespace* subSpace = currentSpace->enter(key, allowInheritance);
+  if(subSpace)
+  {
+    currentSpace = subSpace;
+    return true;
+  }
   return false;
-success:
-  namespaces.append(Namespace(this, script, key));
-  return true;
 }
 
 void Engine::enterNew()
 {
-  namespaces.append(Namespace(this, 0, String()));
+  Namespace* subSpace = currentSpace->enterTemporary();
+  assert(subSpace);
+  currentSpace = subSpace;
 }
 
-Script* Engine::resolveReference(const String& key)
+bool Engine::resolveScript(const String& key, Script*& script)
 {
-  Script* script;
-  for(List<Namespace>::Node* i = namespaces.getLast()->getPrevious(); i; i = i->getPrevious())
-    if(i->data.resolve(key, script))
-      return script;
-  return 0;
+  for(Namespace* space = currentSpace->getParent(); space; space = space->getParent())
+    if(space->resolveScript(key, script))
+      return true;
+  return false;
 }
 
 bool Engine::leave()
 {
-  if(namespaces.getSize() <= 1)
+  if(!currentSpace->getParent())
     return false;
-  namespaces.removeLast();
+  currentSpace = currentSpace->getParent();
+  assert(currentSpace);
   return true;
 }
 
 void Engine::getKeys(List<String>& keys)
 {
-  namespaces.getLast()->data.getKeys(keys);
+  currentSpace->getKeys(keys);
 }
 
 void Engine::getKeys(const String& key, List<String>& keys, bool allowInheritance)
 {
   if(enter(key, allowInheritance))
   {
-    getKeys(keys);
+    currentSpace->getKeys(keys);
     leave();
   }
-  else
-    keys.clear();
 }
 
 String Engine::getFirstKey()
 {
-  return namespaces.getLast()->data.getFirstKey();
+  return currentSpace->getFirstKey();
 }
 
-void Engine::addDefaultVariable(const String& key, const String& value)
+void Engine::addKey(const String& key, const String& value)
 {
-  return namespaces.getLast()->data.addDefaultVariableRaw(key, value);
+  return currentSpace->addKeyRaw(key, value);
+}
+
+void Engine::addKey(const String& key)
+{
+  return currentSpace->addKeyRaw(key, 0);
 }

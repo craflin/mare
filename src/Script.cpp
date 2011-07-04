@@ -17,6 +17,6 @@ void StringScript::execute(Namespace& space)
   if(executing)
     return; // cycling references
   executing = true;
-  space.addVariable(value, 0);
+  space.addKey(value, 0);
   executing = false;
 }

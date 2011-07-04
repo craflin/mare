@@ -12,7 +12,7 @@ void BlockStatement::execute(Namespace& space)
 
 void AssignStatement::execute(Namespace& space)
 {
-  space.addVariable(variable, value);
+  space.addKey(variable, value);
 }
 
 void BinaryStatement::execute(Namespace& space)
@@ -23,12 +23,13 @@ void BinaryStatement::execute(Namespace& space)
 
 void StringStatement::execute(Namespace& space)
 {
-  space.addVariable(value, 0);
+  space.addKey(value, 0);
 }
 
 void ReferenceStatement::execute(Namespace& space)
 {
-  Script* script = space.getEngine().resolveReference(variable);
-  if(script)
-    script->execute(space);
+  Script* script;
+  if(space.getEngine().resolveScript(variable, script))
+    if(script)
+      script->execute(space);
 }

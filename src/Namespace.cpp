@@ -104,7 +104,7 @@ String Namespace::evaluateString(const String& string)
         engine.enterNew();
         for(List<String>::Node* i = words.getFirst(); i; i = i->getNext())
         {
-          engine.addDefaultVariable(var, i->data);
+          engine.addKey(var, i->data);
           input = inputStart;
           i->data.clear();
           handle(engine, input, i->data, ",)");
@@ -175,7 +175,7 @@ String Namespace::evaluateString(const String& string)
   return result;
 }
 
-void Namespace::addVariable(const String& key, Script* value)
+void Namespace::addKey(const String& key, Script* value)
 {
   // evaluate variables
   String evaluatedKey = evaluateString(key);
@@ -195,10 +195,10 @@ void Namespace::addVariable(const String& key, Script* value)
       List<String> files;
       Directory::findFiles(word, files);
       for(const List<String>::Node* i = files.getFirst(); i; i = i->getNext())
-        addVariableRaw(i->data, value);
+        addKeyRaw(i->data, value);
     }
     else
-      addVariableRaw(word, value);
+      addKeyRaw(word, value);
   }
   
   /*
@@ -215,33 +215,38 @@ void Namespace::addVariable(const String& key, Script* value)
     */
 }
 
-void Namespace::addVariableRaw(const String& key, Script* value)
+void Namespace::addKeyRaw(const String& key, Script* value)
 {
+  //assert(!compiled);
   assert(!key.isEmpty());
-  Map<String, Script*>::Node* node = variables.find(key);
+  Map<String, Variable>::Node* node = variables.find(key);
   if(node)
   {
-    if(node->data)
-      delete node->data;
+    assert(!node->data.space);
     node->data = value;
   }
   else
     variables.append(key, value);
 }
 
-void Namespace::addDefaultVariableRaw(const String& key, const String& value)
+void Namespace::addKeyRaw(const String& key, const String& value)
 {
+  //assert(!compiled);
   assert(!key.isEmpty());
-  Map<String, Script*>::Node* node = variables.find(key);
+  Map<String, Variable>::Node* node = variables.find(key);
   if(node)
   {
-    StringScript* script = dynamic_cast<StringScript*>(node->data);
+    
+    StringScript* script = dynamic_cast<StringScript*>(node->data.script);
     if(script)
+    {
+      if(node->data.space)
+        node->data.space->rest();
       script->value = value;
+    }
     else
     {
-      if(node->data)
-        delete node->data;
+      assert(!node->data.space);
       node->data = new StringScript(*this, value);
     }
   }
@@ -249,30 +254,62 @@ void Namespace::addDefaultVariableRaw(const String& key, const String& value)
     variables.append(key, new StringScript(*this, value));
 }
 
-bool Namespace::resolve(const String& name, Script*& script)
+Namespace* Namespace::enter(const String& name, bool allowInheritance)
 {
   compile();
-  Map<String, Script*>::Node* i = variables.find(name);
+  Map<String, Variable>::Node* i = variables.find(name);
+  if(!i)
+  {
+    if(allowInheritance)
+    {
+      Script* script;
+      if(engine->resolveScript(name, script))
+      {
+        Variable& var = variables.append(name, Variable(script, true));
+        var.space = new Namespace(*this, this, engine, script);
+        return var.space;
+      }
+    }
+    return 0;
+  }
+  if(!i->data.space)
+    i->data.space = new Namespace(*this, this, engine, i->data.script);
+  return i->data.space;
+}
+
+Namespace* Namespace::enterTemporary()
+{
+  if(temporarySpace)
+    temporarySpace->rest();
+  else
+    temporarySpace = new Namespace(*this, this, engine, 0);
+  return temporarySpace;
+}
+
+bool Namespace::resolveScript(const String& name, Script*& script)
+{
+  compile();
+  Map<String, Variable>::Node* i = variables.find(name);
   if(!i)
     return false;
-  script = i->data;
+  script = i->data.script;
   return true;
 }
 
 void Namespace::getKeys(List<String>& keys)
 {
   compile();
-  keys.clear();
-  for(Map<String, Script*>::Node* node = variables.getFirst(); node; node = node->getNext())
-    keys.append(node->key);
+  for(Map<String, Variable>::Node* node = variables.getFirst(); node; node = node->getNext())
+    if(!node->data.inherited)
+      keys.append(node->key);
 }
 
 String Namespace::getFirstKey()
 {
   compile();
-  Map<String, Script*>::Node* node = variables.getFirst();
-  if(node)
-    return node->key;
+  for(Map<String, Variable>::Node* node = variables.getFirst(); node; node = node->getNext())
+    if(!node->data.inherited)
+      return node->key;
   return String();
 }
 
@@ -283,4 +320,10 @@ void Namespace::compile()
   if(script)
     script->execute(*this);
   compiled = true;
+}
+
+void Namespace::rest()
+{
+  compiled = false;
+  variables.clear();
 }

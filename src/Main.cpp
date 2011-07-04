@@ -2,6 +2,8 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cassert>
+#include <cstring>
+#include <malloc.h>
 
 #include "Engine.h"
 #include "Tools/Words.h"
@@ -31,7 +33,8 @@ static void showVersion(bool andExit)
   puts(COPYRIGHT);
   //printf("Author(s): %s\n", AUTHORS);
   puts("This program comes with ABSOLUTELY NO WARRANTY.");
-  puts("This is free software, and you are welcome to redistribute it under certain conditions.");
+  puts("This is free software, and you are welcome to redistribute it under certain ");
+  puts("conditions.");
   if(andExit)
     exit(EXIT_SUCCESS);
 }
@@ -41,25 +44,35 @@ static void showUsage(const char* executable)
   String basename = File::getBasename(String(executable, -1));
   showVersion(false);
   puts("");
-  printf("Usage: %s [ -c <config> ] [ -f <file> ] [ <options> ] [ <targets> ]\n", basename.getData());
+  printf("Usage: %s [ -f <file> ] [ <options> ] [ config=<config> ] [ <target> ]", basename.getData());
+  puts("        [ <variable>=<value> ]");
   puts("");
   puts("Options:");
   puts("");
-  puts("    -c <config>, --config=<config>");
-  puts("        Use <config> as active configuration.");
+  puts("    -f <file>, --file=<file>");
+  puts("        Use <file> as a marefile.");
+  puts("");
+  puts("    config=<config>, --config=<config>");
+  puts("        Build using configuration <config> as declared in the marefile (Debug ");
+  puts("        and Release by default). Multiple configurations can be used by add ");
+  puts("        adding config=<config> multiple times.");
+  puts("");
+  puts("    <target>, --target=<target>");
+  puts("        Build <target> as declared in the marefile. Multiple targets can be ");
+  puts("        used.");
+  puts("");
+  puts("    <variable>=<value>, --<variable>=<value>");
+  puts("        Set any variable <variable> to <value>. This can be used to set");
+  puts("        various options with a meaning defined by the marefile.");
   puts("");
   puts("    -d");
   puts("        Print debugging information while processing normally.");
-  puts("");
-  puts("    -f <file>, --file=<file>");
-  puts("        Use <file> as a marefile.");
   puts("");
   puts("    -h, --help");
   puts("        Display this help message.");
   puts("");
   puts("    -v, --version");
   puts("        Display version information.");
-  // TODO: you can set various options with a meaning defined by the marefile simply by adding variable=value or --variable=value to the command line
   puts("");
   exit(EXIT_SUCCESS);
 }
@@ -71,13 +84,15 @@ static void showHelp(const char* executable)
   exit(EXIT_FAILURE);
 }
 
-static bool build(Engine& engine, const List<String>& inputTargets);
+static bool buildFile(Engine& engine, const String& inputFile, const List<String>& inputConfigs, const List<String>& inputTargets);
+static bool buildConfigurations(Engine& engine, const String& inputFile, const List<String>& inputConfigs, const List<String>& inputTargets);
+static bool buildConfiguration(Engine& engine, const String& inputFile, const String& configuration, const List<String>& inputTargets);
+static bool buildTargets(Engine& engine, const List<String>& inputTargets);
 
 int main(int argc, char* argv[])
 {
+  Map<String, String> userArgs;
   String inputFile("Marefile");
-  String inputConfig;
-  List<String> inputTargets;
   bool showHelp = false;
   bool showDebug = false;
 
@@ -86,17 +101,41 @@ int main(int argc, char* argv[])
     int c, option_index;
     static struct option long_options[] = {
       {"file", required_argument , 0, 'f'},
-      {"config", required_argument , 0, 'c'},
       {"help", no_argument , 0, 'h'},
       {"version", no_argument , 0, 'v'},
       {0, 0, 0, 0}
     };
-    while((c = getopt_long(argc, argv, "c:df:hv", long_options, &option_index)) != -1)
+
+    // find all user arguments
+    char** nargv = (char**)alloca(sizeof(char*) * argc);
+    int nargc = 1;
+    nargv[0] = argv[0];
+    for(int i = 1; i < argc; ++i)
+    {
+      if(strncmp(argv[i], "--", 2) != 0)
+        nargv[nargc++] = argv[i];
+      else
+      {
+        const char* arg = argv[i] + 2;
+        for(struct option* opt = long_options; opt->name; ++opt)
+          if(strcmp(arg, opt->name) == 0)
+          {
+            nargv[nargc++] = argv[i];
+            goto nextarg;
+          }
+        const char* sep = strchr(arg, '=');
+        if(sep)
+          userArgs.append(String(arg, sep - arg), String(sep + 1, -1));
+        else
+          userArgs.append(String(arg, -1), String());
+      }
+    nextarg:;
+    }
+
+    // parse normal arguments
+    while((c = getopt_long(nargc, nargv, "c:df:hv", long_options, &option_index)) != -1)
       switch(c)
       {
-      case 'c':
-        inputConfig = String(optarg, -1);
-        break;
       case 'd':
         showDebug = true;
         break;
@@ -114,7 +153,14 @@ int main(int argc, char* argv[])
         break;
       }
     while(optind < argc)
-      inputTargets.append(String(argv[optind++], -1));
+    {
+      const char* arg = argv[optind++];
+      const char* sep = strchr(arg, '=');
+      if(sep)
+        userArgs.append(String(arg, sep - arg), String(sep + 1, -1));
+      else
+        userArgs.append(String("target"), String(arg, -1));
+    }
   }
 
   {
@@ -126,8 +172,6 @@ int main(int argc, char* argv[])
 
       return EXIT_FAILURE;
     }
-    engine.addDefaultVariable("CC", "gcc");
-    engine.addDefaultVariable("CXX", "g++");
 
     // show help only?
     if(showHelp)
@@ -144,96 +188,121 @@ int main(int argc, char* argv[])
         showUsage(argv[0]);
     }
 
-    // enter selected configuration
+    // add default rules and stuff
+    engine.addKey("CC", "gcc");
+    engine.addKey("CXX", "g++");
+
+    // add user arguments
+    engine.enterNew();
+    for(Map<String, String>::Node* i = userArgs.getFirst(); i; i = i->getNext())
     {
-      bool enteredConfiguration = true;
-      if(!engine.enter("configurations"))
+      
+      if(i->key == "config")
+        i->key = "configuration";
+      if(!engine.enter(i->key, false))
       {
-        if(!inputConfig.isEmpty())
-          enteredConfiguration = false;
+        engine.addKey(i->key);
+        engine.enter(i->key, false);
       }
-      else
-      {
-        if(inputConfig.isEmpty())
-          inputConfig = engine.getFirstKey();
-        if(!inputConfig.isEmpty() && !engine.enter(inputConfig))
-          enteredConfiguration = false;
-      } 
-      if(!enteredConfiguration)
-      {
-        String message;
-        message.format(256, "cannot find configuration \"%s\"", inputConfig.getData());
-        errorHandler((void*)inputFile.getData(), 0, message);
-        return EXIT_FAILURE;
-      }
-      engine.addDefaultVariable("configuration", inputConfig.isEmpty() ? String("default") : inputConfig);
+      engine.addKey(i->data);
+      engine.leave();
     }
 
-    // find targets
-    {
-      bool enteredTargets = true;
-      if(!engine.enter("targets"))
-        enteredTargets = false;
-      else if(inputTargets.isEmpty())
-      {
-        engine.getKeys(inputTargets);
-        if(inputTargets.isEmpty())
-          enteredTargets = false;
-      }
-      else
-      {
-        bool failure = false;
-        for(List<String>::Node* node = inputTargets.getFirst(); node; node = node->getNext())
-        {
-          if(!engine.enter(node->data))
-          {
-            String message;
-            message.format(256, "cannot find target \"%s\"", node->data.getData());
-            errorHandler((void*)inputFile.getData(), 0, message);
-            failure = true;
-          }
-          else
-            engine.leave();
-        }
-        if(failure)
-          return EXIT_FAILURE;
-      }
-      if(!enteredTargets)
-      {
-        String message;
-        message.format(256, "cannot find any targets");
-        errorHandler((void*)inputFile.getData(), 0, message);
-        return EXIT_FAILURE;
-      }
-    }
+    // get targets and configurations to build
+    List<String> inputConfigs, inputTargets;
+    engine.getKeys("configuration", inputConfigs);
+    engine.getKeys("target", inputTargets);
 
-    // build targets
-    if(!build(engine, inputTargets))
+    // build 
+    if(!buildFile(engine, inputFile, inputConfigs, inputTargets))
       return EXIT_FAILURE;
-    /*
-    {
-      bool failure = false;
-      for(List<String>::Node* node = inputTargets.getFirst(); node; node = node->getNext())
-      {
-        if(!engine.enter(node->data))
-        {
-          assert(false);
-          continue;
-        }
-        if(!buildTarget(engine))
-        {
-          fprintf(stderr, "failed to build target \"%s\"\n", node->data.getData());
-          failure = true;
-        }
-        engine.leave();
-      }
-      if(failure)
-        return EXIT_FAILURE;
-    }
-    */
-
   }
   return EXIT_SUCCESS;
+}
+
+static bool buildFile(Engine& engine, const String& inputFile, const List<String>& inputConfigs, const List<String>& inputTargets)
+{
+  if(!engine.enter("configurations"))
+  {
+    engine.enterNew();
+    engine.addKey("Debug");
+    engine.addKey("Release");
+  }
+
+  if(inputConfigs.isEmpty())
+  {
+    String firstConfiguration = engine.getFirstKey();
+    if(!firstConfiguration.isEmpty())
+    {
+      engine.enter(firstConfiguration);
+      bool result = buildConfiguration(engine, inputFile, firstConfiguration, inputTargets);
+      engine.leave();
+      return result;
+    }
+    else
+    {
+      errorHandler((void*)inputFile.getData(), 0, "cannot find any configurations");
+      return false;
+    }
+  }
+
+  bool result = buildConfigurations(engine, inputFile, inputConfigs, inputTargets);
+  engine.leave();
+  return result;
+}
+
+static bool buildConfigurations(Engine& engine, const String& inputFile, const List<String>& inputConfigs, const List<String>& inputTargets)
+{
+  for(const List<String>::Node* i = inputConfigs.getFirst(); i; i = i->getNext())
+  {
+    if(!engine.enter(i->data))
+    {
+      String message;
+      message.format(256, "cannot find configuration \"%s\"", i->data.getData());
+      errorHandler((void*)inputFile.getData(), 0, message);
+      return false;
+    }
+    if(!buildConfiguration(engine, inputFile, i->data, inputTargets))
+    {
+      engine.leave();
+      return false;
+    }
+    engine.leave();
+  }
+  return true;
+}
+
+static bool buildConfiguration(Engine& engine, const String& inputFile, const String& configuration, const List<String>& inputTargets)
+{
+  engine.addKey("configuration", configuration);
+
+  if(!engine.enter("targets"))
+    engine.enterNew();
+
+  if(inputTargets.isEmpty())
+  { // build all
+    List<String> inputTargets;
+    engine.getKeys(inputTargets);
+    if(inputTargets.isEmpty())
+    {
+      errorHandler((void*)inputFile.getData(), 0, "cannot find any targets");
+      return false;
+    }
+    return buildTargets(engine, inputTargets);
+  }
+
+  for(const List<String>::Node* node = inputTargets.getFirst(); node; node = node->getNext())
+  {
+    if(!engine.enter(node->data))
+    {
+      String message;
+      message.format(256, "cannot find target \"%s\"", node->data.getData());
+      errorHandler((void*)inputFile.getData(), 0, message);
+      return false;
+    }
+    engine.leave();
+  }
+  return buildTargets(engine, inputTargets);
 }
 
 class Target;
@@ -483,7 +552,7 @@ public:
   }
 };
 
-static bool build(Engine& engine, const List<String>& inputTargets)
+static bool buildTargets(Engine& engine, const List<String>& inputTargets)
 {
   RuleSet ruleSet;
 
@@ -503,18 +572,19 @@ static bool build(Engine& engine, const List<String>& inputTargets)
       ruleSet.activeTargets.append(&target);
     }
     engine.enter(i->data);
-    engine.addDefaultVariable("target", i->data);
+    engine.addKey("target", i->data);
 
     // add rule for each source file
     if(engine.enter("files"))
     {
+      files.clear();
       engine.getKeys(files);
       for(List<String>::Node* i = files.getFirst(); i; i = i->getNext())
       {
         Rule& rule = target.rules.append();
         rule.target = &target;
         engine.enter(i->data);
-        engine.addDefaultVariable("file", i->data);
+        engine.addKey("file", i->data);
         engine.getKeys("input", rule.input, false);
         //rule.input.append(i->data);
         engine.getKeys("output", rule.output, false);
