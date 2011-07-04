@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mare", "mare.vcxproj", "{A5054486-B92C-A97F-62E3-AD7C9FAB3353}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libmare", "libmare.vcxproj", "{179311C6-6B6F-4E45-BA68-6C7168CCC82D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A5054486-B92C-A97F-62E3-AD7C9FAB3353}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A5054486-B92C-A97F-62E3-AD7C9FAB3353}.Debug|Win32.Build.0 = Debug|Win32
+		{A5054486-B92C-A97F-62E3-AD7C9FAB3353}.Release|Win32.ActiveCfg = Release|Win32
+		{A5054486-B92C-A97F-62E3-AD7C9FAB3353}.Release|Win32.Build.0 = Release|Win32
+		{179311C6-6B6F-4E45-BA68-6C7168CCC82D}.Debug|Win32.ActiveCfg = Debug|Win32
+		{179311C6-6B6F-4E45-BA68-6C7168CCC82D}.Debug|Win32.Build.0 = Debug|Win32
+		{179311C6-6B6F-4E45-BA68-6C7168CCC82D}.Release|Win32.ActiveCfg = Release|Win32
+		{179311C6-6B6F-4E45-BA68-6C7168CCC82D}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

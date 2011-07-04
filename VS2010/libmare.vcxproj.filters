@@ -1,0 +1,82 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\src\libmare\Engine.cpp" />
+    <ClCompile Include="..\src\libmare\Namespace.cpp" />
+    <ClCompile Include="..\src\libmare\Parser.cpp" />
+    <ClCompile Include="..\src\libmare\Script.cpp" />
+    <ClCompile Include="..\src\libmare\Statement.cpp" />
+    <ClCompile Include="..\src\libmare\Tools\Directory.cpp">
+      <Filter>Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\libmare\Tools\Error.cpp">
+      <Filter>Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\libmare\Tools\File.cpp">
+      <Filter>Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\libmare\Tools\Process.cpp">
+      <Filter>Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\libmare\Tools\Scope.cpp">
+      <Filter>Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\libmare\Tools\String.cpp">
+      <Filter>Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\libmare\Tools\Words.cpp">
+      <Filter>Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\libmare\Tools\Win32\getopt.cpp">
+      <Filter>Tools\Win32</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\libmare\Engine.h" />
+    <ClInclude Include="..\src\libmare\Namespace.h" />
+    <ClInclude Include="..\src\libmare\Parser.h" />
+    <ClInclude Include="..\src\libmare\Script.h" />
+    <ClInclude Include="..\src\libmare\Statement.h" />
+    <ClInclude Include="..\src\libmare\Tools\Array.h">
+      <Filter>Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\libmare\Tools\Directory.h">
+      <Filter>Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\libmare\Tools\Error.h">
+      <Filter>Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\libmare\Tools\File.h">
+      <Filter>Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\libmare\Tools\List.h">
+      <Filter>Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\libmare\Tools\Map.h">
+      <Filter>Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\libmare\Tools\Process.h">
+      <Filter>Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\libmare\Tools\Scope.h">
+      <Filter>Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\libmare\Tools\String.h">
+      <Filter>Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\libmare\Tools\Words.h">
+      <Filter>Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\libmare\Tools\Win32\getopt.h">
+      <Filter>Tools\Win32</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Tools">
+      <UniqueIdentifier>{f60d70d4-05dc-483a-843a-587c0fd8ebfe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Tools\Win32">
+      <UniqueIdentifier>{71ed62ae-bdf6-4886-9ddf-a4b491ef9f13}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
