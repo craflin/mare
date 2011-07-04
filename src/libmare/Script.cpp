@@ -3,20 +3,22 @@
 #include "Statement.h"
 #include "Namespace.h"
 
-void StatementScript::execute(Namespace& space)
+bool StatementScript::execute(Namespace& space)
 {
   if(executing)
-    return; // cycling references
+    return false; // cycling references
   executing = true;
   statement.execute(space);
   executing = false;
+  return true;
 }
 
-void StringScript::execute(Namespace& space)
+bool StringScript::execute(Namespace& space)
 {
   if(executing)
-    return; // cycling references
+    return false; // cycling references
   executing = true;
   space.addKey(value, 0);
   executing = false;
+  return true;
 }

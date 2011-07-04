@@ -12,7 +12,7 @@ class Script : public Scope::Object
 public:
   Script(Scope& scope) : Scope::Object(scope), executing(false) {}
 
-  virtual void execute(Namespace& space) = 0;
+  virtual bool execute(Namespace& space) = 0;
 
 protected:
   bool executing;
@@ -26,7 +26,7 @@ public:
 private:
   Statement& statement;
 
-  virtual void execute(Namespace& space);
+  virtual bool execute(Namespace& space);
 };
 
 class StringScript : public Script
@@ -37,5 +37,5 @@ public:
   StringScript(Scope& scope, const String& value) : Script(scope), value(value) {}
 
 private:
-  virtual void execute(Namespace& space);
+  virtual bool execute(Namespace& space);
 };

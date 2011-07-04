@@ -176,7 +176,7 @@ int main(int argc, char* argv[])
     // show help only?
     if(showHelp)
     {
-      if(engine.enter("help"))
+      if(engine.enterKey("help"))
       {
         List<String> help;
         engine.getKeys(help);
@@ -189,23 +189,24 @@ int main(int argc, char* argv[])
     }
 
     // add default rules and stuff
-    engine.addKey("CC", "gcc");
-    engine.addKey("CXX", "g++");
+    engine.addDefaultKey("CC", "gcc");
+    engine.addDefaultKey("CXX", "g++");
+    engine.enterDefaultKey("configurations");
+      engine.addDefaultKey("Debug");
+      engine.addDefaultKey("Release");
+    engine.leaveKey();
+    engine.addDefaultKey("targets");
 
     // add user arguments
-    engine.enterNew();
+    engine.enterUnnamedKey();
     for(Map<String, String>::Node* i = userArgs.getFirst(); i; i = i->getNext())
     {
       
       if(i->key == "config")
         i->key = "configuration";
-      if(!engine.enter(i->key, false))
-      {
-        engine.addKey(i->key);
-        engine.enter(i->key, false);
-      }
-      engine.addKey(i->data);
-      engine.leave();
+      engine.enterDefaultKey(i->key);
+      engine.addDefaultKey(i->data);
+      engine.leaveKey();
     }
 
     // get targets and configurations to build
@@ -222,11 +223,10 @@ int main(int argc, char* argv[])
 
 static bool buildFile(Engine& engine, const String& inputFile, const List<String>& inputConfigs, const List<String>& inputTargets)
 {
-  if(!engine.enter("configurations"))
+  if(!engine.enterKey("configurations"))
   {
-    engine.enterNew();
-    engine.addKey("Debug");
-    engine.addKey("Release");
+    assert(false);
+    return false;
   }
 
   if(inputConfigs.isEmpty())
@@ -234,9 +234,9 @@ static bool buildFile(Engine& engine, const String& inputFile, const List<String
     String firstConfiguration = engine.getFirstKey();
     if(!firstConfiguration.isEmpty())
     {
-      engine.enter(firstConfiguration);
+      engine.enterKey(firstConfiguration);
       bool result = buildConfiguration(engine, inputFile, firstConfiguration, inputTargets);
-      engine.leave();
+      engine.leaveKey();
       return result;
     }
     else
@@ -247,7 +247,7 @@ static bool buildFile(Engine& engine, const String& inputFile, const List<String
   }
 
   bool result = buildConfigurations(engine, inputFile, inputConfigs, inputTargets);
-  engine.leave();
+  engine.leaveKey();
   return result;
 }
 
@@ -255,7 +255,7 @@ static bool buildConfigurations(Engine& engine, const String& inputFile, const L
 {
   for(const List<String>::Node* i = inputConfigs.getFirst(); i; i = i->getNext())
   {
-    if(!engine.enter(i->data))
+    if(!engine.enterKey(i->data))
     {
       String message;
       message.format(256, "cannot find configuration \"%s\"", i->data.getData());
@@ -264,20 +264,23 @@ static bool buildConfigurations(Engine& engine, const String& inputFile, const L
     }
     if(!buildConfiguration(engine, inputFile, i->data, inputTargets))
     {
-      engine.leave();
+      engine.leaveKey();
       return false;
     }
-    engine.leave();
+    engine.leaveKey();
   }
   return true;
 }
 
 static bool buildConfiguration(Engine& engine, const String& inputFile, const String& configuration, const List<String>& inputTargets)
 {
-  engine.addKey("configuration", configuration);
+  engine.addDefaultKey("configuration", configuration);
 
-  if(!engine.enter("targets"))
-    engine.enterNew();
+  if(!engine.enterKey("targets"))
+  {
+    assert(false);
+    return false;
+  }
 
   if(inputTargets.isEmpty())
   { // build all
@@ -293,14 +296,14 @@ static bool buildConfiguration(Engine& engine, const String& inputFile, const St
 
   for(const List<String>::Node* node = inputTargets.getFirst(); node; node = node->getNext())
   {
-    if(!engine.enter(node->data))
+    if(!engine.enterKey(node->data))
     {
       String message;
       message.format(256, "cannot find target \"%s\"", node->data.getData());
       errorHandler((void*)inputFile.getData(), 0, message);
       return false;
     }
-    engine.leave();
+    engine.leaveKey();
   }
   return buildTargets(engine, inputTargets);
 }
@@ -571,11 +574,11 @@ static bool buildTargets(Engine& engine, const List<String>& inputTargets)
       target.active = true;
       ruleSet.activeTargets.append(&target);
     }
-    engine.enter(i->data);
-    engine.addKey("target", i->data);
+    engine.enterKey(i->data);
+    engine.addDefaultKey("target", i->data);
 
     // add rule for each source file
-    if(engine.enter("files"))
+    if(engine.enterKey("files"))
     {
       files.clear();
       engine.getKeys(files);
@@ -583,16 +586,15 @@ static bool buildTargets(Engine& engine, const List<String>& inputTargets)
       {
         Rule& rule = target.rules.append();
         rule.target = &target;
-        engine.enter(i->data);
-        engine.addKey("file", i->data);
+        engine.enterKey(i->data);
+        engine.addDefaultKey("file", i->data);
         engine.getKeys("input", rule.input, false);
-        //rule.input.append(i->data);
         engine.getKeys("output", rule.output, false);
         engine.getKeys("command", rule.command, false);
         engine.getKeys("message", rule.message, false);
-        engine.leave();
+        engine.leaveKey();
       }
-      engine.leave();
+      engine.leaveKey();
     }
 
     // add rule for target file
@@ -603,7 +605,7 @@ static bool buildTargets(Engine& engine, const List<String>& inputTargets)
     engine.getKeys("command", rule.command, false);
     engine.getKeys("message", rule.message, false);
 
-    engine.leave();
+    engine.leaveKey();
   }
 
   ruleSet.resolveDependencies();

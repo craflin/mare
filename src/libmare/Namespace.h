@@ -10,12 +10,13 @@ class Script;
 class Namespace : public Scope, public Scope::Object
 {
 public:
-  Namespace(Scope& scope, Namespace* parent, Engine* engine, Script* script) : Scope::Object(scope), parent(parent), engine(engine), script(script), compiled(false), temporarySpace(0) {}
+  Namespace(Scope& scope, Namespace* parent, Engine* engine, Script* script, const String& name) : Scope::Object(scope), parent(parent), engine(engine), script(script), compiled(false), unnamedSpace(0), name(name)/*, compiling(false)*/ {}
   
   inline Namespace* getParent() {return parent;}
   bool resolveScript(const String& name, Script*& script);
-  Namespace* enter(const String& name, bool allowInheritance);
-  Namespace* enterTemporary();
+  Namespace* enterKey(const String& name, bool allowInheritance);
+  Namespace* enterUnnamedKey();
+  Namespace* enterDefaultKey(const String& name);
   void getKeys(List<String>& keys);
   String getFirstKey();
   inline Engine& getEngine() {return *engine;}
@@ -24,7 +25,7 @@ public:
   void addKeyRaw(const String& key, Script* value);
   void addKeyRaw(const String& key, const String& value);
 
-  void rest();
+  void reset();
 
 private:
   class Variable
@@ -42,8 +43,10 @@ private:
   Script* script;
   bool compiled;
   Map<String, Variable> variables;
-  Namespace* temporarySpace;
+  Namespace* unnamedSpace;
+  String name; // for debugging
+  //bool compiling; // for debugging?
 
-  void compile();
+  bool compile();
   String evaluateString(const String& string);
 };

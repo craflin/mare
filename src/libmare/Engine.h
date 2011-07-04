@@ -18,18 +18,24 @@ public:
 
   bool load(const String& file, ErrorHandler errorHandler, void* userData);
 
-  bool enter(const String& key, bool allowInheritance = true);
-  void enterNew();
+  bool enterKey(const String& key, bool allowInheritance = true);
+  void enterUnnamedKey();
+  void enterDefaultKey(const String& key);
 
   bool resolveScript(const String& key, Script*& script);
 
-  bool leave();
+  bool leaveKey();
   void getKeys(List<String>& keys);
   void getKeys(const String& key, List<String>& keys, bool allowInheritance = true);
   String getFirstKey();
-  void addKey(const String& key, const String& value);
-  void addKey(const String& key);
+
+  void addDefaultKey(const String& key, const String& value);
+  void addDefaultKey(const String& key);
+
+  void pushState();
+  bool popState();
 
 private:
   Namespace* currentSpace;
+  List<Namespace*> states;
 };

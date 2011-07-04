@@ -13,14 +13,14 @@ bool Engine::load(const String& file, ErrorHandler errorHandler, void* userData)
   Script* root = parser.parse(file, errorHandler, userData);
   if(!root)
     return false;
-  currentSpace = new Namespace(*this, 0, this, root);
+  currentSpace = new Namespace(*this, 0, this, root, String());
   assert(currentSpace);
   return true;
 }
 
-bool Engine::enter(const String& key, bool allowInheritance)
+bool Engine::enterKey(const String& key, bool allowInheritance)
 {
-  Namespace* subSpace = currentSpace->enter(key, allowInheritance);
+  Namespace* subSpace = currentSpace->enterKey(key, allowInheritance);
   if(subSpace)
   {
     currentSpace = subSpace;
@@ -29,9 +29,16 @@ bool Engine::enter(const String& key, bool allowInheritance)
   return false;
 }
 
-void Engine::enterNew()
+void Engine::enterUnnamedKey()
 {
-  Namespace* subSpace = currentSpace->enterTemporary();
+  Namespace* subSpace = currentSpace->enterUnnamedKey();
+  assert(subSpace);
+  currentSpace = subSpace;
+}
+
+void Engine::enterDefaultKey(const String& key)
+{
+  Namespace* subSpace = currentSpace->enterDefaultKey(key);
   assert(subSpace);
   currentSpace = subSpace;
 }
@@ -44,7 +51,7 @@ bool Engine::resolveScript(const String& key, Script*& script)
   return false;
 }
 
-bool Engine::leave()
+bool Engine::leaveKey()
 {
   if(!currentSpace->getParent())
     return false;
@@ -60,10 +67,10 @@ void Engine::getKeys(List<String>& keys)
 
 void Engine::getKeys(const String& key, List<String>& keys, bool allowInheritance)
 {
-  if(enter(key, allowInheritance))
+  if(enterKey(key, allowInheritance))
   {
     currentSpace->getKeys(keys);
-    leave();
+    leaveKey();
   }
 }
 
@@ -72,12 +79,28 @@ String Engine::getFirstKey()
   return currentSpace->getFirstKey();
 }
 
-void Engine::addKey(const String& key, const String& value)
+void Engine::addDefaultKey(const String& key, const String& value)
 {
   return currentSpace->addKeyRaw(key, value);
 }
 
-void Engine::addKey(const String& key)
+void Engine::addDefaultKey(const String& key)
 {
   return currentSpace->addKeyRaw(key, 0);
 }
+
+void Engine::pushState()
+{
+  states.append(currentSpace);
+}
+
+bool Engine::popState()
+{
+  if(states.isEmpty())
+    return false;
+  currentSpace = states.getLast()->data;
+  states.removeLast();
+  return true;
+}
+
+

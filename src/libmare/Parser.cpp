@@ -3,7 +3,7 @@
 #include <cstring>
 
 #include "Parser.h"
-#include "String.h"
+#include "Tools/String.h"
 #include "Statement.h"
 #include "Script.h"
 
