@@ -8,7 +8,7 @@ targets = {
   }
 }
 
-CXX = "g++-4"
+//CXX = "g++-4"
 
 configurations = { Debug, Release }
 buildDir = "$(configuration)"

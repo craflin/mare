@@ -105,6 +105,18 @@ String File::getBasename(const String& file)
   return file;
 }
 
+String File::getExtension(const String& file)
+{
+  const char* start = file.getData();
+  const char* pos = &start[file.getLength() - 1];
+  for(; pos >= start; --pos)
+    if(*pos == '.')
+      return file.substr(pos - start + 1);
+    else if(*pos == '\\' || *pos == '/')
+      return String();
+  return String();
+}
+
 bool File::getWriteTime(const String& file, long long& writeTime)
 {
 #ifdef _WIN32
