@@ -84,21 +84,21 @@ void Engine::addDefaultKey(const String& key)
   currentSpace->addKeyRaw(key, 0);
 }
 
+void Engine::addDefaultKey(const String& key, const String& value)
+{
+  enterDefaultKey(key);
+  currentSpace->addResolvableKey(value, String());
+  leaveKey();
+}
+
 void Engine::setDefaultKey(const String& key)
 {
   currentSpace->setKeyRaw(key);
 }
 
-void Engine::addResolvableKey(const String& key)
-{
-  currentSpace->addResolvableKey(key);
-}
-
 void Engine::addResolvableKey(const String& key, const String& value)
 {
-  enterDefaultKey(key);
-  currentSpace->addResolvableKey(value);
-  leaveKey();
+  currentSpace->addResolvableKey(key, value);
 }
 
 void Engine::pushKey()

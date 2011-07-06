@@ -9,7 +9,7 @@ targets = {
 }
 
 //CXX = "g++-4"
-
+/*
 configurations = { Debug, Release }
 buildDir = "$(configuration)"
 
@@ -25,6 +25,7 @@ cppLink = {
   input = "$(foreach file,$(files),$(buildDir)/$(patsubst %.cpp,%.o,$(subst ../,,$(file))))"
   output = "$(buildDir)/$(target)"
   command = "$(CXX) -o $(output) $(input) $(LDFLAGS) $(patsubst %,-L%,$(libPaths)) $(patsubst %,-l%,$(libs))"
-  message = "Linking $(target)..."
+  message = "aaLinking $(target)..."
   // preMessage = "--- Building $(target) ($(configuration)) ---"
 }
+*/

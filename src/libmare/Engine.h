@@ -30,9 +30,9 @@ public:
   String getFirstKey();
 
   void addDefaultKey(const String& key);
+  void addDefaultKey(const String& key, const String& value);
   void setDefaultKey(const String& key);
-  void addResolvableKey(const String& key);
-  void addResolvableKey(const String& key, const String& value);
+  void addResolvableKey(const String& key, const String& value = String());
 
   void pushKey();
   bool popKey();

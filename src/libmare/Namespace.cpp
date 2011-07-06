@@ -305,23 +305,37 @@ void Namespace::setKeyRaw(const String& key)
   variables.append(key, 0);
 }
 
-void Namespace::addResolvableKey(const String& key)
+void Namespace::addResolvableKey(const String& key, const String& value)
 {
   assert(!compiled);
-  StringStatement* stringStatement = new StringStatement(*this);
-  stringStatement->value = key;
+  Statement* newStatement;
+  if(value.isEmpty())
+  {
+    StringStatement* stringStatement = new StringStatement(*this);
+    stringStatement->value = key;
+    newStatement = stringStatement;
+  }
+  else
+  {
+    StringStatement* stringStatement = new StringStatement(*this);
+    stringStatement->value = value;
+    AssignStatement* assignStatement = new AssignStatement(*this);
+    assignStatement->variable = key;
+    assignStatement->value = new Script(*this, stringStatement);
+    newStatement = assignStatement;
+  }
   if(!statement)
-    statement = stringStatement;
+    statement = newStatement;
   else
   {
     BlockStatement* blockStatement = dynamic_cast<BlockStatement*>(statement);
     if(blockStatement)
-      blockStatement->statements.prepend(stringStatement);
+      blockStatement->statements.append(newStatement);
     else
     {
       blockStatement = new BlockStatement(*this);
-      blockStatement->statements.append(stringStatement);
       blockStatement->statements.append(statement);
+      blockStatement->statements.append(newStatement);
       statement = blockStatement;
     }
   }

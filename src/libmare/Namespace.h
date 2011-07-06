@@ -26,7 +26,7 @@ public:
   void addKeyRaw(const String& key, Script* value);
   void setKeyRaw(const String& key);
 
-  void addResolvableKey(const String& key);
+  void addResolvableKey(const String& key, const String& value);
 
   void reset();
 
