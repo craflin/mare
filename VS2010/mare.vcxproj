@@ -11,6 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\mare\Builder.cpp" />
     <ClCompile Include="..\src\mare\Main.cpp" />
     <ClCompile Include="..\src\mare\Vcxproj.cpp" />
   </ItemGroup>
@@ -20,6 +21,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\mare\Builder.h" />
     <ClInclude Include="..\src\mare\Vcxproj.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

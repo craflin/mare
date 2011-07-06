@@ -5,17 +5,22 @@
 #include "Namespace.h"
 #include "Parser.h"
 
-bool Engine::load(const String& file, ErrorHandler errorHandler, void* userData)
+bool Engine::load(const String& file)
 {
   if(currentSpace)
     return false;
   Parser parser(*this);
-  Script* root = parser.parse(file, errorHandler, userData);
+  Script* root = parser.parse(file, errorHandler, errorUserData);
   if(!root)
     return false;
   currentSpace = new Namespace(*this, 0, this, root->statement);
   assert(currentSpace);
   return true;
+}
+
+void Engine::error(const String& message)
+{
+  errorHandler(errorUserData, 0, message);
 }
 
 bool Engine::enterKey(const String& key, bool allowInheritance)

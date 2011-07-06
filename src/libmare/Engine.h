@@ -14,9 +14,10 @@ public:
 
   typedef void (*ErrorHandler)(void* userData, unsigned int line, const String& message);
 
-  Engine() : currentSpace(0) {}
+  Engine(ErrorHandler errorHandler, void* userData) : errorHandler(errorHandler), errorUserData(userData), currentSpace(0) {}
 
-  bool load(const String& file, ErrorHandler errorHandler, void* userData);
+  bool load(const String& file);
+  void error(const String& message);
 
   bool enterKey(const String& key, bool allowInheritance = true);
   void enterUnnamedKey();
@@ -38,6 +39,8 @@ public:
   bool popKey();
 
 private:
+  ErrorHandler errorHandler;
+  void* errorUserData;
   Namespace* currentSpace;
   List<Namespace*> stashedKeys;
 };
