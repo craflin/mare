@@ -12,11 +12,15 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\mare\Main.cpp" />
+    <ClCompile Include="..\src\mare\Vcxproj.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="libmare.vcxproj">
       <Project>{179311c6-6b6f-4e45-ba68-6c7168ccc82d}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\mare\Vcxproj.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <Keyword>Win32Proj</Keyword>

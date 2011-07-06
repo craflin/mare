@@ -14,6 +14,8 @@
 #include "../libmare/Tools/Process.h"
 #include "../libmare/Tools/Win32/getopt.h"
 
+#include "Vcxproj.h"
+
 static const char* VERSION   = "0.1";
 static const char* COPYRIGHT = "Copyright (C) 2011 Colin Graf";
 
@@ -33,7 +35,7 @@ static void showVersion(bool andExit)
   puts(COPYRIGHT);
   //printf("Author(s): %s\n", AUTHORS);
   puts("This program comes with ABSOLUTELY NO WARRANTY.");
-  puts("This is free software, and you are welcome to redistribute it under certain ");
+  puts("This is free software, and you are welcome to redistribute it under certain");
   puts("conditions.");
   if(andExit)
     exit(EXIT_SUCCESS);
@@ -52,16 +54,20 @@ static void showUsage(const char* executable)
   puts("    -f <file>, --file=<file>");
   puts("        Use <file> as a marefile.");
   puts("");
+  puts("    --vcxproj 2010");
+  puts("        Generate a .sln and .vcxproj files for Visual Studio 2010 from the");
+  puts("        marefile.");
+  puts("");
   puts("    config=<config>, --config=<config>");
-  puts("        Build using configuration <config> as declared in the marefile (Debug ");
-  puts("        and Release by default). Multiple configurations can be used by add ");
+  puts("        Build using configuration <config> as declared in the marefile (Debug");
+  puts("        and Release by default). Multiple configurations can be used by add");
   puts("        adding config=<config> multiple times.");
   puts("");
   puts("    <target>, --target=<target>");
-  puts("        Build <target> as declared in the marefile. Multiple targets can be ");
+  puts("        Build <target> as declared in the marefile. Multiple targets can be");
   puts("        used.");
   puts("");
-  puts("    <variable>=<value>, --<variable>=<value>");
+  puts("    <variable>=<value>, --<variable>[=<value>]");
   puts("        Set any variable <variable> to <value>. This can be used to set");
   puts("        various options with a meaning defined by the marefile.");
   puts("");
@@ -95,6 +101,7 @@ int main(int argc, char* argv[])
   String inputFile("Marefile");
   bool showHelp = false;
   bool showDebug = false;
+  int generateVcxproj = 0;
 
   // parse args
   {
@@ -103,6 +110,7 @@ int main(int argc, char* argv[])
       {"file", required_argument , 0, 'f'},
       {"help", no_argument , 0, 'h'},
       {"version", no_argument , 0, 'v'},
+      {"vcxproj", required_argument , 0, 0},
       {0, 0, 0, 0}
     };
 
@@ -125,7 +133,12 @@ int main(int argc, char* argv[])
           }
         const char* sep = strchr(arg, '=');
         if(sep)
-          userArgs.append(String(arg, sep - arg), String(sep + 1, -1));
+        {
+          String key(arg, sep - arg);
+          if(key == "config")
+            key = "configuration";
+          userArgs.append(key, String(sep + 1, -1));
+        }
         else
           userArgs.append(String(arg, -1), String());
       }
@@ -136,6 +149,19 @@ int main(int argc, char* argv[])
     while((c = getopt_long(nargc, nargv, "c:df:hv", long_options, &option_index)) != -1)
       switch(c)
       {
+      case 0:
+        if(strcmp(long_options[option_index].name, "vcxproj") == 0)
+        {
+          generateVcxproj = 2010;
+          if(optarg)
+          {
+            if(strcmp(long_options[option_index].name, "2010") == 0)
+              generateVcxproj = 2010;
+            else // unknown version
+              ::showHelp(argv[0]);
+          }
+        }
+        break;
       case 'd':
         showDebug = true;
         break;
@@ -157,7 +183,12 @@ int main(int argc, char* argv[])
       const char* arg = argv[optind++];
       const char* sep = strchr(arg, '=');
       if(sep)
-        userArgs.append(String(arg, sep - arg), String(sep + 1, -1));
+      {
+        String key(arg, sep - arg);
+        if(key == "config")
+          key = "configuration";
+        userArgs.append(key, String(sep + 1, -1));
+      }
       else
         userArgs.append(String("target"), String(arg, -1));
     }
@@ -188,6 +219,15 @@ int main(int argc, char* argv[])
         showUsage(argv[0]);
     }
 
+    // generate vcxproh mode?
+    if(generateVcxproj)
+    {
+      Vcxproj vcxprog(engine, generateVcxproj);
+      if(!vcxprog.generate(userArgs))
+        return EXIT_FAILURE;
+      return EXIT_SUCCESS;
+    }
+
     // add default rules and stuff
     engine.addDefaultKey("CC", "gcc");
     engine.addDefaultKey("CXX", "g++");
@@ -214,13 +254,8 @@ int main(int argc, char* argv[])
 
     // add user arguments
     engine.enterUnnamedKey();
-    for(Map<String, String>::Node* i = userArgs.getFirst(); i; i = i->getNext())
-    {
-      
-      if(i->key == "config")
-        i->key = "configuration";
+    for(const Map<String, String>::Node* i = userArgs.getFirst(); i; i = i->getNext())
       engine.addDefaultKey(i->key, i->data);
-    }
 
     // get targets and configurations to build
     List<String> inputConfigs, inputTargets;
