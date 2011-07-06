@@ -13,7 +13,7 @@ bool Engine::load(const String& file, ErrorHandler errorHandler, void* userData)
   Script* root = parser.parse(file, errorHandler, userData);
   if(!root)
     return false;
-  currentSpace = new Namespace(*this, 0, this, root, String());
+  currentSpace = new Namespace(*this, 0, this, root->statement);
   assert(currentSpace);
   return true;
 }
@@ -79,27 +79,39 @@ String Engine::getFirstKey()
   return currentSpace->getFirstKey();
 }
 
-void Engine::addDefaultKey(const String& key, const String& value)
-{
-  return currentSpace->addKeyRaw(key, value);
-}
-
 void Engine::addDefaultKey(const String& key)
 {
-  return currentSpace->addKeyRaw(key, 0);
+  currentSpace->addKeyRaw(key, 0);
 }
 
-void Engine::pushState()
+void Engine::setDefaultKey(const String& key)
 {
-  states.append(currentSpace);
+  currentSpace->setKeyRaw(key);
 }
 
-bool Engine::popState()
+void Engine::addResolvableKey(const String& key)
 {
-  if(states.isEmpty())
+  currentSpace->addResolvableKey(key);
+}
+
+void Engine::addResolvableKey(const String& key, const String& value)
+{
+  enterDefaultKey(key);
+  currentSpace->addResolvableKey(value);
+  leaveKey();
+}
+
+void Engine::pushKey()
+{
+  stashedKeys.append(currentSpace);
+}
+
+bool Engine::popKey()
+{
+  if(stashedKeys.isEmpty())
     return false;
-  currentSpace = states.getLast()->data;
-  states.removeLast();
+  currentSpace = stashedKeys.getLast()->data;
+  stashedKeys.removeLast();
   return true;
 }
 

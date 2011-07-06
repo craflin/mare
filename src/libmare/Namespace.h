@@ -3,14 +3,15 @@
 
 #include "Tools/Map.h"
 #include "Tools/Scope.h"
+#include "Script.h"
 
 class Engine;
 class Script;
 
-class Namespace : public Scope, public Scope::Object
+class Namespace : public Script, public Scope
 {
 public:
-  Namespace(Scope& scope, Namespace* parent, Engine* engine, Script* script, const String& name) : Scope::Object(scope), parent(parent), engine(engine), script(script), compiled(false), unnamedSpace(0), name(name)/*, compiling(false)*/ {}
+  Namespace(Scope& scope, Namespace* parent, Engine* engine, Statement* statement) : Script(scope, statement), parent(parent), engine(engine), script(script), compiled(false), unnamedSpace(0) {}
   
   inline Namespace* getParent() {return parent;}
   bool resolveScript(const String& name, Script*& script);
@@ -23,29 +24,20 @@ public:
 
   void addKey(const String& key, Script* value);
   void addKeyRaw(const String& key, Script* value);
-  void addKeyRaw(const String& key, const String& value);
+  void setKeyRaw(const String& key);
+
+  void addResolvableKey(const String& key);
 
   void reset();
 
 private:
-  class Variable
-  {
-  public:
-    Script* script;
-    Namespace* space;
-    bool inherited;
-
-    Variable(Script* script, bool inherited = false) : script(script), space(0), inherited(inherited) {}
-  };
-
   Namespace* parent;
   Engine* engine;
   Script* script;
   bool compiled;
-  Map<String, Variable> variables;
+  Map<String, Script*> variables;
+  Map<String, Namespace*> inheritedSpaces;
   Namespace* unnamedSpace;
-  String name; // for debugging
-  //bool compiling; // for debugging?
 
   bool compile();
   String evaluateString(const String& string);

@@ -65,6 +65,27 @@ public:
     return node->data;
   }
 
+  T& prepend(const T& data = T())
+  {
+    Node* node;
+    if(firstFree)
+    {
+      node = firstFree;
+      firstFree = firstFree->next;
+      node->data = data;
+    }
+    else
+      node = new Node(data);
+    node->previous = 0;
+    if((node->next = first))
+      first->previous = node;
+    else
+      last = node;
+    first = node;
+    ++size;
+    return node->data;
+  }
+
   void remove(Node* node)
   {
     if(node->next)

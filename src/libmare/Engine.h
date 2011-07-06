@@ -29,13 +29,15 @@ public:
   void getKeys(const String& key, List<String>& keys, bool allowInheritance = true);
   String getFirstKey();
 
-  void addDefaultKey(const String& key, const String& value);
   void addDefaultKey(const String& key);
+  void setDefaultKey(const String& key);
+  void addResolvableKey(const String& key);
+  void addResolvableKey(const String& key, const String& value);
 
-  void pushState();
-  bool popState();
+  void pushKey();
+  bool popKey();
 
 private:
   Namespace* currentSpace;
-  List<Namespace*> states;
+  List<Namespace*> stashedKeys;
 };

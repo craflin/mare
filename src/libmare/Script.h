@@ -10,32 +10,12 @@ class Statement;
 class Script : public Scope::Object
 {
 public:
-  Script(Scope& scope) : Scope::Object(scope), executing(false) {}
+  Statement* statement;
 
-  virtual bool execute(Namespace& space) = 0;
+  Script(Scope& scope, Statement* statement) : Scope::Object(scope), executing(false), statement(statement) {}
 
-protected:
+  bool execute(Namespace& space);
+
+private:
   bool executing;
-};
-
-class StatementScript : public Script
-{
-public:
-  StatementScript(Scope& scope, Statement& statement) : Script(scope), statement(statement) {}
-
-private:
-  Statement& statement;
-
-  virtual bool execute(Namespace& space);
-};
-
-class StringScript : public Script
-{
-public:
-  String value;
-
-  StringScript(Scope& scope, const String& value) : Script(scope), value(value) {}
-
-private:
-  virtual bool execute(Namespace& space);
 };

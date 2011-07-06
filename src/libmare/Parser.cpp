@@ -213,7 +213,7 @@ Script* Parser::readFile()
   BlockStatement* statement = new BlockStatement(engine);
   while(currentToken.id != Token::eof)
     statement->statements.append(readStatement());
-  return new StatementScript(engine, *statement);
+  return new Script(engine, statement);
 }
 
 Statement* Parser::readStatement()
@@ -247,7 +247,7 @@ Script* Parser::readConcatination()
     binaryStatement->rightOperand = readValue();
     statement = binaryStatement;
   }
-  return new StatementScript(engine, *statement);
+  return new Script(engine, statement);
 }
 
 Statement* Parser::readValue()

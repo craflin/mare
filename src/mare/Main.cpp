@@ -189,13 +189,29 @@ int main(int argc, char* argv[])
     }
 
     // add default rules and stuff
-    engine.addDefaultKey("CC", "gcc");
-    engine.addDefaultKey("CXX", "g++");
+    engine.addResolvableKey("CC", "gcc");
+    engine.addResolvableKey("CXX", "g++");
     engine.enterDefaultKey("configurations");
-      engine.addDefaultKey("Debug");
-      engine.addDefaultKey("Release");
+      engine.addResolvableKey("Debug");
+      engine.addResolvableKey("Release");
     engine.leaveKey();
-    engine.addDefaultKey("targets");
+    engine.addResolvableKey("targets");
+    /*
+    engine.addDefaultKey("buildDir", "$(configuration)");
+    engine.enterDefaultKey("cppCompile");
+      engine.addDefaultKey("dfile", "$(buildDir)/$(patsubst %.cpp,%.d,$(subst ../,,$(file)))");
+      engine.addDefaultKey("input", "$(file) $(filter-out %.o: \\,$(readfile $(dfile)))");
+      engine.addDefaultKey("output", "$(buildDir)/$(patsubst %.cpp,%.o,$(subst ../,,$(file))) $(dfile)");
+      engine.addDefaultKey("command", "$(CXX) -MMD -o $(firstword $(output)) -c $(firstword $(input)) $(CXXFLAGS) $(patsubst %,-D%,$(defines)) $(patsubst %,-I%,$(includePaths))");
+      engine.addDefaultKey("message", "$(subst ../,,$(file))");
+    engine.leaveKey();
+    engine.enterDefaultKey("cppLink");
+      engine.addDefaultKey("input", "$(foreach file,$(files),$(buildDir)/$(patsubst %.cpp,%.o,$(subst ../,,$(file))))");
+      engine.addDefaultKey("output", "$(buildDir)/$(target)");
+      engine.addDefaultKey("command", "$(CXX) -o $(output) $(input) $(LDFLAGS) $(patsubst %,-L%,$(libPaths)) $(patsubst %,-l%,$(libs))");
+      engine.addDefaultKey("message", "Linking $(target)...");
+    engine.leaveKey();
+    */
 
     // add user arguments
     engine.enterUnnamedKey();
@@ -274,7 +290,7 @@ static bool buildConfigurations(Engine& engine, const String& inputFile, const L
 
 static bool buildConfiguration(Engine& engine, const String& inputFile, const String& configuration, const List<String>& inputTargets)
 {
-  engine.addDefaultKey("configuration", configuration);
+  engine.addResolvableKey("configuration", configuration);
 
   if(!engine.enterKey("targets"))
   {
@@ -575,7 +591,7 @@ static bool buildTargets(Engine& engine, const List<String>& inputTargets)
       ruleSet.activeTargets.append(&target);
     }
     engine.enterKey(i->data);
-    engine.addDefaultKey("target", i->data);
+    engine.addResolvableKey("target", i->data);
 
     // add rule for each source file
     if(engine.enterKey("files"))
@@ -587,7 +603,7 @@ static bool buildTargets(Engine& engine, const List<String>& inputTargets)
         Rule& rule = target.rules.append();
         rule.target = &target;
         engine.enterKey(i->data);
-        engine.addDefaultKey("file", i->data);
+        engine.addResolvableKey("file", i->data);
         engine.getKeys("input", rule.input, false);
         engine.getKeys("output", rule.output, false);
         engine.getKeys("command", rule.command, false);
