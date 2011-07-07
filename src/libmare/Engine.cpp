@@ -84,6 +84,17 @@ String Engine::getFirstKey()
   return currentSpace->getFirstKey();
 }
 
+String Engine::getFirstKey(const String& key, bool allowInheritance)
+{
+  if(enterKey(key, allowInheritance))
+  {
+    String result = currentSpace->getFirstKey();
+    leaveKey();
+    return result;
+  }
+  return String();
+}
+
 void Engine::addDefaultKey(const String& key)
 {
   currentSpace->addKeyRaw(key, 0);

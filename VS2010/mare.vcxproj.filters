@@ -4,9 +4,20 @@
     <ClCompile Include="..\src\mare\Main.cpp" />
     <ClCompile Include="..\src\mare\Vcxproj.cpp" />
     <ClCompile Include="..\src\mare\Builder.cpp" />
+    <ClCompile Include="..\src\mare\Tools\md5.cpp">
+      <Filter>Tools</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\mare\Vcxproj.h" />
     <ClInclude Include="..\src\mare\Builder.h" />
+    <ClInclude Include="..\src\mare\Tools\md5.h">
+      <Filter>Tools</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Tools">
+      <UniqueIdentifier>{71f0f318-9d46-4f62-9af5-7e5f1340102e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>

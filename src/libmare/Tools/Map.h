@@ -101,6 +101,15 @@ public:
     return 0;
   }
 
+  const Node* find(const K& key) const
+  {
+    // TODO: use hash map
+    for(const Node* node = first; node; node = node->next)
+      if(node->key == key)
+        return node;
+    return 0;
+  }
+
   T lookup(const K& key)
   {
     // TODO: use hash map

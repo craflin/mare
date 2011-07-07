@@ -29,6 +29,7 @@ public:
   void getKeys(List<String>& keys);
   void getKeys(const String& key, List<String>& keys, bool allowInheritance = true);
   String getFirstKey();
+  String getFirstKey(const String& key, bool allowInheritance = true);
 
   void addDefaultKey(const String& key);
   void addDefaultKey(const String& key, const String& value);

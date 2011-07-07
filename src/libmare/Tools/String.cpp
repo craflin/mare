@@ -110,31 +110,34 @@ void String::setCapacity(unsigned int size)
   grow(size < data->length ? data->length : size, data->length); // enforce detach
 }
 
-void String::append(char c)
+String& String::append(char c)
 {
   unsigned int newLength = data->length + 1;
   grow(newLength, data->length);
   ((char*)data->str)[data->length] = c;
   ((char*)data->str)[newLength] = '\0';
   data->length = newLength;
+  return *this;
 }
 
-void String::append(const String& str)
+String& String::append(const String& str)
 {
   unsigned int newLength = data->length + str.data->length;
   grow(newLength, data->length);
   memcpy(((char*)data->str) + data->length, str.data->str, str.data->length);
   ((char*)data->str)[newLength] = '\0';
   data->length = newLength;
+  return *this;
 }
 
-void String::append(const char* str, unsigned int length)
+String& String::append(const char* str, unsigned int length)
 {
   unsigned int newLength = data->length + length;
   grow(newLength, data->length);
   memcpy(((char*)data->str) + data->length, str, length);
   ((char*)data->str)[newLength] = '\0';
   data->length = newLength;
+  return *this;
 }
 
 void String::clear()

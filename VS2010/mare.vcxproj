@@ -13,6 +13,7 @@
   <ItemGroup>
     <ClCompile Include="..\src\mare\Builder.cpp" />
     <ClCompile Include="..\src\mare\Main.cpp" />
+    <ClCompile Include="..\src\mare\Tools\md5.cpp" />
     <ClCompile Include="..\src\mare\Vcxproj.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -22,6 +23,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\mare\Builder.h" />
+    <ClInclude Include="..\src\mare\Tools\md5.h" />
     <ClInclude Include="..\src\mare\Vcxproj.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

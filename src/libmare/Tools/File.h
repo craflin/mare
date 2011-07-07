@@ -17,6 +17,8 @@ public:
 
   bool open(const String& file, Flags flags = readFlag);
   int read(char* buffer, int len);
+  int write(const char* buffer, int len);
+  bool write(const String& data);
 
   inline const Error& getErrno() {return error;}
 

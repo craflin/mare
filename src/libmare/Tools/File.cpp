@@ -78,11 +78,51 @@ int File::read(char* buffer, int len)
 #ifdef _WIN32
   DWORD i;
   if(!ReadFile((HANDLE)fp, buffer, len, &i, NULL))
+  {
+    error = GetLastError();
     return 0;
+  }
   return i;
 #else
-  return (int)fread(buffer, 1, len, (FILE*)fp);
+  size_t i = fread(buffer, 1, len, (FILE*)fp);
+  if(i == 0)
+  {
+    error = errno;
+    return 0;
+  }
+  return (int)i;
 #endif
+}
+
+int File::write(const char* buffer, int len)
+{
+#ifdef _WIN32
+  DWORD i;
+  if(!WriteFile((HANDLE)fp, buffer, len, &i, NULL))
+  {
+    error = GetLastError();
+    return 0;
+  }
+  if(i != len)
+  {
+    error = GetLastError();
+    return i;
+  }
+  return i;
+#else
+  size_t i = fwrite(buffer, 1, len, (FILE*)fp);
+  if(i != len)
+  {
+    error = errno;
+    return (int)i;
+  }
+  return (int)i;
+#endif
+}
+
+bool File::write(const String& data)
+{
+  return write(data.getData(), data.getLength()) != data.getLength();
 }
 
 String File::getDirname(const String& file)

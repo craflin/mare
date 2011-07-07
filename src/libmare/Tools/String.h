@@ -23,6 +23,8 @@ public:
   ~String();
 
   String& operator=(const String& other);
+  inline String& operator+=(const String& other) {return append(other);}
+  inline String operator+(const String& other) const {return String(*this).append(other);}
 
   bool operator==(const String& other) const;
 
@@ -37,9 +39,9 @@ public:
 
   unsigned int format(unsigned int size, const char* format, ...);
 
-  void append(char c);
-  void append(const String& str);
-  void append(const char* str, unsigned int length);
+  String& append(char c);
+  String& append(const String& str);
+  String& append(const char* str, unsigned int length);
 
   void clear();
   bool isEmpty() const {return data->length == 0;}
