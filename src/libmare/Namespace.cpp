@@ -213,7 +213,7 @@ failure:
     Script* script;
     if(engine->resolveScript(name, script))
     {
-      Namespace* space = new Namespace(*this, this, engine, script->statement);
+      Namespace* space = new Namespace(*this, this, engine, script ? script->statement : 0);
       inheritedSpaces.append(name, space);
       return space;
     }

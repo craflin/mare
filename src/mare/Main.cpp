@@ -102,7 +102,7 @@ int main(int argc, char* argv[])
       {0, 0, 0, 0}
     };
 
-    // find all user arguments
+    // find and remove all user arguments
     char** nargv = (char**)alloca(sizeof(char*) * argc);
     int nargc = 1;
     nargv[0] = argv[0];
@@ -132,9 +132,11 @@ int main(int argc, char* argv[])
       }
     nextarg:;
     }
+    argc = nargc;
+    argv = nargv;
 
     // parse normal arguments
-    while((c = getopt_long(nargc, nargv, "c:df:hv", long_options, &option_index)) != -1)
+    while((c = getopt_long(argc, argv, "c:df:hv", long_options, &option_index)) != -1)
       switch(c)
       {
       case 0:
@@ -143,7 +145,7 @@ int main(int argc, char* argv[])
           generateVcxproj = 2010;
           if(optarg)
           {
-            if(strcmp(long_options[option_index].name, "2010") == 0)
+            if(strcmp(optarg, "2010") == 0)
               generateVcxproj = 2010;
             else // unknown version
               ::showHelp(argv[0]);

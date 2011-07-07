@@ -44,7 +44,7 @@ bool File::open(const String& file, Flags flags)
   if(flags & writeFlag)
   {
     desiredAccess |= GENERIC_WRITE;
-    creationDisposition |= TRUNCATE_EXISTING | OPEN_ALWAYS;
+    creationDisposition |= CREATE_ALWAYS;
   }
   if(flags & readFlag)
   {
@@ -122,7 +122,7 @@ int File::write(const char* buffer, int len)
 
 bool File::write(const String& data)
 {
-  return write(data.getData(), data.getLength()) != data.getLength();
+  return write(data.getData(), data.getLength()) == data.getLength();
 }
 
 String File::getDirname(const String& file)

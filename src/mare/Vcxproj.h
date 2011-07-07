@@ -17,23 +17,23 @@ public:
 
 private:
 
-  class ProjectFilter
-  {
-  public:
-    String guid;
-
-    ProjectFilter(const String& guid) : guid(guid) {}
-  };
-
   class Project
   {
   public:
     String name;
     String guid;
     Map<String, void*> configurations;
-    ProjectFilter* filter;
 
-    Project(const String& Name, const String& guid) : name(name), guid(guid), filter(0) {}
+    Project(const String& name, const String& guid) : name(name), guid(guid) {}
+  };
+
+  class ProjectFilter
+  {
+  public:
+    String guid;
+    List<Project*> projects;
+
+    ProjectFilter(const String& guid) : guid(guid) {}
   };
 
   Engine& engine;

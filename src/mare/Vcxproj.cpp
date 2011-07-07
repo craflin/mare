@@ -60,18 +60,21 @@ bool Vcxproj::generate(const Map<String, String>& userArgs)
       else
       {
         project = &projects.append(i->data, Project(i->data, createSomethingLikeGUID(i->data)));
-        String filter = engine.getFirstKey("filter");
-        Map<String, ProjectFilter>::Node* node = projectFilters.find(filter);
-        if(node)
-          project->filter = &node->data;
-        else
-          project->filter = &projectFilters.append(filter, ProjectFilter(createSomethingLikeGUID(filter)));
+        String filterName = engine.getFirstKey("filter");
+        if(!filterName.isEmpty())
+        {
+          Map<String, ProjectFilter>::Node* node = projectFilters.find(filterName);
+          ProjectFilter& filter = node ? node->data : projectFilters.append(filterName, ProjectFilter(createSomethingLikeGUID(filterName)));
+          filter.projects.append(project);
+        }
       }
       project->configurations.append(configuration, 0);
     }
     engine.leaveKey();
     engine.leaveKey();
   }
+  if(solutionName.isEmpty() && !projects.isEmpty())
+    solutionName = projects.getFirst()->data.name;
 
   // generate solution file
   if(!generateSln())
@@ -134,7 +137,7 @@ bool Vcxproj::generateSln()
         const String& config = i->data;
         const String& projectConfig = project.configurations.find(config) ? config : project.configurations.getFirst()->key;
         fileWrite(String("\t\t{") + project.guid + "}." + config + "|" + platform + ".ActiveCfg = " + projectConfig + "|" + platform + "\r\n");
-        if(activesProjects.find(project.name))
+        if(activesProjects.isEmpty() || activesProjects.find(project.name))
           fileWrite(String("\t\t{") + project.guid + "}." + config + "|" + platform + ".Build.0 = " + projectConfig + "|" + platform + "\r\n");
       }
     }
@@ -147,15 +150,20 @@ bool Vcxproj::generateSln()
   fileWrite("\tEndGlobalSection\r\n");
 
   // add projects to project filters
-/*
-  fileWrite("<?lua if filters then ?>\r\n");
-  fileWrite("\tGlobalSection(NestedProjects) = preSolution\r\n");
-  fileWrite("<?lua for _, filter in pairs(filters) do for _, project in pairs(filter.projects) do ?>\r\n");
-  fileWrite("\t\t{<?lua=project?>} = {<?lua=filter.guid?>}\r\n");
-  fileWrite("<?lua end end ?>\r\n");
-  fileWrite("\tEndGlobalSection\r\n");
-  fileWrite("<?lua end ?>\r\n");
-*/
+  if(!projectFilters.isEmpty())
+  {
+    fileWrite("\tGlobalSection(NestedProjects) = preSolution\r\n");
+    for(const Map<String, ProjectFilter>::Node* i = projectFilters.getFirst(); i; i = i->getNext())
+    {
+      const ProjectFilter& filter = i->data;
+      for(const List<Project*>::Node* i = filter.projects.getFirst(); i; i = i->getNext())
+      {
+        const Project& project = *i->data;
+        fileWrite(String("\t\t{") + project.guid + "} = {" + filter.guid + "}\r\n");
+      }
+    }
+    fileWrite("\tEndGlobalSection\r\n");
+  }
 
   //
   fileWrite("EndGlobal\r\n");
