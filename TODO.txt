@@ -1,9 +1,6 @@
-Namespace::getEngine ist blöd! stattdessen engine.getNamespace()?
-
-string für const strings optimieren
-
-cached hash sum in einem string? oder sehr einfache hashsumme
-
-gelesenden file inhalt in readfile cachen
-
-der unnamed namespace der für foreach benutzt wird, darf nicht einfach so benutzt werden, denn das dürfte bei verschachtelten foreach nicht funktionieren
+- brauch man Namespace::getEngine wirklich?
+- String für const strings optimieren
+- cached hash sum in einem string? oder sehr einfache hashsumme?
+- getopt.cpp und Process.cpp von libmare nach mare verschieben
+- Engine::resolveScript private machen
+- ../libmare bei den includes weg includepathen
