@@ -27,6 +27,7 @@ public:
   inline String operator+(const String& other) const {return String(*this).append(other);}
 
   bool operator==(const String& other) const;
+  bool operator!=(const String& other) const;
 
   inline const char* getData() const {return data->str;}
   

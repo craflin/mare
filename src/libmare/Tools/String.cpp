@@ -99,6 +99,11 @@ bool String::operator==(const String& other) const
   return data->length == other.data->length && memcmp(data->str, other.data->str, data->length) == 0;
 }
 
+bool String::operator!=(const String& other) const
+{
+  return data->length != other.data->length || memcmp(data->str, other.data->str, data->length) != 0;
+}
+
 char* String::getData(unsigned int size)
 {
   grow(size, 0);
