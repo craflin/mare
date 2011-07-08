@@ -36,6 +36,8 @@ public:
   void setDefaultKey(const String& key);
   void addResolvableKey(const String& key, const String& value = String());
 
+  void resetKey();
+
   void pushKey();
   bool popKey();
 
