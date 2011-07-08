@@ -26,12 +26,23 @@ File::File()
 
 File::~File()
 {
+  close();
+}
+
+void File::close()
+{
 #ifdef _WIN32
   if(fp != INVALID_HANDLE_VALUE)
+  {
     CloseHandle((HANDLE)fp);
+    fp = INVALID_HANDLE_VALUE;
+  }
 #else
   if(fp)
+  {
     fclose((FILE*)fp);
+    fp = 0;
+  }
 #endif
 }
 
@@ -152,6 +163,18 @@ String File::getExtension(const String& file)
   for(; pos >= start; --pos)
     if(*pos == '.')
       return file.substr(pos - start + 1);
+    else if(*pos == '\\' || *pos == '/')
+      return String();
+  return String();
+}
+
+String File::getWithoutExtension(const String& file)
+{
+  const char* start = file.getData();
+  const char* pos = &start[file.getLength() - 1];
+  for(; pos >= start; --pos)
+    if(*pos == '.')
+      return file.substr(0, pos - start);
     else if(*pos == '\\' || *pos == '/')
       return String();
   return String();
