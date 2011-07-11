@@ -11,12 +11,16 @@ class Builder
 {
 public:
 
-  Builder(Engine& engine) : engine(engine) {}
+  Builder(Engine& engine, bool showDebug, bool clean, bool rebuild) : engine(engine), showDebug(showDebug), clean(clean), rebuild(rebuild) {}
 
   bool build(const Map<String, String>& userArgs);
 
 private:
   Engine& engine;
+  bool showDebug;
+  bool clean;
+  bool rebuild;
+
   List<String> inputConfigs;
   List<String> inputTargets;
 

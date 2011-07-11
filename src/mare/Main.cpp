@@ -40,7 +40,7 @@ static void showUsage(const char* executable)
   showVersion(false);
   puts("");
   printf("Usage: %s [ -f <file> ] [ <options> ] [ config=<config> ] [ <target> ]", basename.getData());
-  puts("        [ <variable>=<value> ]");
+  puts("        [ <variable>=<value> ] [ clean | rebuild ]");
   puts("");
   puts("Options:");
   puts("");
@@ -53,8 +53,8 @@ static void showUsage(const char* executable)
   puts("");
   puts("    config=<config>, --config=<config>");
   puts("        Build using configuration <config> as declared in the marefile (Debug");
-  puts("        and Release by default). Multiple configurations can be used by add");
-  puts("        adding config=<config> multiple times.");
+  puts("        and Release by default). Multiple configurations can be used by adding");
+  puts("        config=<config> multiple times.");
   puts("");
   puts("    <target>, --target=<target>");
   puts("        Build <target> as declared in the marefile. Multiple targets can be");
@@ -63,6 +63,12 @@ static void showUsage(const char* executable)
   puts("    <variable>=<value>, --<variable>[=<value>]");
   puts("        Set any variable <variable> to <value>. This can be used to set");
   puts("        various options with a meaning defined by the marefile.");
+  puts("");
+  puts("    clean, --clean");
+  puts("        Delete all output files instead of building the selected target.");
+  puts("");
+  puts("    rebuild, --rebuild");
+  puts("        Rebuild all output files of the selected target.");
   puts("");
   puts("    -d");
   puts("        Print debugging information while processing normally.");
@@ -89,6 +95,8 @@ int main(int argc, char* argv[])
   String inputFile("Marefile");
   bool showHelp = false;
   bool showDebug = false;
+  bool clean = false;
+  bool rebuild = false;
   int generateVcxproj = 0;
 
   // parse args
@@ -98,6 +106,8 @@ int main(int argc, char* argv[])
       {"file", required_argument , 0, 'f'},
       {"help", no_argument , 0, 'h'},
       {"version", no_argument , 0, 'v'},
+      {"clean", no_argument , 0, 0},
+      {"rebuild", no_argument , 0, 0},
       {"vcxproj", required_argument , 0, 0},
       {0, 0, 0, 0}
     };
@@ -140,16 +150,23 @@ int main(int argc, char* argv[])
       switch(c)
       {
       case 0:
-        if(strcmp(long_options[option_index].name, "vcxproj") == 0)
         {
-          generateVcxproj = 2010;
-          if(optarg)
+          String opt(long_options[option_index].name, -1);
+          if(opt == "vcxproj")
           {
-            if(strcmp(optarg, "2010") == 0)
-              generateVcxproj = 2010;
-            else // unknown version
-              ::showHelp(argv[0]);
+            generateVcxproj = 2010;
+            if(optarg)
+            {
+              if(strcmp(optarg, "2010") == 0)
+                generateVcxproj = 2010;
+              else // unknown version
+                ::showHelp(argv[0]);
+            }
           }
+          else if(opt == "clean")
+            clean = true;
+          else if(opt == "rebuild")
+            rebuild = true;
         }
         break;
       case 'd':
@@ -180,7 +197,15 @@ int main(int argc, char* argv[])
         userArgs.append(key, String(sep + 1, -1));
       }
       else
-        userArgs.append(String("target"), String(arg, -1));
+      {
+        String target(arg, -1);
+        if(target == "clean")
+          clean = true;
+        else if(target == "rebuild")
+          rebuild = true;
+        else
+          userArgs.append(String("target"), target);
+      }
     }
   }
 
@@ -221,7 +246,7 @@ int main(int argc, char* argv[])
 
     // direct build
     {
-      Builder builder(engine);
+      Builder builder(engine, showDebug, clean, rebuild);
       if(!builder.build(userArgs))
         return EXIT_FAILURE;
       return EXIT_SUCCESS;

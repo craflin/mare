@@ -159,9 +159,12 @@ public:
 
   Rule() : finishedDependencies(0), rebuild(false) {}
 
-  bool startExecution(unsigned int& pid)
+  bool startExecution(unsigned int& pid, bool clean, bool rebuild)
   {
     assert(finishedDependencies == dependencies.getSize());
+
+    if(rebuild)
+      goto build;
 
     // determine whether to build this rule
     for(Map<Rule*, void*>::Node* i = dependencies.getFirst(); i; i = i->getNext())
@@ -221,7 +224,34 @@ public:
 
     // create output directories
     for(const List<String>::Node* i = output.getFirst(); i; i = i->getNext())
-      Directory::create(File::getDirname(i->data));
+    {
+      if(clean)
+      {
+        /*
+        if(File::exists(i->data))
+        {
+          File file;
+          if(!file.unlink(i->data))
+          {
+            // TODO: error message
+          }
+        }
+        */
+        if(!rebuild)
+        {
+          /*
+          String dir = File::getDirname(i->data);
+          if(!unlinkDirs.find(dir)
+            unlinkDirs.append(dir, 0);
+          */
+          /*
+          Directory::unlink(File::getDirname(i->data));
+          */
+        }
+      }
+      if(!clean || rebuild)
+        Directory::create(File::getDirname(i->data));
+    }
 
     pid = process.start(command);
     if(!pid)
@@ -317,7 +347,7 @@ public:
       }
   }
   
-  bool build(unsigned int maxParallelJobs)
+  bool build(unsigned int maxParallelJobs, bool clean, bool rebuild)
   {
     List<Rule*> pendingJobs;
     for(List<Target*>::Node* i = activeTargets.getFirst(); i; i = i->getNext())
@@ -337,7 +367,7 @@ public:
           rule = pendingJobs.getFirst()->data;
           pendingJobs.removeFirst();
           unsigned int pid;
-          if(!rule->startExecution(pid))
+          if(!rule->startExecution(pid, clean, rebuild))
           {
             failure = true;
             goto finishedRuleExecution;
@@ -441,6 +471,6 @@ bool Builder::buildTargets()
   }
 
   ruleSet.resolveDependencies();
-  return ruleSet.build(Process::getProcessorCount());
+  return ruleSet.build(Process::getProcessorCount(), clean, rebuild);
 }
 
