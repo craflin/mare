@@ -163,6 +163,8 @@ public:
   {
     assert(finishedDependencies == dependencies.getSize());
 
+    if(clean)
+      goto clean;
     if(rebuild)
       goto build;
 
@@ -208,9 +210,38 @@ public:
     pid = 0;
     return true;
   
+clean:
+
+    // delete output files and directories
+    for(const List<String>::Node* i = output.getFirst(); i; i = i->getNext())
+    {
+      if(File::exists(i->data))
+      {
+        File file;
+        if(!file.unlink(i->data))
+        {
+          // TODO: error message
+        }
+      }
+      if(!rebuild)
+      {
+        /*
+        String dir = File::getDirname(i->data);
+        if(!unlinkDirs.find(dir)
+          unlinkDirs.append(dir, 0);
+        */
+        Directory::remove(File::getDirname(i->data));
+      }
+    }
+
+    if(rebuild)
+      goto build;
+    pid = 0;
+    return true;
+
     //
   build:
-    rebuild = true;
+    this->rebuild = true;
 
     String message;
     Words::append(this->message.isEmpty() ? this->command : this->message, message);
@@ -224,34 +255,7 @@ public:
 
     // create output directories
     for(const List<String>::Node* i = output.getFirst(); i; i = i->getNext())
-    {
-      if(clean)
-      {
-        /*
-        if(File::exists(i->data))
-        {
-          File file;
-          if(!file.unlink(i->data))
-          {
-            // TODO: error message
-          }
-        }
-        */
-        if(!rebuild)
-        {
-          /*
-          String dir = File::getDirname(i->data);
-          if(!unlinkDirs.find(dir)
-            unlinkDirs.append(dir, 0);
-          */
-          /*
-          Directory::unlink(File::getDirname(i->data));
-          */
-        }
-      }
-      if(!clean || rebuild)
-        Directory::create(File::getDirname(i->data));
-    }
+      Directory::create(File::getDirname(i->data));
 
     pid = process.start(command);
     if(!pid)
