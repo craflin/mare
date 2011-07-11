@@ -31,10 +31,20 @@ bool Builder::build(const Map<String, String>& userArgs)
   engine.leaveKey();
   engine.enterDefaultKey("cppLink");
     engine.addResolvableKey("input", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
-    engine.addResolvableKey("output", "$(buildDir)/$(target)");
+    engine.addResolvableKey("output", "$(buildDir)/$(target)$(if $(windows),.exe)");
     engine.addResolvableKey("command", "$(CXX) -o $(output) $(input) $(LDFLAGS) $(patsubst %,-L%,$(libPaths)) $(patsubst %,-l%,$(libs))");
     engine.addResolvableKey("message", "Linking $(target)...");
   engine.leaveKey();
+#if defined(_WIN32)
+  engine.addDefaultKey("windows", "true");
+#elif defined(__linux)
+  engine.addDefaultKey("linux", "true");
+#elif defined(__APPLE__) && defined(__MACH__)
+  engine.addDefaultKey("macosx", "true");
+#else
+  // add your os :)
+  // http://predef.sourceforge.net/preos.html
+#endif
 
   // add user arguments
   engine.enterUnnamedKey();
