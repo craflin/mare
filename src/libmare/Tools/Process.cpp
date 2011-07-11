@@ -3,6 +3,8 @@
 #ifdef _WIN32
 #include <windows.h>
 #include <malloc.h>
+#else
+#include <unistd.h>
 #endif
 
 #include "Process.h"
@@ -277,13 +279,14 @@ unsigned int Process::waitOne()
 
 unsigned  int Process::getProcessorCount()
 {
-#ifdef _WIN32
+#if defined(_WIN32)
   SYSTEM_INFO si;
   GetSystemInfo(&si);
   return si.dwNumberOfProcessors;
-#elif defined(__linux__)
-  return sysconf(_SC_NPROCESSORS_CONF);
+//#elif defined(__linux)
 #else
-  return 1;
+  return sysconf(_SC_NPROCESSORS_CONF);
+//#else
+  //return 1;
 #endif
 }
