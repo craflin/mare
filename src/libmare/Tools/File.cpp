@@ -46,6 +46,24 @@ void File::close()
 #endif
 }
 
+bool File::unlink(const String& file)
+{
+#ifdef _WIN32
+  if(!DeleteFile(file.getData()))
+  {
+    error = GetLastError();
+    return false;
+  }
+#else
+  if(::unlink(file.getData()) != 0)
+  {
+    error = errno;
+    return false;
+  }
+#endif
+  return true;
+}
+
 bool File::open(const String& file, Flags flags)
 {
 #ifdef _WIN32
@@ -198,3 +216,23 @@ bool File::getWriteTime(const String& file, long long& writeTime)
   return buf.st_mtime;
 #endif
 }
+
+bool File::exists(const String& file)
+{
+#ifdef _WIN32
+  WIN32_FIND_DATAA wfd;
+  HANDLE hFind = FindFirstFileA(file.getData(), &wfd);
+  if(hFind == INVALID_HANDLE_VALUE) 
+    return false;
+  //bool isDir = (wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != FILE_ATTRIBUTE_DIRECTORY;
+  FindClose(hFind);
+  //return isDir;
+  return true;
+#else
+  struct stat buf;
+  if(lstat(file.getData(), &buf) != 0)
+    return false;
+  return true;
+#endif
+}
+

@@ -15,6 +15,7 @@ public:
   File();
   ~File();
 
+  bool unlink(const String& file);
   bool open(const String& file, Flags flags = readFlag);
   void close();
   int read(char* buffer, int len);
@@ -29,6 +30,8 @@ public:
   static String getWithoutExtension(const String& file);
 
   static bool getWriteTime(const String& file, long long& writeTime);
+
+  static bool exists(const String& file);
 
 private:
   void* fp;
