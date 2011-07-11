@@ -43,6 +43,8 @@ public:
 
   static bool create(const String& dir);
 
+  static bool remove(const String& dir);
+
 private:
 
 #ifdef _WIN32

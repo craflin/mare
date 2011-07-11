@@ -17,6 +17,7 @@
 #include "Directory.h"
 #include "List.h"
 #include "Map.h"
+#include "File.h"
 
 Directory::Directory()
 {
@@ -32,6 +33,23 @@ Directory::~Directory()
   if(findFile != INVALID_HANDLE_VALUE)
     FindClose((HANDLE)findFile);
 #endif
+}
+
+bool Directory::remove(const String& dir)
+{
+  String path = dir;
+  while(path != ".")
+  {
+#ifdef _WIN32
+    if(!RemoveDirectory(path.getData()))
+      return false;
+#else
+    if(rmdir(path.getData()) != 0)
+      return false;
+#endif
+    path = File::getDirname(path);
+  }
+  return true;
 }
 
 bool Directory::open(const String& dirpath, const String& pattern)
