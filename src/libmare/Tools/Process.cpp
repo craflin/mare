@@ -44,20 +44,9 @@ unsigned int Process::start(const List<String>& command)
 
   struct Executable
   {
-    static bool Executable::fileExists(const String& file)
-    {
-      WIN32_FIND_DATAA wfd;
-      HANDLE hFind = FindFirstFileA(file.getData(), &wfd);
-      if(hFind == INVALID_HANDLE_VALUE) 
-        return false;
-      bool isDir = (wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != FILE_ATTRIBUTE_DIRECTORY;
-      FindClose(hFind);
-      return isDir;
-    }
-
     static bool Executable::fileComplete(const String& searchName, bool testExtensions, String& result)
     {
-      if(fileExists(searchName))
+      if(File::exists(searchName))
       {
         result = searchName;
         return true;
@@ -66,14 +55,14 @@ unsigned int Process::start(const List<String>& command)
       {
         String testPath = searchName;
         testPath.append(".exe");
-        if(fileExists(testPath))
+        if(File::exists(testPath))
         {
           result = testPath;
           return true;
         }
         testPath.setLength(searchName.getLength());
         testPath.append(".com");
-        if(fileExists(testPath))
+        if(File::exists(testPath))
         {
           result = testPath;
           return true;
