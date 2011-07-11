@@ -1,7 +1,6 @@
 
 targets = {
   mare = cppLink + {
-    output = "$(buildDir)/$(target).exe"
     files = {
       "src/**.cpp" = cppCompile
     }
