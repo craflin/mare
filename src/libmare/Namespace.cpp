@@ -20,29 +20,35 @@ String Namespace::evaluateString(const String& string)
 
   struct ParserAndInterpreter
   {
-    static void handle(Engine& engine, const char*& input, String& output, const char* endchars)
+    static void handle(Engine& engine, const char*& input, String& output, const char* endchars, bool evaluate = true)
     {
       while(*input && !strchr(endchars, *input))
         if(*input == '$' && input[1] == '(')
         {
           input += 2;
           String varOrCommand;
-          handle(engine, input, varOrCommand, " )");
+          handle(engine, input, varOrCommand, " )", evaluate);
           if(*input == ' ')
           {
             ++input;
-            handleCommand(engine, varOrCommand, input, output);
+            if(evaluate)
+              handleCommand(engine, varOrCommand, input, output);
+
+            // skip further arguements
             if(*input && *input != ')')
               for(;;)
               {
-                handle(engine, input, varOrCommand, ",)");
+                handle(engine, input, output, ",)", false);
                 if(*input != ',')
                   break;
                 ++input;
               }
           }
           else
-            handleVariable(engine, varOrCommand, output);
+          {
+            if(evaluate)
+              handleVariable(engine, varOrCommand, output);
+          }
           if(*input == ')')
             ++input;
         }
@@ -51,7 +57,8 @@ String Namespace::evaluateString(const String& string)
           const char* str = input++;
           while(*input && *input != '$' && !strchr(endchars, *input))
             ++input;
-          output.append(str, input - str);
+          if(evaluate)
+            output.append(str, input - str);
         }
     }
     static void handleCommand(Engine& engine, const String& cmd, const char*& input, String& output)
@@ -163,6 +170,21 @@ String Namespace::evaluateString(const String& string)
           int i;
           while((i = file.read(buffer, sizeof(buffer))) > 0)
             output.append(buffer, i);
+        }
+      }
+      else if(cmd == "if")
+      {
+        String condition;
+        handle(engine, input, condition, ",)"); if(*input == ',') ++input;
+        if(!condition.isEmpty())
+        { // then
+          handle(engine, input, output, ",)"); if(*input == ',') ++input;
+          handle(engine, input, output, ",)", false); if(*input == ',') ++input;
+        }
+        else
+        {
+          handle(engine, input, output, ",)", false); if(*input == ',') ++input;
+          handle(engine, input, output, ",)"); if(*input == ',') ++input;
         }
       }
     }
