@@ -1,8 +1,8 @@
 
 targets = {
-  mare = cppLink + {
+  mare = cppApplication + {
     files = {
-      "src/**.cpp" = cppCompile
+      "src/**.cpp" = cppSource
     }
   }
 }
