@@ -77,15 +77,18 @@ bool Builder::build(const Map<String, String>& userArgs)
     engine.addResolvableKey("message", "$(file)");
   engine.leaveKey();
 #if defined(_WIN32)
-  engine.addDefaultKey("windows", "true");
+  String platform("win32");
 #elif defined(__linux)
-  engine.addDefaultKey("linux", "true");
+  String platform("linux");
 #elif defined(__APPLE__) && defined(__MACH__)
-  engine.addDefaultKey("macosx", "true");
+  String platform("macosx");
 #else
+  String platform("unknown");
   // add your os :)
   // http://predef.sourceforge.net/preos.html
 #endif
+  engine.addDefaultKey("host", platform); // the platform on which the compiler is run
+  engine.addDefaultKey("platform", platform); // the target platform of the compiler
 
   // add user arguments
   engine.enterUnnamedKey();
@@ -93,6 +96,7 @@ bool Builder::build(const Map<String, String>& userArgs)
     engine.addDefaultKey(i->key, i->data);
 
   // get targets and configurations to build
+  engine.getKeys("platform", inputPlatforms);
   engine.getKeys("configuration", inputConfigs);
   engine.getKeys("target", inputTargets);
 
@@ -105,32 +109,45 @@ bool Builder::build(const Map<String, String>& userArgs)
 
 bool Builder::buildFile()
 {
-  if(!engine.enterKey("configurations"))
+  for(const List<String>::Node* i = inputPlatforms.getFirst(); i; i = i->getNext())
   {
-    assert(false);
-    return false;
-  }
+    const String& platform = i->data;
+    engine.resetKey();
+    engine.addDefaultKey("platform", platform);
+    engine.addDefaultKey(platform, "true");
 
-  if(inputConfigs.isEmpty())
-  {
-    String firstConfiguration = engine.getFirstKey();
-    if(!firstConfiguration.isEmpty())
+    if(!engine.enterKey("configurations"))
     {
-      engine.enterKey(firstConfiguration);
-      bool result = buildConfiguration(firstConfiguration);
-      engine.leaveKey();
-      return result;
-    }
-    else
-    {
-      engine.error("cannot find any configurations");
+      assert(false);
       return false;
     }
+
+    if(inputConfigs.isEmpty())
+    {
+      String firstConfiguration = engine.getFirstKey();
+      if(!firstConfiguration.isEmpty())
+      {
+        engine.enterKey(firstConfiguration);
+        bool result = buildConfiguration(firstConfiguration);
+        engine.leaveKey();
+        return result;
+      }
+      else
+      {
+        engine.error("cannot find any configurations");
+        return false;
+      }
+    }
+
+    if(!buildConfigurations())
+    {
+      engine.leaveKey();
+      return false;
+    }
+    engine.leaveKey();
   }
 
-  bool result = buildConfigurations();
-  engine.leaveKey();
-  return result;
+  return true;
 }
 
 bool Builder::buildConfigurations()

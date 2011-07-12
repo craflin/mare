@@ -21,6 +21,7 @@ private:
   bool clean;
   bool rebuild;
 
+  List<String> inputPlatforms;
   List<String> inputConfigs;
   List<String> inputTargets;
 
