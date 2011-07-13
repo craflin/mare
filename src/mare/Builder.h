@@ -11,7 +11,7 @@ class Builder
 {
 public:
 
-  Builder(Engine& engine, bool showDebug, bool clean, bool rebuild) : engine(engine), showDebug(showDebug), clean(clean), rebuild(rebuild) {}
+  Builder(Engine& engine, bool showDebug, bool clean, bool rebuild, int jobs) : engine(engine), showDebug(showDebug), clean(clean), rebuild(rebuild), jobs(jobs) {}
 
   bool build(const Map<String, String>& userArgs);
 
@@ -20,6 +20,7 @@ private:
   bool showDebug;
   bool clean;
   bool rebuild;
+  int jobs;
 
   List<String> inputPlatforms;
   List<String> inputConfigs;

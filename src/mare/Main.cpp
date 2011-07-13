@@ -73,6 +73,10 @@ static void showUsage(const char* executable)
   puts("    -d");
   puts("        Print debugging information while processing normally.");
   puts("");
+  puts("    -j <jobs>");
+  puts("        Use <jobs> processes in parallel for building alle targets. The default");
+  puts("        value for <jobs> is the number of processors on the host system.");
+  puts("");
   puts("    -h, --help");
   puts("        Display this help message.");
   puts("");
@@ -97,6 +101,7 @@ int main(int argc, char* argv[])
   bool showDebug = false;
   bool clean = false;
   bool rebuild = false;
+  int jobs = 0;
   int generateVcxproj = 0;
 
   // parse args
@@ -146,7 +151,7 @@ int main(int argc, char* argv[])
     argv = nargv;
 
     // parse normal arguments
-    while((c = getopt_long(argc, argv, "c:df:hv", long_options, &option_index)) != -1)
+    while((c = getopt_long(argc, argv, "c:df:hj:v", long_options, &option_index)) != -1)
       switch(c)
       {
       case 0:
@@ -177,6 +182,9 @@ int main(int argc, char* argv[])
         break;
       case 'h':
         showHelp = true;
+        break;
+      case 'j':
+        jobs = atoi(optarg);
         break;
       case 'v':
         showVersion(true);
@@ -248,7 +256,7 @@ int main(int argc, char* argv[])
 
     // direct build
     {
-      Builder builder(engine, showDebug, clean, rebuild);
+      Builder builder(engine, showDebug, clean, rebuild, jobs);
       if(!builder.build(userArgs))
         return EXIT_FAILURE;
       return EXIT_SUCCESS;

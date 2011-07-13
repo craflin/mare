@@ -543,6 +543,6 @@ bool Builder::buildTargets()
   }
 
   ruleSet.resolveDependencies();
-  return ruleSet.build(Process::getProcessorCount(), clean, rebuild);
+  return ruleSet.build(jobs <= 0 ? (Process::getProcessorCount() - jobs) : jobs, clean, rebuild);
 }
 
