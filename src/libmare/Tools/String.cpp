@@ -167,7 +167,7 @@ void String::setLength(unsigned int length)
   data->length = length;
 }
 
-unsigned int String::format(unsigned int size, const char* format, ...)
+String& String::format(unsigned int size, const char* format, ...)
 {
   int length;
   va_list ap;
@@ -182,7 +182,7 @@ unsigned int String::format(unsigned int size, const char* format, ...)
   va_end(ap);
   ((char*)data->str)[length] = '\0';
   data->length = length;
-  return data->length;
+  return *this;
 }
 
 String String::substr(int start, int length) const

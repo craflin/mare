@@ -38,7 +38,7 @@ public:
   void setLength(unsigned int length);
   inline unsigned int getLength() const {return data->length;}
 
-  unsigned int format(unsigned int size, const char* format, ...);
+  String& format(unsigned int size, const char* format, ...);
 
   String& append(char c);
   String& append(const String& str);
