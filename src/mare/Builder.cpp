@@ -134,7 +134,7 @@ bool Builder::buildFile()
       }
       else
       {
-        engine.error("cannot find any configurations", 0);
+        engine.error("cannot find any configurations");
         return false;
       }
     }
@@ -158,7 +158,7 @@ bool Builder::buildConfigurations()
     {
       String message;
       message.format(256, "cannot find configuration \"%s\"", i->data.getData());
-      engine.error(message, 0);
+      engine.error(message);
       return false;
     }
     if(!buildConfiguration(i->data))
@@ -186,7 +186,7 @@ bool Builder::buildConfiguration(const String& configuration)
     engine.getKeys(inputTargets);
     if(inputTargets.isEmpty())
     {
-      engine.error("cannot find any targets", 0);
+      engine.error("cannot find any targets");
       return false;
     }
     return buildTargets();
@@ -198,7 +198,7 @@ bool Builder::buildConfiguration(const String& configuration)
     {
       String message;
       message.format(256, "cannot find target \"%s\"", node->data.getData());
-      engine.error(message, 0);
+      engine.error(message);
       return false;
     }
     engine.leaveKey();
@@ -212,14 +212,16 @@ class Rule
 {
 public:
   Target* target;
+
+  String name; /**< The main input file or the name of the target */
   List<String> input;
   List<String> output;
   List<String> command;
   List<String> message;
 
   unsigned int finishedDependencies;
-  Map<Rule*, void*> dependencies;
-  Map<Rule*, void*> propagations;
+  Map<Rule*, String> dependencies;
+  Map<Rule*, String> propagations;
 
   bool rebuild;
 
@@ -227,7 +229,7 @@ public:
 
   Rule() : finishedDependencies(0), rebuild(false) {}
 
-  bool startExecution(Engine& engine, unsigned int& pid, bool clean, bool rebuild)
+  bool startExecution(Engine& engine, unsigned int& pid, bool clean, bool rebuild, bool showDebug)
   {
     assert(finishedDependencies == dependencies.getSize());
 
@@ -235,30 +237,42 @@ public:
       goto clean;
     if(rebuild)
     {
-      // TODO: debug message
+      if(showDebug)
+        printf("debug: Applying rule for \"%s\" since the rebuild flag is set\n", name.getData());
       goto build;
     }
 
     // determine whether to build this rule
-    for(Map<Rule*, void*>::Node* i = dependencies.getFirst(); i; i = i->getNext())
+    for(Map<Rule*, String>::Node* i = dependencies.getFirst(); i; i = i->getNext())
       if(i->key->rebuild)
       {
-        // TODO: debug message
+        if(showDebug)
+          printf("debug: Applying rule for \"%s\" since the rule for the input file \"%s\" was applied as well\n", name.getData(), i->data.getData());
         goto build;
       }
     {
       long long minWriteTime = 0;
+      String minOutputFile;
       for(const List<String>::Node* i = output.getFirst(); i; i = i->getNext())
       {
         const String& file = i->data;
         long long writeTime;
         if(!File::getWriteTime(file, writeTime))
         {
-          // TODO: debug message
+          if(showDebug)
+          {
+            if(!File::exists(file))
+              printf("debug: Applying rule for \"%s\" since the output file \"%s\" does not exist\n", name.getData(), file.getData());
+            else
+              printf("debug: Applying rule for \"%s\" since the last modification time of output file \"%s\" cannot be read\n", name.getData(), file.getData());
+          }
           goto build;
         }
         if(i == output.getFirst() || writeTime < minWriteTime)
+        {
           minWriteTime = writeTime;
+          minOutputFile = file;
+        }
       }
       for(const List<String>::Node* i = input.getFirst(); i; i = i->getNext())
       {
@@ -266,12 +280,19 @@ public:
         long long writeTime;
         if(!File::getWriteTime(file, writeTime))
         {
-          // TODO: debug message
+          if(showDebug)
+          {
+            if(!File::exists(file))
+              printf("debug: Applying rule for \"%s\" since the input file \"%s\" does not exist\n", name.getData(), file.getData());
+            else
+              printf("debug: Applying rule for \"%s\" since the last modification time of input file \"%s\" cannot be read\n", name.getData(), file.getData());
+          }
           goto build;
         }
         if(writeTime >= minWriteTime)
         {
-          // TODO: debug message
+          if(showDebug)
+            printf("debug: Applying rule for \"%s\" since the input file \"%s\" is newer than output file \"%s\"\n", name.getData(), file.getData(), minOutputFile.getData());
           goto build;
         }
       }
@@ -373,15 +394,18 @@ public:
       {
         Rule& rule = j->data;
         if(rule.output.isEmpty())
-        { // TODO: warning
+        {
+          printf("warning: Rule for \"%s\" does not define an output file\n", rule.name.getData());
         }
         if(rule.command.isEmpty())
-        { // TODO: warning
+        {
+          printf("warning: Rule for \"%s\" does not define a command\n", rule.name.getData());
         }
         for(List<String>::Node* i = rule.output.getFirst(); i; i = i->getNext())
         {
           if(outputToRule.find(i->data))
-          { // TODO: warning
+          {
+            printf("warning: There are multiple rules for the output file \"%s\"\n", i->data.getData());
             continue;
           }
           outputToRule.append(i->data, &rule);
@@ -401,7 +425,7 @@ public:
           {
             if(dependency == &rule)
             {
-              // TODO: warning
+              //printf("warning: Rule for \"%s\" depends on itself\n", rule.name.getData());
               continue;
             }
 
@@ -414,15 +438,15 @@ public:
 
             //
             if(!rule.dependencies.find(dependency))
-              rule.dependencies.append(dependency, 0);
+              rule.dependencies.append(dependency, i->data);
             if(!dependency->propagations.find(&rule))
-              dependency->propagations.append(&rule, 0);
+              dependency->propagations.append(&rule, i->data);
           }
         }
       }
   }
   
-  bool build(Engine& engine, unsigned int maxParallelJobs, bool clean, bool rebuild)
+  bool build(Engine& engine, unsigned int maxParallelJobs, bool clean, bool rebuild, bool showDebug)
   {
     List<Rule*> pendingJobs;
     for(List<Target*>::Node* i = activeTargets.getFirst(); i; i = i->getNext())
@@ -442,7 +466,7 @@ public:
           rule = pendingJobs.getFirst()->data;
           pendingJobs.removeFirst();
           unsigned int pid;
-          if(!rule->startExecution(engine, pid, clean, rebuild))
+          if(!rule->startExecution(engine, pid, clean, rebuild, showDebug))
           {
             failure = true;
             goto finishedRuleExecution;
@@ -469,7 +493,7 @@ public:
 
     finishedRuleExecution:
       ++finishedRules;
-      for(Map<Rule*, void*>::Node* i = rule->propagations.getFirst(); i; i = i->getNext())
+      for(Map<Rule*, String>::Node* i = rule->propagations.getFirst(); i; i = i->getNext())
       {
         Rule& rule = *i->key;
         assert(!rule.dependencies.isEmpty());
@@ -524,6 +548,7 @@ bool Builder::buildTargets()
       {
         Rule& rule = target.rules.append();
         rule.target = &target;
+        rule.name = i->data;
         engine.enterKey(i->data);
         engine.addDefaultKey("file", i->data);
         engine.getKeys("input", rule.input, false);
@@ -538,6 +563,7 @@ bool Builder::buildTargets()
     // add rule for target file
     Rule& rule = target.rules.append();
     rule.target = &target;
+    rule.name = i->data;
     engine.getKeys("input", rule.input, false);
     engine.getKeys("output", rule.output, false);
     engine.getKeys("command", rule.command, false);
@@ -547,6 +573,6 @@ bool Builder::buildTargets()
   }
 
   ruleSet.resolveDependencies();
-  return ruleSet.build(engine, jobs <= 0 ? (Process::getProcessorCount() - jobs) : jobs, clean, rebuild);
+  return ruleSet.build(engine, jobs <= 0 ? (Process::getProcessorCount() - jobs) : jobs, clean, rebuild, showDebug);
 }
 

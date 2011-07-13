@@ -17,7 +17,7 @@ public:
   Engine(ErrorHandler errorHandler, void* userData) : errorHandler(errorHandler), errorUserData(userData), currentSpace(0) {}
 
   bool load(const String& file);
-  void error(const String& message, int line = -1);
+  void error(const String& message);
 
   bool enterKey(const String& key, bool allowInheritance = true);
   void enterUnnamedKey();
