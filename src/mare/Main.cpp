@@ -14,12 +14,18 @@
 static const char* VERSION   = "0.1";
 static const char* COPYRIGHT = "Copyright (C) 2011 Colin Graf";
 
-static void errorHandler(void* userData, unsigned int line, const String& message)
+static void errorHandler(void* userData, int line, const String& message)
 {
-  if(line)
-    fprintf(stderr, "%s:%u: error: %s\n", (const char*)userData, line, message.getData());
+  const char** errorSources = (const char**)userData;
+  if(line < 0)
+    fprintf(stderr, "%s: %s\n", errorSources[1], message.getData());
   else
-    fprintf(stderr, "%s: %s\n", (const char*)userData, message.getData());
+  {
+    if(line > 0)
+      fprintf(stderr, "%s:%u: error: %s\n", errorSources[0], line, message.getData());
+    else
+      fprintf(stderr, "%s: %s\n", errorSources[0], message.getData());
+  }
 }
 
 static void showVersion(bool andExit)
@@ -88,8 +94,7 @@ static void showUsage(const char* executable)
 
 static void showHelp(const char* executable)
 {
-  String basename = File::getBasename(String(executable, -1));
-  fprintf(stderr, "Type '%s --help' for help\n", basename.getData());
+  fprintf(stderr, "Type '%s --help' for help\n", executable);
   exit(EXIT_FAILURE);
 }
 
@@ -219,7 +224,10 @@ int main(int argc, char* argv[])
 
   // start the engine
   {
-    Engine engine(errorHandler, (void*)inputFile.getData());
+    const char* errorSources[2];
+    errorSources[0] = inputFile.getData();
+    errorSources[1] = argv[0];
+    Engine engine(errorHandler, errorSources);
     if(!engine.load(inputFile))
     {
       if(showHelp)

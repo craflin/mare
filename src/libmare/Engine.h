@@ -12,12 +12,12 @@ class Engine : public Scope
 {
 public:
 
-  typedef void (*ErrorHandler)(void* userData, unsigned int line, const String& message);
+  typedef void (*ErrorHandler)(void* userData, int line, const String& message);
 
   Engine(ErrorHandler errorHandler, void* userData) : errorHandler(errorHandler), errorUserData(userData), currentSpace(0) {}
 
   bool load(const String& file);
-  void error(const String& message);
+  void error(const String& message, int line = -1);
 
   bool enterKey(const String& key, bool allowInheritance = true);
   void enterUnnamedKey();

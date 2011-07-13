@@ -134,7 +134,7 @@ bool Builder::buildFile()
       }
       else
       {
-        engine.error("cannot find any configurations");
+        engine.error("cannot find any configurations", 0);
         return false;
       }
     }
@@ -158,7 +158,7 @@ bool Builder::buildConfigurations()
     {
       String message;
       message.format(256, "cannot find configuration \"%s\"", i->data.getData());
-      engine.error(message);
+      engine.error(message, 0);
       return false;
     }
     if(!buildConfiguration(i->data))
@@ -186,7 +186,7 @@ bool Builder::buildConfiguration(const String& configuration)
     engine.getKeys(inputTargets);
     if(inputTargets.isEmpty())
     {
-      engine.error("cannot find any targets");
+      engine.error("cannot find any targets", 0);
       return false;
     }
     return buildTargets();
@@ -198,7 +198,7 @@ bool Builder::buildConfiguration(const String& configuration)
     {
       String message;
       message.format(256, "cannot find target \"%s\"", node->data.getData());
-      engine.error(message);
+      engine.error(message, 0);
       return false;
     }
     engine.leaveKey();
@@ -227,14 +227,17 @@ public:
 
   Rule() : finishedDependencies(0), rebuild(false) {}
 
-  bool startExecution(unsigned int& pid, bool clean, bool rebuild)
+  bool startExecution(Engine& engine, unsigned int& pid, bool clean, bool rebuild)
   {
     assert(finishedDependencies == dependencies.getSize());
 
     if(clean)
       goto clean;
     if(rebuild)
+    {
+      // TODO: debug message
       goto build;
+    }
 
     // determine whether to build this rule
     for(Map<Rule*, void*>::Node* i = dependencies.getFirst(); i; i = i->getNext())
@@ -288,7 +291,7 @@ clean:
         File file;
         if(!file.unlink(i->data))
         {
-          // TODO: error message
+          engine.error(file.getErrno().getString());
         }
       }
       if(!rebuild)
@@ -328,7 +331,7 @@ clean:
     pid = process.start(command);
     if(!pid)
     {
-      fprintf(stderr, "%s\n", process.getErrno().getString().getData());
+      engine.error(process.getErrno().getString());
       return false;
     }
     return true;
@@ -419,7 +422,7 @@ public:
       }
   }
   
-  bool build(unsigned int maxParallelJobs, bool clean, bool rebuild)
+  bool build(Engine& engine, unsigned int maxParallelJobs, bool clean, bool rebuild)
   {
     List<Rule*> pendingJobs;
     for(List<Target*>::Node* i = activeTargets.getFirst(); i; i = i->getNext())
@@ -439,7 +442,7 @@ public:
           rule = pendingJobs.getFirst()->data;
           pendingJobs.removeFirst();
           unsigned int pid;
-          if(!rule->startExecution(pid, clean, rebuild))
+          if(!rule->startExecution(engine, pid, clean, rebuild))
           {
             failure = true;
             goto finishedRuleExecution;
@@ -465,6 +468,7 @@ public:
       continue;
 
     finishedRuleExecution:
+      ++finishedRules;
       for(Map<Rule*, void*>::Node* i = rule->propagations.getFirst(); i; i = i->getNext())
       {
         Rule& rule = *i->key;
@@ -481,7 +485,7 @@ public:
     // unresolvable dependencies?
     if(finishedRules < activeRules)
     {
-      // TODO: error message
+      engine.error("cannot build some targets because of circular dependencies");
       return false;
     }
 
@@ -543,6 +547,6 @@ bool Builder::buildTargets()
   }
 
   ruleSet.resolveDependencies();
-  return ruleSet.build(jobs <= 0 ? (Process::getProcessorCount() - jobs) : jobs, clean, rebuild);
+  return ruleSet.build(engine, jobs <= 0 ? (Process::getProcessorCount() - jobs) : jobs, clean, rebuild);
 }
 

@@ -18,9 +18,9 @@ bool Engine::load(const String& file)
   return true;
 }
 
-void Engine::error(const String& message)
+void Engine::error(const String& message, int line)
 {
-  errorHandler(errorUserData, 0, message);
+  errorHandler(errorUserData, line, message);
 }
 
 bool Engine::enterKey(const String& key, bool allowInheritance)
