@@ -15,7 +15,10 @@ public:
   Script(Scope& scope, Statement* statement, Script* next = 0) : Scope::Object(scope), statement(statement), next(next), executing(false) {}
 
   bool execute(Namespace& space);
+  inline bool isExecuting() const {return executing;}
 
   Script* next; /**< A script that was replaced by this one */
+
+private:
   bool executing;
 };

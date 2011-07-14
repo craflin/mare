@@ -211,16 +211,17 @@ Namespace* Namespace::enterKey(const String& name, bool allowInheritance)
     goto failure;
 
   {
+    // find cached namespace
+    Map<String, Namespace*>::Node* j = spaces.find(name);
+    if(j && (allowInheritance || !j->data->inherited))
+      return j->data;
+
+    // find local variable with that name
     Map<String, Script*>::Node* i = variables.find(name);
     if(i)
     {
-      Script* script = i->data;
-      Namespace* space;
-      if(!script || !(space = dynamic_cast<Namespace*>(i->data)))
-      {
-        space = new Namespace(*this, this, engine, script ? script->statement : 0, script ? script->next : 0);
-        i->data = space;
-      }
+      Namespace* space = new Namespace(*this, this, engine, i->data, false);
+      spaces.append(name, space);
       return space;
     }
   }
@@ -228,15 +229,11 @@ Namespace* Namespace::enterKey(const String& name, bool allowInheritance)
 failure:
   if(allowInheritance)
   {
-    Map<String, Namespace*>::Node* i = inheritedSpaces.find(name);
-    if(i)
-      return i->data;
-
     Script* script;
     if(engine->resolveScript(name, script))
     {
-      Namespace* space = new Namespace(*this, this, engine, script ? script->statement : 0, script ? script->next : 0);
-      inheritedSpaces.append(name, space);
+      Namespace* space = new Namespace(*this, this, engine, script, true);
+      spaces.append(name, space);
       return space;
     }
   }
@@ -247,28 +244,28 @@ Namespace* Namespace::enterUnnamedKey()
 {
   if(unnamedSpace)
     delete unnamedSpace;
-  unnamedSpace = new Namespace(*this, this, engine, 0, 0);
+  unnamedSpace = new Namespace(*this, this, engine, 0, false);
   return unnamedSpace;
 }
 
 Namespace* Namespace::enterDefaultKey(const String& name)
 {
   assert(!compiled);
+
+  Map<String, Namespace*>::Node* j = spaces.find(name);
+  if(j && !j->data->inherited)
+    return j->data;
+
   Map<String, Script*>::Node* i = variables.find(name);
   if(i)
   {
-    Script* script = i->data;
-    Namespace* space;
-    if(!script || !(space = dynamic_cast<Namespace*>(i->data)))
-    {
-      space = new Namespace(*this, this, engine, script ? script->statement : 0, script ? script->next : 0);
-      i->data = space;
-    }
+    Namespace* space = new Namespace(*this, this, engine,i->data, false);
+    spaces.append(name, space);
     return space;
   }
 
-  Namespace* space = new Namespace(*this, this, engine, 0, 0);
-  variables.append(name, space);
+  Namespace* space = new Namespace(*this, this, engine, 0, false);
+  spaces.append(name, space);
   return space;
 }
 
@@ -276,12 +273,19 @@ bool Namespace::resolveScript(const String& name, Script*& script)
 {
   if(!compile())
     return false;
-  Map<String, Script*>::Node* i = variables.find(name);
-  if(!i)
-    return false;
-  script = i->data;
 
-  while(script && script->executing)
+  Map<String, Namespace*>::Node* j = spaces.find(name);
+  if(j)
+    script = j->data->script;
+  else
+  {
+    Map<String, Script*>::Node* i = variables.find(name);
+    if(!i)
+      return false;
+    script = i->data;
+  }
+
+  while(script && script->isExecuting())
   {
     script = script->next;
     if(!script)
@@ -359,19 +363,21 @@ void Namespace::addResolvableKey(const String& key, const String& value)
     assignStatement->value = new Script(*this, stringStatement);
     newStatement = assignStatement;
   }
-  if(!statement)
-    statement = newStatement;
+  if(!script)
+    script = new Script(*this, newStatement);
+  else if(!script->statement)
+    script->statement = newStatement;
   else
   {
-    BlockStatement* blockStatement = dynamic_cast<BlockStatement*>(statement);
+    BlockStatement* blockStatement = dynamic_cast<BlockStatement*>(script->statement);
     if(blockStatement)
       blockStatement->statements.append(newStatement);
     else
     {
       blockStatement = new BlockStatement(*this);
-      blockStatement->statements.append(statement);
+      blockStatement->statements.append(script->statement);
       blockStatement->statements.append(newStatement);
-      statement = blockStatement;
+      script->statement = blockStatement;
     }
   }
 }
@@ -397,7 +403,7 @@ bool Namespace::compile()
 {
   if(compiled)
     return true;
-  if(!execute(*this))
+  if(script && !script->execute(*this))
     return false;
   compiled = true;
   return true;
@@ -407,5 +413,5 @@ void Namespace::reset()
 {
   compiled = false;
   variables.clear();
-  inheritedSpaces.clear();
+  spaces.clear();
 }

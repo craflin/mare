@@ -4,6 +4,7 @@
 #include "Engine.h"
 #include "Namespace.h"
 #include "Parser.h"
+#include "Script.h"
 
 bool Engine::load(const String& file)
 {
@@ -13,7 +14,7 @@ bool Engine::load(const String& file)
   Script* root = parser.parse(file, errorHandler, errorUserData);
   if(!root)
     return false;
-  currentSpace = new Namespace(*this, 0, this, root->statement, 0);
+  currentSpace = new Namespace(*this, 0, this, root, false);
   assert(currentSpace);
   return true;
 }
