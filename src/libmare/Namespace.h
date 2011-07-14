@@ -11,7 +11,7 @@ class Script;
 class Namespace : public Script, public Scope
 {
 public:
-  Namespace(Scope& scope, Namespace* parent, Engine* engine, Statement* statement) : Script(scope, statement), parent(parent), engine(engine), script(script), compiled(false), unnamedSpace(0) {}
+  Namespace(Scope& scope, Namespace* parent, Engine* engine, Statement* statement, Script* next) : Script(scope, statement, next), parent(parent), engine(engine), script(script), compiled(false), unnamedSpace(0) {}
   
   inline Namespace* getParent() {return parent;}
   bool resolveScript(const String& name, Script*& script);

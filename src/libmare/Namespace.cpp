@@ -218,7 +218,7 @@ Namespace* Namespace::enterKey(const String& name, bool allowInheritance)
       Namespace* space;
       if(!script || !(space = dynamic_cast<Namespace*>(i->data)))
       {
-        space = new Namespace(*this, this, engine, script ? script->statement : 0);
+        space = new Namespace(*this, this, engine, script ? script->statement : 0, script ? script->next : 0);
         i->data = space;
       }
       return space;
@@ -235,7 +235,7 @@ failure:
     Script* script;
     if(engine->resolveScript(name, script))
     {
-      Namespace* space = new Namespace(*this, this, engine, script ? script->statement : 0);
+      Namespace* space = new Namespace(*this, this, engine, script ? script->statement : 0, script ? script->next : 0);
       inheritedSpaces.append(name, space);
       return space;
     }
@@ -247,7 +247,7 @@ Namespace* Namespace::enterUnnamedKey()
 {
   if(unnamedSpace)
     delete unnamedSpace;
-  unnamedSpace = new Namespace(*this, this, engine, 0);
+  unnamedSpace = new Namespace(*this, this, engine, 0, 0);
   return unnamedSpace;
 }
 
@@ -261,13 +261,13 @@ Namespace* Namespace::enterDefaultKey(const String& name)
     Namespace* space;
     if(!script || !(space = dynamic_cast<Namespace*>(i->data)))
     {
-      space = new Namespace(*this, this, engine, script ? script->statement : 0);
+      space = new Namespace(*this, this, engine, script ? script->statement : 0, script ? script->next : 0);
       i->data = space;
     }
     return space;
   }
 
-  Namespace* space = new Namespace(*this, this, engine, 0);
+  Namespace* space = new Namespace(*this, this, engine, 0, 0);
   variables.append(name, space);
   return space;
 }
@@ -280,6 +280,14 @@ bool Namespace::resolveScript(const String& name, Script*& script)
   if(!i)
     return false;
   script = i->data;
+
+  while(script && script->executing)
+  {
+    script = script->next;
+    if(!script)
+      return false;
+  }
+
   return true;
 }
 
@@ -314,9 +322,14 @@ void Namespace::addKeyRaw(const String& key, Script* value)
 {
   assert(!compiled);
   assert(!key.isEmpty());
+  assert(!value || !value->next);
   Map<String, Script*>::Node* node = variables.find(key);
   if(node)
+  {
+    if(value)
+      value->next = node->data;
     node->data = value;
+  }
   else
     variables.append(key, value);
 }

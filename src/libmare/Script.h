@@ -12,10 +12,10 @@ class Script : public Scope::Object
 public:
   Statement* statement;
 
-  Script(Scope& scope, Statement* statement) : Scope::Object(scope), executing(false), statement(statement) {}
+  Script(Scope& scope, Statement* statement, Script* next = 0) : Scope::Object(scope), statement(statement), next(next), executing(false) {}
 
   bool execute(Namespace& space);
 
-private:
+  Script* next; /**< A script that was replaced by this one */
   bool executing;
 };
