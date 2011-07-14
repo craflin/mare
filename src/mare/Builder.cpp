@@ -339,6 +339,13 @@ clean:
     Words::append(this->message.isEmpty() ? this->command : this->message, message);
     puts(message.getData());
 
+    if(showDebug)
+    {
+      String command;
+      Words::append(this->command, command);
+      printf("debug: %s\n", command.getData());
+    }
+
     if(command.isEmpty())
     {
       pid = 0;
