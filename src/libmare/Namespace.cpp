@@ -408,10 +408,11 @@ bool Namespace::compile()
   compiled = true;
   return true;
 }
-
+/*
 void Namespace::reset()
 {
   compiled = false;
   variables.clear();
   spaces.clear();
 }
+*/

@@ -27,7 +27,7 @@ public:
 
   void addResolvableKey(const String& key, const String& value);
 
-  void reset();
+  //void reset();
 
 private:
   Namespace* parent;

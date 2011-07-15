@@ -112,7 +112,7 @@ bool Builder::buildFile()
   for(const List<String>::Node* i = inputPlatforms.getFirst(); i; i = i->getNext())
   {
     const String& platform = i->data;
-    engine.resetKey();
+    engine.enterUnnamedKey();
     engine.addDefaultKey("platform", platform);
     engine.addDefaultKey(platform, "true");
 
@@ -140,10 +140,9 @@ bool Builder::buildFile()
     }
 
     if(!buildConfigurations())
-    {
-      engine.leaveKey();
       return false;
-    }
+
+    engine.leaveKey();
     engine.leaveKey();
   }
 
@@ -162,10 +161,7 @@ bool Builder::buildConfigurations()
       return false;
     }
     if(!buildConfiguration(i->data))
-    {
-      engine.leaveKey();
       return false;
-    }
     engine.leaveKey();
   }
   return true;

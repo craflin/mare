@@ -117,12 +117,12 @@ void Engine::addResolvableKey(const String& key, const String& value)
 {
   currentSpace->addResolvableKey(key, value);
 }
-
+/*
 void Engine::resetKey()
 {
   currentSpace->reset();
 }
-
+*/
 void Engine::pushKey()
 {
   stashedKeys.append(currentSpace);
