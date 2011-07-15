@@ -44,7 +44,7 @@ public:
     return *this;
   }
 
-  T& append(const K& key, const T& data)
+  T& append(const K& key, const T& data = T())
   {
     Node* node;
     if(firstFree)
