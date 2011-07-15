@@ -1,8 +1,22 @@
 
 targets = {
-  mare = cppApplication + {
+  libmare = cppStaticLibrary + {
     files = {
-      "src/**.cpp" = cppSource
+      "src/libmare/**.cpp" = cppSource
+    }
+  }
+  mare = cppApplication + {
+    dependencies = { 
+      "libmare"
+    }
+    libs = {
+      "mare"
+    }
+    libPaths = {
+      "$(buildDir)"
+    }
+    files = {
+      "src/mare/**.cpp" = cppSource
     }
   }
 }

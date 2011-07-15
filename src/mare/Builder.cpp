@@ -23,56 +23,56 @@ bool Builder::build(const Map<String, String>& userArgs)
   engine.addDefaultKey("targets");
   engine.addDefaultKey("buildDir", "$(configuration)");
   engine.enterDefaultKey("cppApplication");
-    engine.addResolvableKey("input", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
-    engine.addResolvableKey("output", "$(buildDir)/$(target)$(if $(win32),.exe)");
-    engine.addResolvableKey("command", "$(CXX) -o $(output) $(input) $(linkFlags) $(LDFLAGS) $(patsubst %,-L%,$(libPaths)) $(patsubst %,-l%,$(libs))");
+    engine.addResolvableKey("inputs", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
+    engine.addResolvableKey("outputs", "$(buildDir)/$(target)$(if $(win32),.exe)");
+    engine.addResolvableKey("command", "$(CXX) -o $(outputs) $(inputs) $(linkFlags) $(LDFLAGS) $(patsubst %,-L%,$(libPaths)) $(patsubst %,-l%,$(libs))");
     engine.addResolvableKey("message", "Linking $(target)...");
   engine.leaveKey();
   engine.enterDefaultKey("cppDynamicLibrary");
-    engine.addResolvableKey("input", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
-    engine.addResolvableKey("output", "$(buildDir)/$(if $(win32),,lib)$(target)$(if $(win32),.dll,.so)");
+    engine.addResolvableKey("inputs", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
+    engine.addResolvableKey("outputs", "$(buildDir)/$(if $(win32),,lib)$(patsubst lib%,%,$(target))$(if $(win32),.dll,.so)");
     engine.addResolvableKey("__soFlags", "-fpic");
-    engine.addResolvableKey("command", "$(CXX) -shared $(__soFlags) -o $(output) $(input) $(linkFlags) $(LDFLAGS) $(patsubst %,-L%,$(libPaths)) $(patsubst %,-l%,$(libs))");
+    engine.addResolvableKey("command", "$(CXX) -shared $(__soFlags) -o $(outputs) $(inputs) $(linkFlags) $(LDFLAGS) $(patsubst %,-L%,$(libPaths)) $(patsubst %,-l%,$(libs))");
     engine.addResolvableKey("message", "Linking $(target)...");
   engine.leaveKey();
   engine.enterDefaultKey("cppStaticLibrary");
-    engine.addResolvableKey("input", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
-    engine.addResolvableKey("output", "$(buildDir)/$(if $(win32),,lib)$(target)$(if $(win32),.lib,.a)");
-    engine.addResolvableKey("command", "$(AR) rcs $(output) $(input)");
+    engine.addResolvableKey("inputs", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
+    engine.addResolvableKey("outputs", "$(buildDir)/$(if $(win32),,lib)$(patsubst lib%,%,$(target))$(if $(win32),.lib,.a)");
+    engine.addResolvableKey("command", "$(AR) rcs $(outputs) $(inputs)");
     engine.addResolvableKey("message", "Creating $(target)...");
   engine.leaveKey();
   engine.enterDefaultKey("cApplication");
-    engine.addResolvableKey("input", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
-    engine.addResolvableKey("output", "$(buildDir)/$(target)$(if $(win32),.exe)");
-    engine.addResolvableKey("command", "$(CC) -o $(output) $(input) $(linkFlags) $(LDFLAGS) $(patsubst %,-L%,$(libPaths)) $(patsubst %,-l%,$(libs))");
+    engine.addResolvableKey("inputs", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
+    engine.addResolvableKey("outputs", "$(buildDir)/$(target)$(if $(win32),.exe)");
+    engine.addResolvableKey("command", "$(CC) -o $(outputs) $(inputs) $(linkFlags) $(LDFLAGS) $(patsubst %,-L%,$(libPaths)) $(patsubst %,-l%,$(libs))");
     engine.addResolvableKey("message", "Linking $(target)...");
   engine.leaveKey();
   engine.enterDefaultKey("cDynamicLibrary");
-    engine.addResolvableKey("input", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
-    engine.addResolvableKey("output", "$(buildDir)/$(if $(win32),,lib)$(target)$(if $(win32),.dll,.so)");
+    engine.addResolvableKey("inputs", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
+    engine.addResolvableKey("outputs", "$(buildDir)/$(if $(win32),,lib)$(patsubst lib%,%,$(target))$(if $(win32),.dll,.so)");
     engine.addResolvableKey("__soFlags", "-fpic");
-    engine.addResolvableKey("command", "$(CC) -shared $(__soFlags) -o $(output) $(input) $(linkFlags) $(LDFLAGS) $(patsubst %,-L%,$(libPaths)) $(patsubst %,-l%,$(libs))");
+    engine.addResolvableKey("command", "$(CC) -shared $(__soFlags) -o $(outputs) $(inputs) $(linkFlags) $(LDFLAGS) $(patsubst %,-L%,$(libPaths)) $(patsubst %,-l%,$(libs))");
     engine.addResolvableKey("message", "Linking $(target)...");
   engine.leaveKey();
   engine.enterDefaultKey("cStaticLibrary");
-    engine.addResolvableKey("input", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
-    engine.addResolvableKey("output", "$(buildDir)/$(if $(win32),,lib)$(target)$(if $(win32),.lib,.a)");
-    engine.addResolvableKey("command", "$(AR) rcs $(output) $(input)");
+    engine.addResolvableKey("inputs", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
+    engine.addResolvableKey("outputs", "$(buildDir)/$(if $(win32),,lib)$(patsubst lib%,%,$(target))$(if $(win32),.lib,.a)");
+    engine.addResolvableKey("command", "$(AR) rcs $(outputs) $(inputs)");
     engine.addResolvableKey("message", "Creating $(target)...");
   engine.leaveKey();
   engine.enterDefaultKey("cppSource");
     engine.addResolvableKey("__ofile", "$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file)))");
     engine.addResolvableKey("__dfile", "$(patsubst %.o,%.d,$(__ofile))");
-    engine.addResolvableKey("input", "$(file) $(filter-out %.o: \\,$(readfile $(__dfile)))");
-    engine.addResolvableKey("output", "$(__ofile) $(__dfile)");
+    engine.addResolvableKey("inputs", "$(file) $(filter-out %.o: \\,$(readfile $(__dfile)))");
+    engine.addResolvableKey("outputs", "$(__ofile) $(__dfile)");
     engine.addResolvableKey("command", "$(CXX) -MMD $(__soFlags) -o $(__ofile) -c $(file) $(cppFlags) $(CXXFLAGS) $(patsubst %,-D%,$(defines)) $(patsubst %,-I%,$(includePaths))");
     engine.addResolvableKey("message", "$(file)");
   engine.leaveKey();
   engine.enterDefaultKey("cSource");
     engine.addResolvableKey("__ofile", "$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file)))");
     engine.addResolvableKey("__dfile", "$(patsubst %.o,%.d,$(__ofile))");
-    engine.addResolvableKey("input", "$(file) $(filter-out %.o: \\,$(readfile $(__dfile)))");
-    engine.addResolvableKey("output", "$(__ofile) $(__dfile)");
+    engine.addResolvableKey("inputs", "$(file) $(filter-out %.o: \\,$(readfile $(__dfile)))");
+    engine.addResolvableKey("outputs", "$(__ofile) $(__dfile)");
     engine.addResolvableKey("command", "$(CC) -MMD $(__soFlags) -o $(__ofile) -c $(file) $(cFlags) $(CFLAGS) $(patsubst %,-D%,$(defines)) $(patsubst %,-I%,$(includePaths))");
     engine.addResolvableKey("message", "$(file)");
   engine.leaveKey();
@@ -214,8 +214,9 @@ public:
   Target* target;
 
   String name; /**< The main input file or the name of the target */
-  List<String> input;
-  List<String> output;
+  List<String> targetdeps;
+  List<String> inputs;
+  List<String> outputs;
   List<String> command;
   List<String> message;
 
@@ -253,7 +254,7 @@ public:
     {
       long long minWriteTime = 0;
       String minOutputFile;
-      for(const List<String>::Node* i = output.getFirst(); i; i = i->getNext())
+      for(const List<String>::Node* i = outputs.getFirst(); i; i = i->getNext())
       {
         const String& file = i->data;
         long long writeTime;
@@ -268,13 +269,13 @@ public:
           }
           goto build;
         }
-        if(i == output.getFirst() || writeTime < minWriteTime)
+        if(i == outputs.getFirst() || writeTime < minWriteTime)
         {
           minWriteTime = writeTime;
           minOutputFile = file;
         }
       }
-      for(const List<String>::Node* i = input.getFirst(); i; i = i->getNext())
+      for(const List<String>::Node* i = inputs.getFirst(); i; i = i->getNext())
       {
         const String& file = i->data;
         long long writeTime;
@@ -305,7 +306,7 @@ public:
 clean:
 
     // delete output files and directories
-    for(const List<String>::Node* i = output.getFirst(); i; i = i->getNext())
+    for(const List<String>::Node* i = outputs.getFirst(); i; i = i->getNext())
     {
       if(File::exists(i->data))
       {
@@ -353,7 +354,7 @@ clean:
     }
 
     // create output directories
-    for(const List<String>::Node* i = output.getFirst(); i; i = i->getNext())
+    for(const List<String>::Node* i = outputs.getFirst(); i; i = i->getNext())
       Directory::create(File::getDirname(i->data));
 
     pid = process.start(command);
@@ -377,6 +378,7 @@ class Target
 public:
   List<Rule> rules;
   bool active;
+  Rule* rule; /**< The final rule for the target (mostly used for linking) */
 
   Target() : active(false) {}
 };
@@ -384,7 +386,7 @@ public:
 class RuleSet
 {
 public:
-  List<Target> targets;
+  Map<String, Target> targets;
   List<Target*> activeTargets;
 
   unsigned int activeRules;
@@ -396,11 +398,11 @@ public:
   {
     // generate outputToRule map
     Map<String, Rule*> outputToRule;
-    for(List<Target>::Node* i = targets.getFirst(); i; i = i->getNext())
+    for(Map<String, Target>::Node* i = targets.getFirst(); i; i = i->getNext())
       for(List<Rule>::Node* j = i->data.rules.getFirst(); j; j = j->getNext())
       {
         Rule& rule = j->data;
-        if(rule.output.isEmpty())
+        if(rule.outputs.isEmpty())
         {
           printf("warning: Rule for \"%s\" does not define an output file\n", rule.name.getData());
         }
@@ -408,7 +410,7 @@ public:
         {
           printf("warning: Rule for \"%s\" does not define a command\n", rule.name.getData());
         }
-        for(List<String>::Node* i = rule.output.getFirst(); i; i = i->getNext())
+        for(List<String>::Node* i = rule.outputs.getFirst(); i; i = i->getNext())
         {
           if(outputToRule.find(i->data))
           {
@@ -416,6 +418,17 @@ public:
             continue;
           }
           outputToRule.append(i->data, &rule);
+        }
+        for(List<String>::Node* i = rule.targetdeps.getFirst(); i; i = i->getNext())
+        {
+          Map<String, Target>::Node* node = targets.find(i->data);
+          if(!node)
+          {
+            printf("warning: Cannot resolve dependency \"%s\" for the rule for \"%s\"\n", i->data.getData(), rule.name.getData());
+            continue;
+          }
+          for(List<String>::Node* j = node->data.rule->outputs.getFirst(); j; j = j->getNext())
+            rule.inputs.append(j->data);
         }
       }
 
@@ -425,7 +438,7 @@ public:
       {
         Rule& rule = j->data;
         ++activeRules;
-        for(List<String>::Node* i = rule.input.getFirst(); i; i = i->getNext())
+        for(List<String>::Node* i = rule.inputs.getFirst(); i; i = i->getNext())
         {
           Rule* dependency = outputToRule.lookup(i->data);
           if(dependency)
@@ -537,7 +550,7 @@ bool Builder::buildTargets()
   List<String> files;
   for(List<String>::Node* i = targets.getFirst(); i; i = i->getNext())
   {
-    Target& target = ruleSet.targets.append();
+    Target& target = ruleSet.targets.append(i->data);
     if(activateTargets.find(i->data))
     {
       target.active = true;
@@ -558,8 +571,9 @@ bool Builder::buildTargets()
         rule.name = i->data;
         engine.enterKey(i->data);
         engine.addDefaultKey("file", i->data);
-        engine.getKeys("input", rule.input, false);
-        engine.getKeys("output", rule.output, false);
+        engine.getKeys("dependencies", rule.targetdeps, false);
+        engine.getKeys("inputs", rule.inputs, false);
+        engine.getKeys("outputs", rule.outputs, false);
         engine.getKeys("command", rule.command, false);
         engine.getKeys("message", rule.message, false);
         engine.leaveKey();
@@ -571,8 +585,10 @@ bool Builder::buildTargets()
     Rule& rule = target.rules.append();
     rule.target = &target;
     rule.name = i->data;
-    engine.getKeys("input", rule.input, false);
-    engine.getKeys("output", rule.output, false);
+    target.rule = &rule;
+    engine.getKeys("dependencies", rule.targetdeps, false);
+    engine.getKeys("inputs", rule.inputs, false);
+    engine.getKeys("outputs", rule.outputs, false);
     engine.getKeys("command", rule.command, false);
     engine.getKeys("message", rule.message, false);
 
