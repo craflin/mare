@@ -6,7 +6,7 @@
 
 #include "../libmare/Engine.h"
 #include "../libmare/Tools/File.h"
-#include "../libmare/Tools/Win32/getopt.h"
+#include "Tools/Win32/getopt.h"
 
 #include "Builder.h"
 #include "Vcxproj.h"

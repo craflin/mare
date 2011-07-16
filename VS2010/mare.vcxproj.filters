@@ -7,6 +7,9 @@
     <ClCompile Include="..\src\mare\Tools\md5.cpp">
       <Filter>Tools</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\mare\Tools\Win32\getopt.cpp">
+      <Filter>Tools\Win32</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\mare\Vcxproj.h" />
@@ -14,10 +17,16 @@
     <ClInclude Include="..\src\mare\Tools\md5.h">
       <Filter>Tools</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\mare\Tools\Win32\getopt.h">
+      <Filter>Tools\Win32</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Tools">
       <UniqueIdentifier>{71f0f318-9d46-4f62-9af5-7e5f1340102e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Tools\Win32">
+      <UniqueIdentifier>{2a0da0ea-e64b-48e2-bcb0-8fcd123e87d7}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

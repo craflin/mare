@@ -27,9 +27,6 @@
     <ClCompile Include="..\src\libmare\Tools\Words.cpp">
       <Filter>Tools</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\libmare\Tools\Win32\getopt.cpp">
-      <Filter>Tools\Win32</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\libmare\Engine.h" />
@@ -67,16 +64,10 @@
     <ClInclude Include="..\src\libmare\Tools\Words.h">
       <Filter>Tools</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\libmare\Tools\Win32\getopt.h">
-      <Filter>Tools\Win32</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Tools">
       <UniqueIdentifier>{f60d70d4-05dc-483a-843a-587c0fd8ebfe}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Tools\Win32">
-      <UniqueIdentifier>{71ed62ae-bdf6-4886-9ddf-a4b491ef9f13}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
