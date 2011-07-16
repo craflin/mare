@@ -4,17 +4,16 @@
 #include "Engine.h"
 #include "Namespace.h"
 #include "Parser.h"
-#include "Script.h"
 
 bool Engine::load(const String& file)
 {
   if(currentSpace)
     return false;
   Parser parser(*this);
-  Script* root = parser.parse(file, errorHandler, errorUserData);
+  Statement* root = parser.parse(file, errorHandler, errorUserData);
   if(!root)
     return false;
-  currentSpace = new Namespace(*this, 0, this, root, false);
+  currentSpace = new Namespace(*this, 0, this, root, 0, false);
   assert(currentSpace);
   return true;
 }
@@ -49,10 +48,10 @@ void Engine::enterDefaultKey(const String& key)
   currentSpace = subSpace;
 }
 
-bool Engine::resolveScript(const String& key, Script*& script)
+bool Engine::resolveScript(const String& key, Namespace*& result)
 {
   for(Namespace* space = currentSpace->getParent(); space; space = space->getParent())
-    if(space->resolveScript(key, script))
+    if(space->resolveScript(key, result))
       return true;
   return false;
 }

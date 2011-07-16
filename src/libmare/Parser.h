@@ -7,7 +7,6 @@
 #include "Engine.h"
 
 class Statement;
-class Script;
 
 class Parser
 {
@@ -15,7 +14,7 @@ public:
 
   Parser(Engine& engine);
 
-  Script* parse(const String& file, Engine::ErrorHandler errorHandler, void* userData);
+  Statement* parse(const String& file, Engine::ErrorHandler errorHandler, void* userData);
 
 private:
   class Token
@@ -67,7 +66,7 @@ private:
   void readString(String& string);
 
   /** file = { statement } EOF */
-  Script* readFile();
+  Statement* readFile();
 
   /** statement ::= assignment { ( ',' | ';' ) } */
   Statement* readStatement();
@@ -76,7 +75,7 @@ private:
   Statement* readAssignment();
 
   /** concatination ::= value { '+' value } */
-  Script* readConcatination();
+  Statement* readConcatination();
 
   /** value ::= '{' { statement } '}' | string | quotedstring */
   Statement* readValue();

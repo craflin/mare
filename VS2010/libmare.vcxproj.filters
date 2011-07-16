@@ -4,7 +4,6 @@
     <ClCompile Include="..\src\libmare\Engine.cpp" />
     <ClCompile Include="..\src\libmare\Namespace.cpp" />
     <ClCompile Include="..\src\libmare\Parser.cpp" />
-    <ClCompile Include="..\src\libmare\Script.cpp" />
     <ClCompile Include="..\src\libmare\Statement.cpp" />
     <ClCompile Include="..\src\libmare\Tools\Directory.cpp">
       <Filter>Tools</Filter>
@@ -32,7 +31,6 @@
     <ClInclude Include="..\src\libmare\Engine.h" />
     <ClInclude Include="..\src\libmare\Namespace.h" />
     <ClInclude Include="..\src\libmare\Parser.h" />
-    <ClInclude Include="..\src\libmare\Script.h" />
     <ClInclude Include="..\src\libmare\Statement.h" />
     <ClInclude Include="..\src\libmare\Tools\Array.h">
       <Filter>Tools</Filter>

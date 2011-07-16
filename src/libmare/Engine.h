@@ -4,9 +4,8 @@
 #include "Tools/String.h"
 #include "Tools/List.h"
 #include "Tools/Scope.h"
-#include "Namespace.h"
 
-class Script;
+class Namespace;
 
 class Engine : public Scope
 {
@@ -23,7 +22,7 @@ public:
   void enterUnnamedKey();
   void enterDefaultKey(const String& key);
 
-  bool resolveScript(const String& key, Script*& script);
+  bool resolveScript(const String& key, Namespace*& space);
 
   bool leaveKey();
   void getKeys(List<String>& keys);

@@ -5,15 +5,15 @@
 #include "Tools/Scope.h"
 
 class Engine;
-class Script;
+class Statement;
 
 class Namespace : public Scope, public Scope::Object
 {
 public:
-  Namespace(Scope& scope, Namespace* parent, Engine* engine, Script* script, bool inherited) : Scope::Object(scope), parent(parent), engine(engine), script(script), inherited(inherited), compiled(false), unnamedSpace(0) {}
+  Namespace(Scope& scope, Namespace* parent, Engine* engine, Statement* statement, Namespace* next, bool inherited) : Scope::Object(scope), parent(parent), statement(statement), next(next), engine(engine), inherited(inherited), compiled(false), compiling(false), unnamedSpace(0) {}
   
   inline Namespace* getParent() {return parent;}
-  bool resolveScript(const String& name, Script*& script);
+  bool resolveScript(const String& name, Namespace*& space);
   Namespace* enterKey(const String& name, bool allowInheritance);
   Namespace* enterUnnamedKey();
   Namespace* enterDefaultKey(const String& name);
@@ -21,8 +21,8 @@ public:
   String getFirstKey();
   inline Engine& getEngine() {return *engine;}
 
-  void addKey(const String& key, Script* value);
-  void addKeyRaw(const String& key, Script* value);
+  void addKey(const String& key, Statement* value);
+  void addKeyRaw(const String& key, Statement* value);
   void setKeyRaw(const String& key);
 
   void addResolvableKey(const String& key, const String& value);
@@ -31,14 +31,17 @@ public:
 
 private:
   Namespace* parent;
+  Statement* statement;
+  Namespace* next;
   Engine* engine;
-  Script* script;
   bool inherited;
   bool compiled;
-  Map<String, Script*> variables;
-  Map<String, Namespace*> spaces;
+  bool compiling;
+  Map<String, Namespace*> variables;
   Namespace* unnamedSpace;
 
   bool compile();
   String evaluateString(const String& string);
+
+  friend class ReferenceStatement; // temporary hack
 };

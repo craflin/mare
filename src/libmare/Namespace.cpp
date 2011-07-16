@@ -8,7 +8,6 @@
 #include "Namespace.h"
 #include "Statement.h"
 #include "Engine.h"
-#include "Script.h"
 
 String Namespace::evaluateString(const String& string)
 {
@@ -211,30 +210,20 @@ Namespace* Namespace::enterKey(const String& name, bool allowInheritance)
     goto failure;
 
   {
-    // find cached namespace
-    Map<String, Namespace*>::Node* j = spaces.find(name);
+    Map<String, Namespace*>::Node* j = variables.find(name);
     if(j && (allowInheritance || !j->data->inherited))
       return j->data;
-
-    // find local variable with that name
-    Map<String, Script*>::Node* i = variables.find(name);
-    if(i)
-    {
-      Namespace* space = new Namespace(*this, this, engine, i->data, false);
-      spaces.append(name, space);
-      return space;
-    }
   }
 
 failure:
   if(allowInheritance)
   {
-    Script* script;
-    if(engine->resolveScript(name, script))
+    Namespace* space;
+    if(engine->resolveScript(name, space))
     {
-      Namespace* space = new Namespace(*this, this, engine, script, true);
-      spaces.append(name, space);
-      return space;
+      Namespace* newSpace = new Namespace(*this, this, engine, space->statement, space->next, true);
+      variables.append(name, newSpace);
+      return newSpace;
     }
   }
   return 0;
@@ -244,7 +233,7 @@ Namespace* Namespace::enterUnnamedKey()
 {
   if(unnamedSpace)
     delete unnamedSpace;
-  unnamedSpace = new Namespace(*this, this, engine, 0, false);
+  unnamedSpace = new Namespace(*this, this, engine, 0, 0, false);
   return unnamedSpace;
 }
 
@@ -252,50 +241,37 @@ Namespace* Namespace::enterDefaultKey(const String& name)
 {
   assert(!compiled);
 
-  Map<String, Namespace*>::Node* j = spaces.find(name);
+  Map<String, Namespace*>::Node* j = variables.find(name);
   if(j && !j->data->inherited)
     return j->data;
 
-  Map<String, Script*>::Node* i = variables.find(name);
-  if(i)
-  {
-    Namespace* space = new Namespace(*this, this, engine,i->data, false);
-    spaces.append(name, space);
-    return space;
-  }
-
-  Namespace* space = new Namespace(*this, this, engine, 0, false);
-  spaces.append(name, space);
+  Namespace* space = new Namespace(*this, this, engine, 0, 0, false);
+  variables.append(name, space);
   return space;
 }
 
-bool Namespace::resolveScript(const String& name, Script*& script)
+bool Namespace::resolveScript(const String& name, Namespace*& space)
 {
   if(!compile())
     return false;
 
-  Map<String, Namespace*>::Node* j = spaces.find(name);
+  Map<String, Namespace*>::Node* j = variables.find(name);
   if(j)
-    script = j->data->script;
+    space = j->data;
   else
-  {
-    Map<String, Script*>::Node* i = variables.find(name);
-    if(!i)
-      return false;
-    script = i->data;
-  }
+    return false;
 
-  while(script && script->isExecuting())
+  while(space->compiling)
   {
-    script = script->next;
-    if(!script)
+    space = space->next;
+    if(!space)
       return false;
   }
 
   return true;
 }
 
-void Namespace::addKey(const String& key, Script* value)
+void Namespace::addKey(const String& key, Statement* value)
 {
   // evaluate variables
   String evaluatedKey = evaluateString(key);
@@ -322,20 +298,15 @@ void Namespace::addKey(const String& key, Script* value)
   }
 }
 
-void Namespace::addKeyRaw(const String& key, Script* value)
+void Namespace::addKeyRaw(const String& key, Statement* value)
 {
   assert(!compiled);
   assert(!key.isEmpty());
-  assert(!value || !value->next);
-  Map<String, Script*>::Node* node = variables.find(key);
+  Map<String, Namespace*>::Node* node = variables.find(key);
   if(node)
-  {
-    if(value)
-      value->next = node->data;
-    node->data = value;
-  }
+    node->data = new Namespace(*this, this, engine, value, node->data, false);
   else
-    variables.append(key, value);
+    variables.append(key, new Namespace(*this, this, engine, value, 0, false));
 }
 
 void Namespace::setKeyRaw(const String& key)
@@ -360,24 +331,22 @@ void Namespace::addResolvableKey(const String& key, const String& value)
     stringStatement->value = value;
     AssignStatement* assignStatement = new AssignStatement(*this);
     assignStatement->variable = key;
-    assignStatement->value = new Script(*this, stringStatement);
+    assignStatement->value = stringStatement;
     newStatement = assignStatement;
   }
-  if(!script)
-    script = new Script(*this, newStatement);
-  else if(!script->statement)
-    script->statement = newStatement;
+  if(!statement)
+    statement = newStatement;
   else
   {
-    BlockStatement* blockStatement = dynamic_cast<BlockStatement*>(script->statement);
+    BlockStatement* blockStatement = dynamic_cast<BlockStatement*>(statement);
     if(blockStatement)
       blockStatement->statements.append(newStatement);
     else
     {
       blockStatement = new BlockStatement(*this);
-      blockStatement->statements.append(script->statement);
+      blockStatement->statements.append(statement);
       blockStatement->statements.append(newStatement);
-      script->statement = blockStatement;
+      statement = blockStatement;
     }
   }
 }
@@ -386,16 +355,18 @@ void Namespace::getKeys(List<String>& keys)
 {
   if(!compile())
     return;
-  for(Map<String, Script*>::Node* node = variables.getFirst(); node; node = node->getNext())
-    keys.append(node->key);
+  for(Map<String, Namespace*>::Node* node = variables.getFirst(); node; node = node->getNext())
+    if(!node->data || !node->data->inherited)
+      keys.append(node->key);
 }
 
 String Namespace::getFirstKey()
 {
   if(!compile())
     return String();
-  for(Map<String, Script*>::Node* node = variables.getFirst(); node; node = node->getNext())
-    return node->key;
+  for(Map<String, Namespace*>::Node* node = variables.getFirst(); node; node = node->getNext())
+    if(!node->data || !node->data->inherited)
+      return node->key;
   return String();
 }
 
@@ -403,8 +374,12 @@ bool Namespace::compile()
 {
   if(compiled)
     return true;
-  if(script && !script->execute(*this))
+  if(compiling)
     return false;
+  compiling = true;
+  if(statement)
+    statement->execute(*this);
+  compiling = false;
   compiled = true;
   return true;
 }

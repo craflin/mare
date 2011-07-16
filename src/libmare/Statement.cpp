@@ -1,8 +1,9 @@
 
+#include <cassert>
+
 #include "Statement.h"
 #include "Namespace.h"
 #include "Engine.h"
-#include "Script.h"
 
 void BlockStatement::execute(Namespace& space)
 {
@@ -28,8 +29,13 @@ void StringStatement::execute(Namespace& space)
 
 void ReferenceStatement::execute(Namespace& space)
 {
-  Script* script;
-  if(space.getEngine().resolveScript(variable, script))
-    if(script)
-      script->execute(space);
+  Namespace* ref;
+  if(space.getEngine().resolveScript(variable, ref))
+    if(ref)
+    {
+      assert(!ref->compiling);
+      ref->compiling = true;
+      ref->statement->execute(space);
+      ref->compiling = false;
+    }
 }

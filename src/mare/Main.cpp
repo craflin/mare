@@ -41,7 +41,7 @@ static void showVersion(bool andExit)
 }
 
 static void showUsage(const char* executable)
-{
+{0
   String basename = File::getBasename(String(executable, -1));
   showVersion(false);
   puts("");

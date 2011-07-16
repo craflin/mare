@@ -6,7 +6,6 @@
 #include "Tools/Scope.h"
 
 class Namespace;
-class Script;
 
 class Statement : public Scope::Object
 {
@@ -33,7 +32,7 @@ public:
   AssignStatement(Scope& scope) : Statement(scope), value(0) {}
 
   String variable;
-  Script* value;
+  Statement* value;
 
 private:
   virtual void execute(Namespace& space);

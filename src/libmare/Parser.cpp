@@ -5,11 +5,10 @@
 #include "Parser.h"
 #include "Tools/String.h"
 #include "Statement.h"
-#include "Script.h"
 
 Parser::Parser(Engine& engine) : engine(engine), readBufferPos(0), readBufferEnd(0), currentLine(1) {}
 
-Script* Parser::parse(const String& file, Engine::ErrorHandler errorHandler, void* userData)
+Statement* Parser::parse(const String& file, Engine::ErrorHandler errorHandler, void* userData)
 {
   this->errorHandler = errorHandler;
   this->errorHandlerUserData = userData;
@@ -208,12 +207,12 @@ void Parser::readString(String& string)
   }
 }
 
-Script* Parser::readFile()
+Statement* Parser::readFile()
 {
   BlockStatement* statement = new BlockStatement(engine);
   while(currentToken.id != Token::eof)
     statement->statements.append(readStatement());
-  return new Script(engine, statement);
+  return statement;
 }
 
 Statement* Parser::readStatement()
@@ -236,7 +235,7 @@ Statement* Parser::readAssignment()
   return statement;
 }
 
-Script* Parser::readConcatination()
+Statement* Parser::readConcatination()
 {
   Statement* statement = readValue();
   while(currentToken.id == Token::plus)
@@ -247,7 +246,7 @@ Script* Parser::readConcatination()
     binaryStatement->rightOperand = readValue();
     statement = binaryStatement;
   }
-  return new Script(engine, statement);
+  return statement;
 }
 
 Statement* Parser::readValue()
