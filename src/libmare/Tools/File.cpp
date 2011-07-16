@@ -90,7 +90,7 @@ bool File::open(const String& file, Flags flags)
 #else
   if(fp)
     return false;
-  const char* mode = flags & (writeFlag | readFlag) == (writeFlag | readFlag) ? "w+" : (flags & writeFlag ? "w" : "r");
+  const char* mode = (flags & (writeFlag | readFlag)) == (writeFlag | readFlag) ? "w+" : (flags & writeFlag ? "w" : "r");
   fp = fopen(file.getData(), mode);
   if(!fp)
   {
