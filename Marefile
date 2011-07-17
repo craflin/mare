@@ -20,3 +20,12 @@ targets = {
     }
   }
 }
+
+configurations = {
+  Debug = {
+    cppFlags = "-Wall -g"
+  }
+  Release = {
+    cppFlags = "-Wall -Os -fomit-frame-pointer"
+  }
+}
