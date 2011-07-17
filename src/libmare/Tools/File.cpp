@@ -213,7 +213,8 @@ bool File::getWriteTime(const String& file, long long& writeTime)
   struct stat buf;
   if(stat(file.getData(), &buf) != 0)
     return false;
-  return buf.st_mtime;
+  writeTime = ((long long)buf.st_mtim.tv_sec) * 1000000000LL + ((long long)buf.st_mtim.tv_nsec);
+  return true;
 #endif
 }
 
