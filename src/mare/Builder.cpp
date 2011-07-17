@@ -515,10 +515,12 @@ public:
         assert(!rule.dependencies.isEmpty());
         ++rule.finishedDependencies;
         if(rule.finishedDependencies == rule.dependencies.getSize())
+        {
           if(rule.propagations.isEmpty())
             pendingJobs.append(&rule);
           else
             pendingJobs.prepend(&rule);
+        }
       }
     } while(!runningJobs.isEmpty() || (!pendingJobs.isEmpty() && !failure));
 
