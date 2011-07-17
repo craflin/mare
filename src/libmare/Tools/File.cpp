@@ -140,7 +140,7 @@ int File::write(const char* buffer, int len)
   return i;
 #else
   size_t i = fwrite(buffer, 1, len, (FILE*)fp);
-  if(i != len)
+  if((int)i != len)
   {
     error = errno;
     return (int)i;
@@ -151,7 +151,7 @@ int File::write(const char* buffer, int len)
 
 bool File::write(const String& data)
 {
-  return write(data.getData(), data.getLength()) == data.getLength();
+  return write(data.getData(), data.getLength()) == (int)data.getLength();
 }
 
 String File::getDirname(const String& file)
