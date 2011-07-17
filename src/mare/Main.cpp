@@ -11,7 +11,7 @@
 #include "Builder.h"
 #include "Vcxproj.h"
 
-static const char* VERSION   = "0.1";
+static const char* VERSION   = "0.2";
 static const char* COPYRIGHT = "Copyright (C) 2011 Colin Graf";
 
 static void errorHandler(void* userData, int line, const String& message)
