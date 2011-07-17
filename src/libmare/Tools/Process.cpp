@@ -1,10 +1,14 @@
 
 #include <cassert>
+#include <malloc.h>
 #ifdef _WIN32
 #include <windows.h>
-#include <malloc.h>
 #else
 #include <unistd.h>
+#include <cerrno>
+#include <cstdlib>
+#include <sys/types.h>
+#include <sys/wait.h>
 #endif
 
 #include "Process.h"
@@ -12,10 +16,14 @@
 #include "Array.h"
 #include "Map.h"
 #include "File.h"
+#else
+#include "Map.h"
 #endif
 
 #ifdef _WIN32
 static Array<HANDLE> runningProcessHandles;
+#else
+static Map<pid_t, Process*> runningProcesses;
 #endif
 
 Process::Process()
@@ -23,20 +31,26 @@ Process::Process()
 #ifdef _WIN32
   assert(sizeof(hProcess) >= sizeof(HANDLE));
   hProcess = INVALID_HANDLE_VALUE;
+#else
+  pid = 0;
+  exitCode = 1;
 #endif
 }
 
 Process::~Process()
 {
 #ifdef _WIN32
+  assert(hProcess ==  INVALID_HANDLE_VALUE);
   if(hProcess != INVALID_HANDLE_VALUE)
   {
     CloseHandle((HANDLE)hProcess);
 
     int index = runningProcessHandles.find(hProcess);
-    assert(index >= 0);
-    runningProcessHandles.remove(index);
+    if(index >= 0)
+      runningProcessHandles.remove(index);
   }
+#else
+  assert(pid ==  0);
 #endif
 }
 
@@ -237,25 +251,49 @@ success:
   runningProcessHandles.append(pi.hProcess);
 
   return pi.dwProcessId;
+#else
+  // TODO: detect path to the executable and use execv instead of execvp ?
+  int r = vfork();
+  if(r == -1)
+  {
+    error = errno;
+    return 0;
+  }
+  else if(r != 0) // parent
+  {
+    pid = r;
+    runningProcesses.append(pid, this);
+    return r;
+  }
+  else // child
+  {
+    const char** argv = (const char**)alloca(command.getSize() + 1);
+    int i = 0;
+    for(const List<String>::Node* j = command.getFirst(); j; j = j->getNext())
+      argv[i++] = j->data.getData();
+    argv[i] = 0;
+    if(execvp(command.isEmpty() ? "" : command.getFirst()->data.getData(), (char* const*)argv) == -1)
+      exit(EXIT_FAILURE);
+    assert(false); // unreachable
+    return 0;
+  }
 #endif
 }
 
-unsigned int Process::wait()
+unsigned int Process::join()
 {
 #ifdef _WIN32
   if(hProcess == INVALID_HANDLE_VALUE)
     return 0;
   DWORD exitCode = 0;
   GetExitCodeProcess(hProcess, &exitCode);
-
   CloseHandle((HANDLE)hProcess);
-
-  int index = runningProcessHandles.find(hProcess);
-  assert(index >= 0);
-  runningProcessHandles.remove(index);
-
   hProcess = INVALID_HANDLE_VALUE;
-
+  return exitCode;
+#else
+  if(!pid)
+    return 0;
+  pid = 0;
   return exitCode;
 #endif
 }
@@ -272,8 +310,21 @@ unsigned int Process::waitOne()
   assert(index >= 0 && index < runningProcessHandles.getSize());
 
   HANDLE handle = runningProcessHandles.getFirst()[index];
+  runningProcessHandles.remove(index);
 
   return GetProcessId(handle);
+#else
+  int status;
+  pid_t pid = wait(&status);
+  if(pid == -1)
+    return 0;
+  Map<pid_t, Process*>::Node* i = runningProcesses.find(pid);
+  if(i)
+  {
+    i->data->exitCode = WIFEXITED(status) ? WEXITSTATUS(status) : 1;
+    runningProcesses.remove(i);
+  }
+  return pid;
 #endif
 }
 

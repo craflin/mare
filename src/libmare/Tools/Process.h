@@ -15,7 +15,7 @@ public:
 
   unsigned int start(const List<String>& command);
 
-  unsigned int wait();
+  unsigned int join();
 
   inline const Error& getErrno() {return error;}
 
@@ -26,6 +26,9 @@ public:
 private:
 #ifdef _WIN32
   void* hProcess;
+#else
+  unsigned int pid;
+  unsigned int exitCode;
 #endif
   Error error;
 };

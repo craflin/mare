@@ -76,7 +76,7 @@ bool Builder::build(const Map<String, String>& userArgs)
     engine.addResolvableKey("command", "$(CC) -MMD $(__soFlags) -o $(__ofile) -c $(file) $(cFlags) $(CFLAGS) $(patsubst %,-D%,$(defines)) $(patsubst %,-I%,$(includePaths))");
     engine.addResolvableKey("message", "$(file)");
   engine.leaveKey();
-#if defined(_WIN32)
+#if defined(_WIN32) || defined(__CYGWIN__)
   String platform("win32");
 #elif defined(__linux)
   String platform("linux");
@@ -364,7 +364,7 @@ clean:
 
   bool finishExecution()
   {
-    unsigned int exitCode = process.wait();
+    unsigned int exitCode = process.join();
     return exitCode == 0;
   }
 };
