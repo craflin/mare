@@ -12,6 +12,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <dirent.h>
+#include <fnmatch.h>
 #endif
 
 #include "Directory.h"
@@ -24,6 +26,8 @@ Directory::Directory()
 #ifdef _WIN32
   findFile = INVALID_HANDLE_VALUE;
   assert(sizeof(ffd) >= sizeof(WIN32_FIND_DATA));
+#else
+  dp = 0;
 #endif
 }
 
@@ -32,6 +36,9 @@ Directory::~Directory()
 #ifdef _WIN32
   if(findFile != INVALID_HANDLE_VALUE)
     FindClose((HANDLE)findFile);
+#else
+  if(dp)
+    closedir((DIR*)dp);
 #endif
 }
 
@@ -55,11 +62,8 @@ bool Directory::remove(const String& dir)
 bool Directory::open(const String& dirpath, const String& pattern)
 {
 #ifdef _WIN32
-  if(findFile)
-  {
-    FindClose((HANDLE)findFile);
-    findFile = INVALID_HANDLE_VALUE;
-  }
+  if(findFile != INVALID_HANDLE_VALUE)
+    return false;
 
   this->dirpath = dirpath;
   String searchPath = dirpath;
@@ -72,6 +76,15 @@ bool Directory::open(const String& dirpath, const String& pattern)
     return false;
   bufferedEntry = true;
   return true;
+#else
+  if(dp)
+    return false;
+
+  this->dirpath = dirpath;
+  this->pattern = pattern;
+
+  dp = opendir(dirpath.getData());
+  return dp != 0;
 #endif
 }
 
@@ -99,6 +112,44 @@ bool Directory::read(bool dirsOnly, String& name, bool& isDir)
     name = String(str, -1);
     return true;
   }
+#else
+  if(!dp)
+    return false;
+
+  for(;;)
+  {
+    struct dirent* dent = readdir((DIR*)dp);
+    if(!dent)
+    {
+      closedir((DIR*)dp);
+      dp = 0;
+      return false;
+    }
+    const char* const str = dent->d_name;
+    if(fnmatch(pattern.getData(), str, 0) == 0)
+    {
+      name = String(str, -1);
+      isDir = false;
+      if(dent->d_type == DT_DIR)
+        isDir = true;
+      else if(dent->d_type == DT_LNK)
+      {
+        String path = dirpath;
+        path.append('/');
+        path.append(name);
+        struct stat buff;
+        if(stat(path.getData(), &buff) == 0)
+          if(S_ISDIR(buff.st_mode))
+            isDir = true;
+      }
+      if(dirsOnly && !isDir)
+        continue;
+      if(isDir && *str == '.' && (str[1] == '\0' || (str[1] == '.' && str[2] == '\0')))
+        continue;
+      return true;
+    }
+  }
+  return false; // unreachable
 #endif
 }
 
