@@ -13,7 +13,7 @@ prebuild:
 
 $(BUILDDIR)/%.o: %.cpp | prebuild
 	@echo "$<"
-	@$(CXX) -MMD -o $@ -c $<
+	@$(CXX) -MMD -Wall -g -o $@ -c $<
 
 $(TARGET): $(OBJECTS) | prebuild
 	@echo Linking $(notdir $@)...
