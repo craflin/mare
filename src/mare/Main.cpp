@@ -41,7 +41,7 @@ static void showVersion(bool andExit)
 }
 
 static void showUsage(const char* executable)
-{0
+{
   String basename = File::getBasename(String(executable, -1));
   showVersion(false);
   puts("");
@@ -107,7 +107,7 @@ int main(int argc, char* argv[])
   bool clean = false;
   bool rebuild = false;
   int jobs = 0;
-  int generateVcxproj = 0;
+  //int generateVcxproj = 0;
 
   // parse args
   {
