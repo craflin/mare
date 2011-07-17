@@ -9,15 +9,15 @@
 #include <cstdlib>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <cstdio>
+#include <cstring>
 #endif
 
 #include "Process.h"
-#ifdef _WIN32
-#include "Array.h"
 #include "Map.h"
 #include "File.h"
-#else
-#include "Map.h"
+#ifdef _WIN32
+#include "Array.h"
 #endif
 
 #ifdef _WIN32
@@ -57,10 +57,9 @@ Process::~Process()
 unsigned int Process::start(const List<String>& command)
 {
 #ifdef _WIN32
-
   struct Executable
   {
-    static bool Executable::fileComplete(const String& searchName, bool testExtensions, String& result)
+    static bool fileComplete(const String& searchName, bool testExtensions, String& result)
     {
       if(File::exists(searchName))
       {
@@ -168,7 +167,7 @@ unsigned int Process::start(const List<String>& command)
       }
       else
       { // try each search path
-        const List<String>& searchPaths = Executable::getPathEnv();
+        const List<String>& searchPaths = getPathEnv();
         for(const List<String>::Node* i = searchPaths.getFirst(); i; i = i->getNext())
         {
           String testPath = i->data;
@@ -252,7 +251,137 @@ success:
 
   return pi.dwProcessId;
 #else
-  // TODO: detect path to the executable and use execv instead of execvp ?
+
+  struct Executable
+  {
+    static const List<String>& getPathEnv()
+    {
+      static List<String> searchPaths;
+      static bool loaded = false;
+      if(!loaded)
+      {
+        char* pathVar = getenv("PATH");
+        for(const char* str = pathVar; *str;)
+        {
+          const char* end = strchr(str, ':');
+          if(end)
+          {
+            if(end > str)
+              searchPaths.append(String(str, end - str));
+            ++end;
+            str = end;
+          }
+          else
+          {
+            searchPaths.append(String(str, -1));
+            break;
+          }
+        }
+        loaded = true;
+      }
+      return searchPaths;
+    }
+
+#ifdef __CYGWIN__
+    static bool Executable::fileComplete(const String& searchName, bool testExtensions, String& result)
+    {
+      if(File::exists(searchName))
+      {
+        result = searchName;
+        return true;
+      }
+      if(testExtensions)
+      {
+        String testPath = searchName;
+        testPath.append(".exe");
+        if(File::exists(testPath))
+        {
+          result = testPath;
+          return true;
+        }
+        testPath.setLength(searchName.getLength());
+        testPath.append(".com");
+        if(File::exists(testPath))
+        {
+          result = testPath;
+          return true;
+        }
+      }
+      return false;
+    }
+    static String find(const String& program)
+    {
+      String result = program;
+      bool testExtensions = File::getExtension(program).isEmpty();
+      // check whether the given path is absolute
+      if(program.getData()[0] == '/')
+      { // absolute
+        fileComplete(program, testExtensions, result);
+      }
+      else
+      { // try each search path
+        const List<String>& searchPaths = Executable::getPathEnv();
+        for(const List<String>::Node* i = searchPaths.getFirst(); i; i = i->getNext())
+        {
+          String testPath = i->data;
+          testPath.append('/');
+          testPath.append(program);
+          if(fileComplete(testPath, testExtensions, result))
+            break;
+        }
+      }
+      return result;
+    }
+#else
+    static String find(const String& program)
+    {
+      String result = program;
+      // check whether the given path is absolute
+      if(program.getData()[0] == '/')
+      { // absolute
+        return result;
+      }
+      else
+      { // try each search path
+        const List<String>& searchPaths = Executable::getPathEnv();
+        for(const List<String>::Node* i = searchPaths.getFirst(); i; i = i->getNext())
+        {
+          String testPath = i->data;
+          testPath.append('/');
+          testPath.append(program);
+          if(File::exists(testPath))
+          {
+            result = testPath;
+            return result;
+          }
+        }
+      }
+      return result;
+    }
+#endif
+  };
+
+  String program, programPath;
+  static Map<String, String> cachedProgramPaths;
+  if(!command.isEmpty())
+  {
+    program = command.getFirst()->data;
+    const Map<String, String>::Node* i = cachedProgramPaths.find(program);
+    if(i)
+      programPath = i->data;
+    else
+    {
+      programPath = Executable::find(program);
+      cachedProgramPaths.append(program, programPath);
+    }
+  }
+
+  const char** argv = (const char**)alloca(command.getSize() + 1);
+  int i = 0;
+  for(const List<String>::Node* j = command.getFirst(); j; j = j->getNext())
+    argv[i++] = j->data.getData();
+  argv[i] = 0;
+
   int r = vfork();
   if(r == -1)
   {
@@ -267,13 +396,12 @@ success:
   }
   else // child
   {
-    const char** argv = (const char**)alloca(command.getSize() + 1);
-    int i = 0;
-    for(const List<String>::Node* j = command.getFirst(); j; j = j->getNext())
-      argv[i++] = j->data.getData();
-    argv[i] = 0;
-    if(execvp(command.isEmpty() ? "" : command.getFirst()->data.getData(), (char* const*)argv) == -1)
+    if(execv(programPath.getData(), (char* const*)argv) == -1)
+    {
+      Error error = errno;
+      fprintf(stderr, "%s: %s\n", Error::program, error.getString().getData());
       exit(EXIT_FAILURE);
+    }
     assert(false); // unreachable
     return 0;
   }

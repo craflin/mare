@@ -13,6 +13,8 @@ public:
 
   String getString() const;
 
+  static const char* program;
+
 private:
   unsigned int err;
 };

@@ -16,15 +16,14 @@ static const char* COPYRIGHT = "Copyright (C) 2011 Colin Graf";
 
 static void errorHandler(void* userData, int line, const String& message)
 {
-  const char** errorSources = (const char**)userData;
   if(line < 0)
-    fprintf(stderr, "%s: %s\n", errorSources[1], message.getData());
+    fprintf(stderr, "%s: %s\n", Error::program, message.getData());
   else
   {
     if(line > 0)
-      fprintf(stderr, "%s:%u: error: %s\n", errorSources[0], line, message.getData());
+      fprintf(stderr, "%s:%u: error: %s\n", (const char*)userData, line, message.getData());
     else
-      fprintf(stderr, "%s: %s\n", errorSources[0], message.getData());
+      fprintf(stderr, "%s: %s\n", (const char*)userData, message.getData());
   }
 }
 
@@ -100,6 +99,7 @@ static void showHelp(const char* executable)
 
 int main(int argc, char* argv[])
 {
+  Error::program = argv[0];
   Map<String, String> userArgs;
   String inputFile("Marefile");
   bool showHelp = false;
@@ -224,10 +224,7 @@ int main(int argc, char* argv[])
 
   // start the engine
   {
-    const char* errorSources[2];
-    errorSources[0] = inputFile.getData();
-    errorSources[1] = argv[0];
-    Engine engine(errorHandler, errorSources);
+    Engine engine(errorHandler, (void*)inputFile.getData());
     if(!engine.load(inputFile))
     {
       if(showHelp)
