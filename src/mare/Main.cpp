@@ -52,10 +52,10 @@ static void showUsage(const char* executable)
   puts("    -f <file>, --file=<file>");
   puts("        Use <file> as a marefile.");
   puts("");
-  //puts("    --vcxproj 2010");
-  //puts("        Generate a .sln and .vcxproj files for Visual Studio 2010 from the");
-  //puts("        marefile.");
-  //puts("");
+  puts("    --vcxproj 2010");
+  puts("        Generate a .sln and .vcxproj files for Visual Studio 2010 from the");
+  puts("        marefile.");
+  puts("");
   puts("    config=<config>, --config=<config>");
   puts("        Build using configuration <config> as declared in the marefile (Debug");
   puts("        and Release by default). Multiple configurations can be used by adding");
@@ -107,7 +107,7 @@ int main(int argc, char* argv[])
   bool clean = false;
   bool rebuild = false;
   int jobs = 0;
-  //int generateVcxproj = 0;
+  int generateVcxproj = 0;
 
   // parse args
   {
@@ -118,7 +118,7 @@ int main(int argc, char* argv[])
       {"version", no_argument , 0, 'v'},
       {"clean", no_argument , 0, 0},
       {"rebuild", no_argument , 0, 0},
-      //{"vcxproj", required_argument , 0, 0},
+      {"vcxproj", required_argument , 0, 0},
       {0, 0, 0, 0}
     };
 
@@ -162,7 +162,7 @@ int main(int argc, char* argv[])
       case 0:
         {
           String opt(long_options[option_index].name, -1);
-          /*if(opt == "vcxproj")
+          if(opt == "vcxproj")
           {
             generateVcxproj = 2010;
             if(optarg)
@@ -173,7 +173,7 @@ int main(int argc, char* argv[])
                 ::showHelp(argv[0]);
             }
           }
-          else */if(opt == "clean")
+          else if(opt == "clean")
             clean = true;
           else if(opt == "rebuild")
             rebuild = true;
@@ -248,8 +248,7 @@ int main(int argc, char* argv[])
         showUsage(argv[0]);
     }
 
-    // generate vcxproh mode?
-    /*
+    // generate vcxproj mode?
     if(generateVcxproj)
     {
       Vcxproj vcxprog(engine, generateVcxproj);
@@ -257,7 +256,6 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
       return EXIT_SUCCESS;
     }
-    */
 
     // direct build
     {
