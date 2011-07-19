@@ -283,7 +283,7 @@ success:
     }
 
 #ifdef __CYGWIN__
-    static bool Executable::fileComplete(const String& searchName, bool testExtensions, String& result)
+    static bool fileComplete(const String& searchName, bool testExtensions, String& result)
     {
       if(File::exists(searchName))
       {
