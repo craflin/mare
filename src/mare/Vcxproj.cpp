@@ -1,5 +1,4 @@
 
-//#include <cstdio>
 #include <cstdlib>
 #include <cassert>
 
@@ -253,7 +252,12 @@ bool Vcxproj::generate(const Map<String, String>& userArgs)
               if(firstCommand == "__clCompile" || firstCommand == "__rcCompile")
                 type = firstCommand;
               else if(!firstCommand.isEmpty())
+              {
                 type = "__CustomBuildTool";
+                engine.getKeys("message", fileConfig.message);
+                engine.getKeys("outputs", fileConfig.outputs);
+                engine.getKeys("inputs", fileConfig.inputs);
+              }
               else
                 type = file.type;
               if(!file.type.isEmpty() && file.type != type)
@@ -603,7 +607,7 @@ bool Vcxproj::generateVcxproj(Project& project)
           if(node)
           {
             const Option& option = node->data;
-            if(option.name.isEmpty())
+              if(option.name.isEmpty())
               continue;
             if(usedOptions.find(option.name))
             {
@@ -637,22 +641,44 @@ bool Vcxproj::generateVcxproj(Project& project)
 
     if(file.type == "__CustomBuildTool")
     {
-      /*
       fileWrite(String("    <CustomBuild Include=\"") + path + "\">\r\n");
-      fileWrite("<?lua for i, config in ipairs(configs) do local include, flag = includes[i]; if flags then flag = flags[i]; end ?>\r\n");
-      fileWrite("<?lua if include ~= nil and flag and flag.target and flag.command then ?>\r\n");
-      fileWrite("      <Message Condition=\"'$(Configuration)|$(Platform)'=='<?lua=config.config?>'\"><?lua=xmlEscape(flag.description)?></Message>\r\n");
-      fileWrite("      <Command Condition=\"'$(Configuration)|$(Platform)'=='<?lua=config.config?>'\"><?lua if type(flag.command) == \"function\" then echo(formatTable(flag.command(flag, config), \"&#x0D;&#x0A;\", nil, nil, xmlEscape)); else echo(formatTable(flag.command, \"&#x0D;&#x0A;\", nil, nil, xmlEscape)); end ?></Command>\r\n");
-      fileWrite("<?lua if type(flag.dependencies) == \"table\" then ?>\r\n");
-      fileWrite("      <AdditionalInputs Condition=\"'$(Configuration)|$(Platform)'=='<?lua=config.config?>'\"><?lua=formatTable(flag.dependencies, \";\")?>;%(AdditionalInputs)</AdditionalInputs>\r\n");
-      fileWrite("<?lua end ?>\r\n");
-      fileWrite("      <Outputs Condition=\"'$(Configuration)|$(Platform)'=='<?lua=config.config?>'\"><?lua=formatTable(flag.target, \";\")?>;%(Outputs)</Outputs>\r\n");
-      fileWrite("<?lua else ?>\r\n");
-      fileWrite("      <ExcludedFromBuild Condition=\"'$(Configuration)|$(Platform)'=='<?lua=config.config?>'\">true</ExcludedFromBuild>\r\n");
-      fileWrite("<?lua end ?>\r\n");
-      fileWrite("<?lua end ?>\r\n");
+      const String& fileName = i->key;
+      for(const Map<String, Project::Config>::Node* i = project.configs.getFirst(); i; i = i->getNext())
+      {
+        const Map<String, Project::File::Config>::Node* node = file.configs.find(i->key);
+        if(node)
+        {
+          const Project::File::Config& config = node->data;
+          if(!config.message.isEmpty())
+            fileWrite(String("      <Message Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">" + join(config.message, ' ') + "</Message>\r\n");
+          if(!config.command.isEmpty())
+            fileWrite(String("      <Command Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">" + joinCommands(config.command) + "</Command>\r\n");
+          else
+            {
+            // TODO: warning or error
+          }
+
+          List<String> additionalInputs;
+          {
+            for(const List<String>::Node* i = config.inputs.getFirst(); i; i = i->getNext())
+              if(i->data != fileName)
+                additionalInputs.append(i->data);
+          }
+
+          if(!additionalInputs.isEmpty())
+            fileWrite(String("      <AdditionalInputs Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">" + join(additionalInputs) + ";%(AdditionalInputs)</AdditionalInputs>\r\n");
+
+          if(!config.outputs.isEmpty())
+            fileWrite(String("      <Outputs Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">" + join(config.outputs) + ";%(Outputs)</Outputs>\r\n");
+          else
+          {
+            // TODO: warning or error
+          }
+        }
+        else
+          fileWrite("      <ExcludedFromBuild Condition=\"'$(Configuration)|$(Platform)'=='<?lua=config.config?>'\">true</ExcludedFromBuild>\r\n");
+      }
       fileWrite("    </CustomBuild>\r\n");
-      */
     }
     else
     {

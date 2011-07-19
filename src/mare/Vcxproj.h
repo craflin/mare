@@ -61,7 +61,10 @@ private:
       class Config
       {
       public:
+        List<String> message;
         List<String> command;
+        List<String> outputs;
+        List<String> inputs;
       };
 
       String type;
