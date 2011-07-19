@@ -113,7 +113,7 @@ bool Vcxproj::generate(const Map<String, String>& userArgs)
   engine.leaveKey();
   engine.addDefaultKey("targets");
   engine.addDefaultKey("buildDir", "$(configuration)");
-  engine.addDefaultKey("cppFlags", "$(if $(Debug),,/O2 /Oy)");
+  engine.addDefaultKey("cppFlags", "/W3 $(if $(Debug),,/O2 /Oy)");
   engine.addDefaultKey("linkFlags", "$(if $(Debug),/INCREMENTAL /DEBUG,/OPT:REF /OPT:ICF)");
   engine.enterDefaultKey("cppSource");
     engine.addResolvableKey("command", "__clCompile");
@@ -198,7 +198,7 @@ bool Vcxproj::generate(const Map<String, String>& userArgs)
         else
         {
           project = &projects.append(i->data, Project(i->data, createSomethingLikeGUID(i->data)));
-          String filterName = engine.getFirstKey("filter");
+          String filterName = engine.getFirstKey("folder");
           if(!filterName.isEmpty())
           {
             Map<String, ProjectFilter>::Node* node = projectFilters.find(filterName);
@@ -235,6 +235,10 @@ bool Vcxproj::generate(const Map<String, String>& userArgs)
         for(const List<String>::Node* i = dependencies.getFirst(); i; i = i->getNext())
           if(!project->dependencies.find(i->data))
             project->dependencies.append(i->data);
+        List<String> root;
+        engine.getKeys("root", root, true);
+        for(const List<String>::Node* i = root.getFirst(); i; i = i->getNext())
+          project->roots.append(i->data);
         if(engine.enterKey("files"))
         {
           List<String> files;
@@ -246,29 +250,43 @@ bool Vcxproj::generate(const Map<String, String>& userArgs)
             Project::File::Config& fileConfig = file.configs.append(configKey);
             if(engine.enterKey(i->data))
             {
-              engine.getKeys("command", fileConfig.command);
+              engine.getKeys("command", fileConfig.command, false);
+              file.filter = engine.getFirstKey("folder");
               String firstCommand = fileConfig.command.isEmpty() ? String() : fileConfig.command.getFirst()->data;
               String type;
-              if(firstCommand == "__clCompile" || firstCommand == "__rcCompile")
-                type = firstCommand;
+              if(firstCommand == "__clCompile")
+                type = "ClCompile";
+              else if(firstCommand == "__rcCompile")
+                type = "ResourceCompile";
               else if(!firstCommand.isEmpty())
               {
-                type = "__CustomBuildTool";
-                engine.getKeys("message", fileConfig.message);
-                engine.getKeys("outputs", fileConfig.outputs);
-                engine.getKeys("inputs", fileConfig.inputs);
+                type = "CustomBuild";
+                engine.getKeys("message", fileConfig.message, false);
+                engine.getKeys("outputs", fileConfig.outputs, false);
+                engine.getKeys("inputs", fileConfig.inputs, false);
               }
-              else
-                type = file.type;
-              if(!file.type.isEmpty() && file.type != type)
+              if(!type.isEmpty())
               {
-                // TODO: warning or error?
+                if(!file.type.isEmpty() && file.type != type)
+                {
+                  // TODO: warning or error?
+                }
+                else
+                  file.type = type;
               }
-              else
-                file.type = type;
               engine.leaveKey();
             }
           }
+          for(Map<String, Project::File>::Node* i = project->files.getFirst(); i; i = i->getNext())
+            if(i->data.type.isEmpty())
+            {
+              String extension = File::getExtension(i->key);
+              if(extension == "h" || extension == "hh" || extension == "hxx"  || extension == "hpp")
+                i->data.type = "ClInclude";
+              else
+                i->data.type = "None";
+            }
+
           engine.leaveKey();
         }
         engine.leaveKey();
@@ -584,11 +602,12 @@ bool Vcxproj::generateVcxproj(Project& project)
       if(!config.defines.isEmpty())
         fileWrite(String("      <PreprocessorDefinitions>") + join(config.defines) + ";%(PreprocessorDefinitions)</PreprocessorDefinitions>\r\n");
       fileWrite("    </ResourceCompile>\r\n");
-      /*
+      
       fileWrite("    <ProjectReference>\r\n");
-      fileWrite("      <UseLibraryDependencyInputs>true</UseLibraryDependencyInputs>\r\n");
+      //fileWrite("      <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>\r\n");
+      fileWrite("      <LinkLibraryDependencies>false</LinkLibraryDependencies>\r\n");
       fileWrite("    </ProjectReference>\r\n");
-      */
+      
       fileWrite("    <Link>\r\n");
 
       {
@@ -639,7 +658,7 @@ bool Vcxproj::generateVcxproj(Project& project)
     String path = i->key;
     path.subst("/", "\\");
 
-    if(file.type == "__CustomBuildTool")
+    if(file.type == "CustomBuild")
     {
       fileWrite(String("    <CustomBuild Include=\"") + path + "\">\r\n");
       const String& fileName = i->key;
@@ -682,28 +701,16 @@ bool Vcxproj::generateVcxproj(Project& project)
     }
     else
     {
-      String type = "None";
-      if(file.type == "__clCompile")
-        type = "ClCompile";
-      else if(file.type == "__rcCompile")
-        type = "ResourceCompile";
-      else
-      {
-        String extension = File::getExtension(i->key);
-        if(extension == "h" || extension == "hh" || extension == "hxx"  || extension == "hpp")
-          type = "ClInclude";
-      }
-
       if(file.configs.getSize() < project.configs.getSize())
       {
-        fileWrite(String("    <") + type + " Include=\"" + path + "\">\r\n");
+        fileWrite(String("    <") + file.type + " Include=\"" + path + "\">\r\n");
         for(const Map<String, Project::Config>::Node* i = project.configs.getFirst(); i; i = i->getNext())
           if(!file.configs.find(i->key))
             fileWrite(String("      <ExcludedFromBuild Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">true</ExcludedFromBuild>\r\n");
-        fileWrite(String("    </") + type + ">\r\n");
+        fileWrite(String("    </") + file.type + ">\r\n");
       }
       else
-        fileWrite(String("    <") + type + " Include=\"" + path + "\" />\r\n");
+        fileWrite(String("    <") + file.type + " Include=\"" + path + "\" />\r\n");
     }
   }
   fileWrite("  </ItemGroup>\r\n");
@@ -737,6 +744,82 @@ bool Vcxproj::generateVcxproj(Project& project)
 
 bool Vcxproj::generateVcxprojFilter(Project& project)
 {
+  fileOpen(project.name + ".vcxproj.filters");
+  fileWrite("<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n");
+  fileWrite("<Project ToolsVersion=\"4.0\" xmlns=\"http://schemas.microsoft.com/developer/msbuild/2003\">\r\n");
+
+  Map<String, String> filters;
+  for(Map<String, Project::File>::Node* i = project.files.getFirst(); i; i = i->getNext())
+  {
+    Project::File& file = i->data;
+
+    if(!file.filter.isEmpty()) // a user defined filter
+    {
+      if(!filters.find(file.filter))
+        filters.append(file.filter);
+      continue;
+    }
+
+    // create a filter based on the file system hierarchy
+    List<String> filtersToAdd;
+    String root;
+    String filterName = File::getDirname(i->key);
+    for(;;)
+    {
+      if(filterName == "." || File::getBasename(filterName) == "..")
+        break;
+      const Map<String, void*>::Node* node = project.roots.find(filterName);
+      if(node)
+      {
+        root = node->key;
+        break;
+      }
+      filtersToAdd.prepend(filterName);
+      filterName = File::getDirname(filterName);
+    }
+    for(const List<String>::Node* i = filtersToAdd.getFirst(); i; i = i->getNext())
+    {
+      String filterName = root.isEmpty() ? i->data : i->data.substr(root.getLength() + 1);
+      filterName.subst("/", "\\");
+      if(!filters.find(filterName))
+        filters.append(filterName, createSomethingLikeGUID(filterName));
+      if(i == filtersToAdd.getLast())
+        file.filter = filterName;
+    }
+  }
+
+
+  fileWrite("  <ItemGroup>\r\n");
+  for(const Map<String, String>::Node* i = filters.getFirst(); i; i = i->getNext())
+  {
+    fileWrite(String("    <Filter Include=\"") + i->key + "\">\r\n");
+    fileWrite(String("      <UniqueIdentifier>{") + i->data + "}</UniqueIdentifier>\r\n");
+    fileWrite("    </Filter>\r\n");
+  }
+  fileWrite("  </ItemGroup>\r\n");
+  
+  
+  fileWrite("  <ItemGroup>\r\n");
+  for(const Map<String, Project::File>::Node* i = project.files.getFirst(); i; i = i->getNext())
+  {
+    const Project::File& file = i->data;
+    String path = i->key;
+    path.subst("/", "\\");
+    if(file.filter.isEmpty())
+      fileWrite(String("    <") + file.type + " Include=\"" + path + "\" />\r\n");
+    else
+    {
+      fileWrite(String("    <") + file.type + " Include=\"" + path + "\">\r\n");
+      fileWrite(String("      <Filter>") + file.filter + "</Filter>\r\n");
+      fileWrite(String("    </") + file.type + ">\r\n");
+    }
+  }
+  
+  fileWrite("  </ItemGroup>\r\n");
+  
+  fileWrite("</Project>\r\n");
+
+  fileClose();
   return true;
 }
 

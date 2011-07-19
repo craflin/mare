@@ -68,6 +68,7 @@ private:
       };
 
       String type;
+      String filter;
       Map<String, Config> configs;
     };
 
@@ -76,6 +77,7 @@ private:
     Map<String, Config> configs;
     Map<String, File> files;
     Map<String, void*> dependencies;
+    Map<String, void*> roots;
 
     Project(const String& name, const String& guid) : name(name), guid(guid) {}
   };

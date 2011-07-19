@@ -13,13 +13,17 @@ targets = {
     includePaths = {
       "src/libmare"
     }
+    root = "src/mare"
     files = {
       "src/mare/**.cpp" = cppSource
+      "src/mare/**.h"
     }
   }
   libmare = cppStaticLibrary + {
+    root = "src/libmare"
     files = {
       "src/libmare/**.cpp" = cppSource
+      "src/libmare/**.h"
     }
   }
 }
