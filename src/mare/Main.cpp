@@ -4,8 +4,8 @@
 #include <cstring>
 #include <malloc.h>
 
-#include "../libmare/Engine.h"
-#include "../libmare/Tools/File.h"
+#include "Engine.h"
+#include "Tools/File.h"
 #include "Tools/Win32/getopt.h"
 
 #include "Builder.h"

@@ -3,10 +3,10 @@
 #include <cstdlib>
 #include <cassert>
 
-#include "../libmare/Tools/Words.h"
-#include "../libmare/Tools/File.h"
+#include "Tools/Words.h"
+#include "Tools/File.h"
 #include "Tools/md5.h"
-#include "../libmare/Engine.h"
+#include "Engine.h"
 
 #include "Vcxproj.h"
 

@@ -4,11 +4,11 @@
 
 #include "Builder.h"
 
-#include "../libmare/Tools/Process.h"
-#include "../libmare/Tools/File.h"
-#include "../libmare/Tools/Directory.h"
-#include "../libmare/Tools/Words.h"
-#include "../libmare/Engine.h"
+#include "Tools/Process.h"
+#include "Tools/File.h"
+#include "Tools/Directory.h"
+#include "Tools/Words.h"
+#include "Engine.h"
 
 bool Builder::build(const Map<String, String>& userArgs)
 {
