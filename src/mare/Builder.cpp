@@ -22,41 +22,43 @@ bool Builder::build(const Map<String, String>& userArgs)
   engine.leaveKey();
   engine.addDefaultKey("targets");
   engine.addDefaultKey("buildDir", "$(configuration)");
+  engine.addDefaultKey("cppFlags", "-Wall $(if $(Debug),-g,-Os -fomit-frame-pointer)");
+  engine.addDefaultKey("linkFlags", "$(if $(Debug),,-s)");
   engine.enterDefaultKey("cppApplication");
     engine.addResolvableKey("inputs", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
-    engine.addResolvableKey("outputs", "$(buildDir)/$(target)$(if $(win32),.exe)");
+    engine.addResolvableKey("outputs", "$(buildDir)/$(target)$(if $(Win32),.exe)");
     engine.addResolvableKey("command", "$(CXX) -o $(outputs) $(inputs) $(linkFlags) $(LDFLAGS) $(patsubst %,-L%,$(libPaths)) $(patsubst %,-l%,$(libs))");
     engine.addResolvableKey("message", "Linking $(target)...");
   engine.leaveKey();
   engine.enterDefaultKey("cppDynamicLibrary");
     engine.addResolvableKey("inputs", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
-    engine.addResolvableKey("outputs", "$(buildDir)/$(if $(win32),,lib)$(patsubst lib%,%,$(target))$(if $(win32),.dll,.so)");
-    engine.addResolvableKey("__soFlags", "-fpic");
+    engine.addResolvableKey("outputs", "$(buildDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.dll,.so)");
+    engine.addResolvableKey("__soFlags", "$(if $(Win32),,-fpic)");
     engine.addResolvableKey("command", "$(CXX) -shared $(__soFlags) -o $(outputs) $(inputs) $(linkFlags) $(LDFLAGS) $(patsubst %,-L%,$(libPaths)) $(patsubst %,-l%,$(libs))");
     engine.addResolvableKey("message", "Linking $(target)...");
   engine.leaveKey();
   engine.enterDefaultKey("cppStaticLibrary");
     engine.addResolvableKey("inputs", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
-    engine.addResolvableKey("outputs", "$(buildDir)/$(if $(win32),,lib)$(patsubst lib%,%,$(target))$(if $(win32),.lib,.a)");
+    engine.addResolvableKey("outputs", "$(buildDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.lib,.a)");
     engine.addResolvableKey("command", "$(AR) rcs $(outputs) $(inputs)");
     engine.addResolvableKey("message", "Creating $(target)...");
   engine.leaveKey();
   engine.enterDefaultKey("cApplication");
     engine.addResolvableKey("inputs", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
-    engine.addResolvableKey("outputs", "$(buildDir)/$(target)$(if $(win32),.exe)");
+    engine.addResolvableKey("outputs", "$(buildDir)/$(target)$(if $(Win32),.exe)");
     engine.addResolvableKey("command", "$(CC) -o $(outputs) $(inputs) $(linkFlags) $(LDFLAGS) $(patsubst %,-L%,$(libPaths)) $(patsubst %,-l%,$(libs))");
     engine.addResolvableKey("message", "Linking $(target)...");
   engine.leaveKey();
   engine.enterDefaultKey("cDynamicLibrary");
     engine.addResolvableKey("inputs", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
-    engine.addResolvableKey("outputs", "$(buildDir)/$(if $(win32),,lib)$(patsubst lib%,%,$(target))$(if $(win32),.dll,.so)");
-    engine.addResolvableKey("__soFlags", "-fpic");
+    engine.addResolvableKey("outputs", "$(buildDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.dll,.so)");
+    engine.addResolvableKey("__soFlags", "$(if $(Win32),,-fpic)");
     engine.addResolvableKey("command", "$(CC) -shared $(__soFlags) -o $(outputs) $(inputs) $(linkFlags) $(LDFLAGS) $(patsubst %,-L%,$(libPaths)) $(patsubst %,-l%,$(libs))");
     engine.addResolvableKey("message", "Linking $(target)...");
   engine.leaveKey();
   engine.enterDefaultKey("cStaticLibrary");
     engine.addResolvableKey("inputs", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
-    engine.addResolvableKey("outputs", "$(buildDir)/$(if $(win32),,lib)$(patsubst lib%,%,$(target))$(if $(win32),.lib,.a)");
+    engine.addResolvableKey("outputs", "$(buildDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.lib,.a)");
     engine.addResolvableKey("command", "$(AR) rcs $(outputs) $(inputs)");
     engine.addResolvableKey("message", "Creating $(target)...");
   engine.leaveKey();
@@ -77,11 +79,11 @@ bool Builder::build(const Map<String, String>& userArgs)
     engine.addResolvableKey("message", "$(file)");
   engine.leaveKey();
 #if defined(_WIN32) || defined(__CYGWIN__)
-  String platform("win32");
+  String platform("Win32");
 #elif defined(__linux)
-  String platform("linux");
+  String platform("Linux");
 #elif defined(__APPLE__) && defined(__MACH__)
-  String platform("macosx");
+  String platform("MacOSX");
 #else
   String platform("unknown");
   // add your os :)
@@ -114,7 +116,7 @@ bool Builder::buildFile()
     const String& platform = i->data;
     engine.enterUnnamedKey();
     engine.addDefaultKey("platform", platform);
-    engine.addDefaultKey(platform, "true");
+    engine.addDefaultKey(platform, "true"); // temp
 
     if(!engine.enterKey("configurations"))
     {
@@ -170,6 +172,7 @@ bool Builder::buildConfigurations()
 bool Builder::buildConfiguration(const String& configuration)
 {
   engine.addDefaultKey("configuration", configuration);
+  engine.addDefaultKey(configuration, "true"); // temp
 
   if(!engine.enterKey("targets"))
   {

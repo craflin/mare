@@ -1,10 +1,5 @@
 
 targets = {
-  libmare = cppStaticLibrary + {
-    files = {
-      "src/libmare/**.cpp" = cppSource
-    }
-  }
   mare = cppApplication + {
     dependencies = { 
       "libmare"
@@ -15,20 +10,16 @@ targets = {
     libPaths = {
       "$(buildDir)"
     }
-	includePaths = {
-	  "src/libmare"
-	}
+    includePaths = {
+      "src/libmare"
+    }
     files = {
       "src/mare/**.cpp" = cppSource
     }
   }
-}
-
-configurations = {
-  Debug = {
-    cppFlags = "-Wall -g"
-  }
-  Release = {
-    cppFlags = "-Wall -Os -fomit-frame-pointer"
+  libmare = cppStaticLibrary + {
+    files = {
+      "src/libmare/**.cpp" = cppSource
+    }
   }
 }

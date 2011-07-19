@@ -99,11 +99,14 @@ bool Vcxproj::generate(const Map<String, String>& userArgs)
   knownLinkOptions.append("/OPT:NOREF", Option("OptimizeReferences", "false"));
   knownLinkOptions.append("/OPT:ICF", Option("EnableCOMDATFolding", "true"));
   knownLinkOptions.append("/OPT:NOICF", Option("EnableCOMDATFolding", "false"));
-  knownLinkOptions.append("/LTCG", Option("LinkTimeCodeGeneration", "UseLinkTimeCodeGeneration"));
+  //knownLinkOptions.append("/LTCG", Option("LinkTimeCodeGeneration", "UseLinkTimeCodeGeneration"));
+  knownLinkOptions.append("/LTCG");
   // TODO: more LTCG options?
   // TODO: more options?
   
-
+  engine.addDefaultKey("tool", "vcxproj");
+  engine.addDefaultKey("vcxproj", "true"); // temp
+  engine.addDefaultKey("host", "Win32");
   engine.addDefaultKey("platforms", "Win32");
   engine.enterDefaultKey("configurations");
     engine.addResolvableKey("Debug");
@@ -111,33 +114,40 @@ bool Vcxproj::generate(const Map<String, String>& userArgs)
   engine.leaveKey();
   engine.addDefaultKey("targets");
   engine.addDefaultKey("buildDir", "$(configuration)");
+  engine.addDefaultKey("cppFlags", "$(if $(Debug),,/O2 /Oy)");
+  engine.addDefaultKey("linkFlags", "$(if $(Debug),/INCREMENTAL /DEBUG,/OPT:REF /OPT:ICF)");
   engine.enterDefaultKey("cppSource");
     engine.addResolvableKey("command", "__clCompile");
   engine.leaveKey();
-  /*engine.enterDefaultKey("cSource");
+  engine.enterDefaultKey("cSource");
     engine.addResolvableKey("command", "__clCompile");
   engine.leaveKey();
-  */
   engine.enterDefaultKey("rcSource");
     engine.addResolvableKey("command", "__rcCompile");
   engine.leaveKey();
   engine.enterDefaultKey("cppApplication");
     engine.addResolvableKey("command", "__Application");
     engine.addResolvableKey("outputs", "$(buildDir)/$(target).exe");
-    //engine.addResolvableKey("linkFlags", "/INCREMENTAL");
-    //engine.addResolvableKey("cppFlags", "/MP");
   engine.leaveKey();
   engine.enterDefaultKey("cppDynamicLibrary");
     engine.addResolvableKey("command", "__DynamicLibrary");
     engine.addResolvableKey("outputs", "$(buildDir)/$(patsubst lib%,%,$(target)).dll");
-    //engine.addResolvableKey("linkFlags", "/INCREMENTAL");
-    //engine.addResolvableKey("cppFlags", "/MP");
   engine.leaveKey();
   engine.enterDefaultKey("cppStaticLibrary");
     engine.addResolvableKey("command", "__StaticLibrary");
     engine.addResolvableKey("outputs", "$(buildDir)/$(patsubst lib%,%,$(target)).lib");
-    //engine.addResolvableKey("linkFlags", "/INCREMENTAL");
-    //engine.addResolvableKey("cppFlags", "/MP");
+  engine.leaveKey();
+  engine.enterDefaultKey("cApplication");
+    engine.addResolvableKey("command", "__Application");
+    engine.addResolvableKey("outputs", "$(buildDir)/$(target).exe");
+  engine.leaveKey();
+  engine.enterDefaultKey("cDynamicLibrary");
+    engine.addResolvableKey("command", "__DynamicLibrary");
+    engine.addResolvableKey("outputs", "$(buildDir)/$(patsubst lib%,%,$(target)).dll");
+  engine.leaveKey();
+  engine.enterDefaultKey("cStaticLibrary");
+    engine.addResolvableKey("command", "__StaticLibrary");
+    engine.addResolvableKey("outputs", "$(buildDir)/$(patsubst lib%,%,$(target)).lib");
   engine.leaveKey();
 
   // add user arguments
@@ -159,7 +169,7 @@ bool Vcxproj::generate(const Map<String, String>& userArgs)
     const String& platform = i->data;
     engine.enterUnnamedKey();
     engine.addDefaultKey("platform", platform);
-    engine.addDefaultKey(platform, "true");
+    engine.addDefaultKey(platform, "true"); // temp
 
     // enter configurations space
     engine.enterKey("configurations");
@@ -175,6 +185,7 @@ bool Vcxproj::generate(const Map<String, String>& userArgs)
 
       engine.enterKey(configName);
       engine.addDefaultKey("configuration", configName);
+      engine.addDefaultKey(configName, "true"); // temp
 
       List<String> targets;
       engine.enterKey("targets");
@@ -411,6 +422,8 @@ bool Vcxproj::generateVcxproj(Project& project)
       fileWrite("    <UseDebugLibraries>true</UseDebugLibraries>\r\n"); // i have no idea what this option does and how to change it in the project settings in visual studio
     else                                                                // appearantly it changes some compiler/linker default values?
       fileWrite("    <UseDebugLibraries>false</UseDebugLibraries>\r\n");
+    if(config.linkFlags.find("/LTCG"))
+      fileWrite("    <WholeProgramOptimization>true</WholeProgramOptimization>\r\n");
     
     fileWrite("  </PropertyGroup>\r\n");
   }
@@ -429,11 +442,12 @@ bool Vcxproj::generateVcxproj(Project& project)
   fileWrite("  <PropertyGroup Label=\"UserMacros\" />\r\n");
 
   fileWrite("  <PropertyGroup>\r\n");
-  fileWrite("    <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>\r\n");
+  //fileWrite("    <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>\r\n");
   
   for(const Map<String, Project::Config>::Node* i = project.configs.getFirst(); i; i = i->getNext())
   {
     const Project::Config& config = i->data;
+
     if(!config.firstOutput.isEmpty())
     {
       String path = File::getDirname(config.firstOutput);
@@ -518,13 +532,13 @@ bool Vcxproj::generateVcxproj(Project& project)
     }
 
     if(config.firstCommand != "__Makefile")
-    {
+    {/*
       fileWrite("    <Midl>\r\n");
       fileWrite("      <WarningLevel>0</WarningLevel>\r\n");
       fileWrite("      <DefaultCharType>Unsigned</DefaultCharType>\r\n");
       fileWrite("      <EnableErrorChecks>None</EnableErrorChecks>\r\n");
       fileWrite("    </Midl>\r\n");
-      
+      */
       fileWrite("    <ClCompile>\r\n");
 
       {
@@ -679,7 +693,7 @@ bool Vcxproj::generateVcxproj(Project& project)
         const Project& project = node->data;
         fileWrite(String("    <ProjectReference Include=\"") + project.name + ".vcxproj\">\r\n");
         fileWrite(String("      <Project>{") + project.guid + "}</Project>\r\n");
-        fileWrite("      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>\r\n");
+        //fileWrite("      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>\r\n");
         fileWrite("    </ProjectReference>\r\n");
       }
     }
