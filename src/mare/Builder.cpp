@@ -401,11 +401,7 @@ public:
       for(List<Rule>::Node* j = i->data.rules.getFirst(); j; j = j->getNext())
       {
         Rule& rule = j->data;
-        if(rule.outputs.isEmpty())
-        {
-          printf("warning: Rule for \"%s\" does not define an output file\n", rule.name.getData());
-        }
-        if(rule.command.isEmpty())
+        if(rule.command.isEmpty() && !rule.outputs.isEmpty())
         {
           printf("warning: Rule for \"%s\" does not define a command\n", rule.name.getData());
         }
