@@ -1,5 +1,5 @@
 
-#include <cstdio>
+//#include <cstdio>
 #include <cstdlib>
 #include <cassert>
 
@@ -718,7 +718,7 @@ void Vcxproj::fileOpen(const String& name)
 {
   if(!file.open(name, File::writeFlag))
   {
-    fprintf(stderr, "%s\n", file.getErrno().getString().getData());
+    engine.error(file.getErrno().getString());
     exit(EXIT_FAILURE);
   }
 }
@@ -727,7 +727,7 @@ void Vcxproj::fileWrite(const String& data)
 {
   if(!file.write(data))
   {
-    fprintf(stderr, "%s\n", file.getErrno().getString().getData());
+    engine.error(file.getErrno().getString());
     exit(EXIT_FAILURE);
   }
 }
