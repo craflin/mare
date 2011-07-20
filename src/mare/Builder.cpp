@@ -335,6 +335,12 @@ clean:
   build:
     this->rebuild = true;
 
+    if(outputs.isEmpty() && command.isEmpty())
+    {
+      pid = 0;
+      return true;
+    }
+
     String message;
     Words::append(this->message.isEmpty() ? this->command : this->message, message);
     puts(message.getData());
