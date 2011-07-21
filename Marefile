@@ -18,12 +18,30 @@ targets = {
       "src/mare/**.cpp" = cppSource
       "src/mare/**.h"
     }
+    if !Win32 {
+      files -= "src/mare/Tools/Win32/**"
+    }
   }
   libmare = cppStaticLibrary + {
     root = "src/libmare"
     files = {
       "src/libmare/**.cpp" = cppSource
       "src/libmare/**.h"
+    }
+  }
+}
+
+configurations = {
+  Debug = {
+    if vcxproj {
+      linkFlags += "/SUBSYSTEM:CONSOLE"
+    }
+  }
+  Release = {
+    if vcxproj {
+      linkFlags += "/SUBSYSTEM:CONSOLE"
+      cppFlags -= "/O2"
+      cppFlags += "/O1 /MT /GF"
     }
   }
 }

@@ -315,6 +315,49 @@ void Namespace::setKeyRaw(const String& key)
   variables.append(key, 0);
 }
 
+void Namespace::removeKeys(Namespace& space)
+{
+  if(!compile() || !space.compile())
+    return;
+  for(const Map<String, Namespace*>::Node* i = space.variables.getFirst(); i; i = i->getNext())
+  {
+    Map<String, Namespace*>::Node* node = variables.find(i->key);
+    if(node)
+      variables.remove(node);
+  }
+}
+
+bool Namespace::compareKeys(Namespace& space, bool& result)
+{
+  if(!compile() || !space.compile())
+    return false;
+
+  result = true;
+  if(variables.getSize() != space.variables.getSize())
+    result = false;
+  else
+    for(const Map<String, Namespace*>::Node* i1 = variables.getFirst(), * i2 = space.variables.getFirst(); i2; i1 = i1->getNext(), i2 = i2->getNext())
+      if(i1->key != i2->key)
+      {
+        result = false;
+        break;
+      }
+
+  return true;
+}
+
+#include <cstdlib>
+bool Namespace::versionCompareKeys(Namespace& space, int& result)
+{
+  if(!compile() || !space.compile())
+    return false;
+
+  // TODO: compare versions not numbers
+  result = atoi(getFirstKey().getData()) - atoi(space.getFirstKey().getData());
+
+  return true;
+}
+
 void Namespace::addResolvableKey(const String& key, const String& value)
 {
   assert(!compiled);

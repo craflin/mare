@@ -22,8 +22,6 @@ public:
   void enterUnnamedKey();
   void enterDefaultKey(const String& key);
 
-  bool resolveScript(const String& key, Namespace*& space);
-
   bool leaveKey();
   void getKeys(List<String>& keys);
   void getKeys(const String& key, List<String>& keys, bool allowInheritance = true);
@@ -45,4 +43,9 @@ private:
   void* errorUserData;
   Namespace* currentSpace;
   List<Namespace*> stashedKeys;
+
+  bool resolveScript(const String& key, Namespace*& space);
+  
+  friend class ReferenceStatement;
+  friend class Namespace;
 };

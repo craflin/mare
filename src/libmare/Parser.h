@@ -5,6 +5,7 @@
 #include "Tools/File.h"
 #include "Tools/String.h"
 #include "Engine.h"
+#include "Token.h"
 
 class Statement;
 
@@ -17,33 +18,6 @@ public:
   Statement* parse(const String& file, Engine::ErrorHandler errorHandler, void* userData);
 
 private:
-  class Token
-  {
-  public:
-    enum Id
-    {
-      leftBrace, rightBrace, comma,
-      assignment, plus,
-      string, quotedString,
-      eof,
-      numOfTokens,
-    };
-    Id id;
-    String value;
-
-    const char* getName(Id id) const
-    {
-      static const char* names[] = {
-        "{", "}", ",",
-        "=", "+",
-        "string", "string",
-        "end of file"
-      };
-      return names[id];
-    }
-    const char* getName() const {return getName(id);}
-  };
-
   Engine& engine;
   Engine::ErrorHandler errorHandler;
   void* errorHandlerUserData;
@@ -68,15 +42,33 @@ private:
   /** file = { statement } EOF */
   Statement* readFile();
 
-  /** statement ::= assignment { ( ',' | ';' ) } */
+  /** statements ::= '{' { statement } '}' | statement */
+  Statement* readStatements();
+
+  /** statement ::= ( 'if' expression statements [ 'else' statements ] | assignment ) { ( ',' | ';' ) } */
   Statement* readStatement();
 
-  /** assignment ::= (string | quotedstring) [ '=' concatination ] */
+  /** assignment ::= ( string | quotedstring ) [ ( '=' | '+=' | '-=' ) expression*/
   Statement* readAssignment();
 
-  /** concatination ::= value { '+' value } */
+  /** expression ::= orformula [ '?' expression ':' expression ] */
+  Statement* readExpression();
+
+  /** orformula ::= andformula { '||' andformula } */
+  Statement* readOrForumla();
+
+  /** andformula ::= comparison { '&&' comparison } */
+  Statement* readAndFormula();
+
+  /** comparison ::= relation { ( '==' | '!=' ) relation } */
+  Statement* readComparison();
+
+  /** relation ::= concatination { ( '<' | '>' | '<=' | '>=' ) concatination } */
+  Statement* readRelation();
+
+  /** concatination ::= value { ( '+' | '-' ) value } */
   Statement* readConcatination();
 
-  /** value ::= '{' { statement } '}' | string | quotedstring */
+  /** value ::= '!' value | '(' expression ')' | '{' { statement } '}' | 'true' | 'false' |  string | quotedstring */
   Statement* readValue();
 };

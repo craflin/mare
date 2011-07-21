@@ -4,6 +4,7 @@
 #include "Tools/String.h"
 #include "Tools/List.h"
 #include "Tools/Scope.h"
+#include "Token.h"
 
 class Namespace;
 
@@ -43,8 +44,21 @@ class BinaryStatement : public Statement
 public:
   BinaryStatement(Scope& scope) : Statement(scope) {}
 
+  Token::Id operation;
   Statement* leftOperand;
   Statement* rightOperand;
+
+private:
+  virtual void execute(Namespace& space);
+};
+
+class UnaryStatement : public Statement
+{
+public:
+  UnaryStatement(Scope& scope) : Statement(scope) {}
+
+  Token::Id operation;
+  Statement* operand;
 
 private:
   virtual void execute(Namespace& space);
@@ -67,6 +81,20 @@ public:
   ReferenceStatement(Scope& scope) : Statement(scope) {}
 
   String variable;
+
+private:
+  virtual void execute(Namespace& space);
+};
+
+/** "if ... then ... else ..." and " ... ? ... : ..." */
+class IfStatement : public Statement
+{
+public:
+  IfStatement(Scope& scope) : Statement(scope), elseStatements(0) {}
+
+  Statement* condition;
+  Statement* thenStatements;
+  Statement* elseStatements;
 
 private:
   virtual void execute(Namespace& space);

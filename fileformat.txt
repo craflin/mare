@@ -12,22 +12,16 @@ mare s1:
 
 file ::= { statement } EOF
 statements ::= '{' { statement } '}' | statement 
-statement ::= ( 'if' condition statements [ 'else' statements ] | assignment ) { ( ',' | ';' ) }
-assignment ::= ( string | quotedstring ) [ '=' expression ]
+statement ::= ( 'if' expression statements [ 'else' statements ] | assignment ) { ( ',' | ';' ) }
+assignment ::= ( string | quotedstring ) [ ( '=' | '+=' | '-=' ) expression ]
 
-expression ::= concatination [ '?' expression ':' expression ]
-concatination ::= value { '+' value }
-value ::= '{' { statement } '}' | string | quotedstring
-
-condition ::= orformula [ '?' condition ':' condition ]
+expression ::= orformula [ '?' expression ':' expression ]
 orformula ::= andformula { '||' andformula }
 andformula ::= comparison { '&&' comparison }
 comparison ::= relation { ( '==' | '!=' ) relation }
-relation ::= plusformula { ( '<' | '>' | '<=' | '>=' ) plusformula }
-plusformula ::= multformula { ( '+' | '-' ) multformula }
-multformula ::= factor { ( '*' | '/' | '%' ) factor }
-factor ::= '+' factor | '-' factor | '!' factor | literal
-literal ::= 'true' | 'false' | '(' condition ')' | string | quotedstring
+relation ::= concatination { ( '<' | '>' | '<=' | '>=' ) concatination }
+concatination ::= value { ( '+' | '-' ) value }
+value ::= '!' value | '(' expression ')' | '{' { statement } '}' | 'true' | 'false' | string | quotedstring
 
 mare s2:
 

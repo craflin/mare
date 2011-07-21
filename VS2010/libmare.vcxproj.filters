@@ -62,6 +62,7 @@
     <ClInclude Include="..\src\libmare\Tools\Words.h">
       <Filter>Tools</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\libmare\Token.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Tools">

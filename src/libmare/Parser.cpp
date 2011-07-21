@@ -60,12 +60,94 @@ void Parser::nextToken()
     switch(c)
     {
     case -1: currentToken.id = Token::eof; return;
+    case '(': currentToken.id = Token::leftParenthesis; return;
+    case ')': currentToken.id = Token::rightParenthesis; return;
     case '{': currentToken.id = Token::leftBrace; return;
     case '}': currentToken.id = Token::rightBrace; return;
     case ',': currentToken.id = Token::comma; return;
     case ';': currentToken.id = Token::comma; return;
-    case '=': currentToken.id = Token::assignment; return;
-    case '+': currentToken.id = Token::plus; return;
+    case '?': currentToken.id = Token::interrogation; return;
+    case ':': currentToken.id = Token::colon; return;
+
+    case '&':
+      if(currentChar == '&')
+      {
+        nextChar();
+        currentToken.id = Token::and_;
+      }
+      else
+        unexpectedChar(c);
+      return;
+
+    case '|':
+      if(currentChar == '|')
+      {
+        nextChar();
+        currentToken.id = Token::or_;
+      }
+      else
+        unexpectedChar(c);
+      return;
+
+    case '=':
+      if(currentChar == '=')
+      {
+        nextChar();
+        currentToken.id = Token::equal;
+      }
+      else
+        currentToken.id = Token::assignment;
+      return;
+
+    case '+':
+      if(currentChar == '=')
+      {
+        nextChar();
+        currentToken.id = Token::plusAssignment;
+      }
+      else
+        currentToken.id = Token::plus;
+      return;
+
+    case '-':
+      if(currentChar == '=')
+      {
+        nextChar();
+        currentToken.id = Token::minusAssignment;
+      }
+      else
+        currentToken.id = Token::minus;
+      return;
+
+    case '!':
+      if(currentChar == '=')
+      {
+        nextChar();
+        currentToken.id = Token::notEqual;
+      }
+      else
+        currentToken.id = Token::not_;
+      return;
+
+    case '>':
+      if(currentChar == '=')
+      {
+        nextChar();
+        currentToken.id = Token::greaterEqualThan;
+      }
+      else
+        currentToken.id = Token::greaterThan;
+      return;
+
+    case '<':
+      if(currentChar == '=')
+      {
+        nextChar();
+        currentToken.id = Token::lowerEqualThan;
+      }
+      else
+        currentToken.id = Token::lowerThan;
+      return;
 
     case '/': // comment ?
       switch(currentChar)
@@ -215,9 +297,39 @@ Statement* Parser::readFile()
   return statement;
 }
 
+Statement* Parser::readStatements()
+{
+  if(currentToken.id == Token::leftBrace)
+  {
+    nextToken();
+    BlockStatement* blockStatement = new BlockStatement(engine);
+    while(currentToken.id != Token::rightBrace)
+      blockStatement->statements.append(readStatement());
+    nextToken();
+    return blockStatement;
+  }
+  else
+    return readStatement();
+}
+
 Statement* Parser::readStatement()
 {
-  Statement* statement = readAssignment();
+  Statement* statement;
+  if(currentToken.id == Token::string && currentToken.value == "if")
+  {
+    nextToken();
+    IfStatement* ifStatement = new IfStatement(engine);
+    ifStatement->condition = readExpression();
+    ifStatement->thenStatements = readStatements();
+    if(currentToken.id == Token::string && currentToken.value == "else")
+    {
+      nextToken();
+      ifStatement->elseStatements = readStatements();
+    }
+    statement = ifStatement;
+  }
+  else
+    statement = readAssignment();
   while(currentToken.id == Token::comma)
     nextToken();
   return statement;
@@ -227,7 +339,18 @@ Statement* Parser::readAssignment()
 {
   AssignStatement* statement = new AssignStatement(engine);
   readString(statement->variable);
-  if(currentToken.id == Token::assignment)
+  if(currentToken.id == Token::plusAssignment || currentToken.id == Token::minusAssignment)
+  {
+    BinaryStatement* binaryStatement = new BinaryStatement(engine);
+    binaryStatement->operation = currentToken.id;
+    nextToken();
+    ReferenceStatement* refStatement = new ReferenceStatement(engine);
+    refStatement->variable = statement->variable;
+    binaryStatement->leftOperand = refStatement;
+    binaryStatement->rightOperand = readConcatination();
+    statement->value = binaryStatement;
+  }
+  else if(currentToken.id == Token::assignment)
   {
     nextToken();
     statement->value = readConcatination();
@@ -235,13 +358,94 @@ Statement* Parser::readAssignment()
   return statement;
 }
 
+Statement* Parser::readExpression()
+{
+  Statement* statement = readOrForumla();
+  if(currentToken.id == Token::interrogation)
+  {
+    nextToken();
+    IfStatement* ifStatement = new IfStatement(engine);
+    ifStatement->condition = statement;
+    ifStatement->thenStatements = readExpression();
+    if(currentToken.id == Token::colon)
+    {
+      nextToken();
+      ifStatement->elseStatements = readExpression();
+    }
+    return ifStatement;
+  }
+  return statement;
+}
+
+Statement* Parser::readOrForumla()
+{
+  Statement* statement = readAndFormula();
+  while(currentToken.id == Token::or_)
+  {
+    BinaryStatement* binaryStatement = new BinaryStatement(engine);
+    binaryStatement->operation = currentToken.id;
+    nextToken();
+    binaryStatement->leftOperand = statement;
+    binaryStatement->rightOperand = readAndFormula();
+    statement = binaryStatement;
+  }
+  return statement;
+}
+
+Statement* Parser::readAndFormula()
+{
+  Statement* statement = readComparison();
+  while(currentToken.id == Token::and_)
+  {
+    BinaryStatement* binaryStatement = new BinaryStatement(engine);
+    binaryStatement->operation = currentToken.id;
+    nextToken();
+    binaryStatement->leftOperand = statement;
+    binaryStatement->rightOperand = readComparison();
+    statement = binaryStatement;
+  }
+  return statement;
+}
+
+Statement* Parser::readComparison()
+{
+  Statement* statement = readRelation();
+  while(currentToken.id == Token::equal || currentToken.id == Token::notEqual)
+  {
+    BinaryStatement* binaryStatement = new BinaryStatement(engine);
+    binaryStatement->operation = currentToken.id;
+    nextToken();
+    binaryStatement->leftOperand = statement;
+    binaryStatement->rightOperand = readRelation();
+    statement = binaryStatement;
+  }
+  return statement;
+}
+
+Statement* Parser::readRelation()
+{
+  Statement* statement = readValue();
+  while(currentToken.id == Token::greaterThan || currentToken.id == Token::lowerThan || 
+    currentToken.id == Token::greaterEqualThan || currentToken.id == Token::lowerEqualThan)
+  {
+    BinaryStatement* binaryStatement = new BinaryStatement(engine);
+    binaryStatement->operation = currentToken.id;
+    nextToken();
+    binaryStatement->leftOperand = statement;
+    binaryStatement->rightOperand = readValue();
+    statement = binaryStatement;
+  }
+  return statement;
+}
+
 Statement* Parser::readConcatination()
 {
   Statement* statement = readValue();
-  while(currentToken.id == Token::plus)
+  while(currentToken.id == Token::plus || currentToken.id == Token::minus)
   {
-    nextToken();
     BinaryStatement* binaryStatement = new BinaryStatement(engine);
+    binaryStatement->operation = currentToken.id;
+    nextToken();
     binaryStatement->leftOperand = statement;
     binaryStatement->rightOperand = readValue();
     statement = binaryStatement;
@@ -253,6 +457,21 @@ Statement* Parser::readValue()
 {
   switch(currentToken.id)
   {
+  case Token::not_:
+    {
+      UnaryStatement* statement = new UnaryStatement(engine);
+      statement->operation = currentToken.id;
+      nextToken();
+      statement->operand = readValue();
+      return statement;
+    }
+  case Token::leftParenthesis:
+    {
+      nextToken();
+      Statement* statement = readExpression();
+      expectToken(Token::rightParenthesis);
+      return statement;
+    }
   case Token::leftBrace:
     {
       nextToken();
@@ -267,12 +486,25 @@ Statement* Parser::readValue()
       return statements;
     }
   case Token::string:
+    if(currentToken.value == "true")
+    {
+      nextToken();
+      StringStatement* statement = new StringStatement(engine);
+      statement->value = "true";
+      return statement;
+    }
+    else if(currentToken.value == "false")
+    {
+      nextToken();
+      return new StringStatement(engine);
+    }
+    else
     {
       ReferenceStatement* statement = new ReferenceStatement(engine);
       readString(statement->variable);
       return statement;
     }
-  default:
+  default: // quotedString
     {
       StringStatement* statement = new StringStatement(engine);
       readString(statement->value);

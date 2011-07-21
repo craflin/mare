@@ -24,6 +24,9 @@ public:
   void addKey(const String& key, Statement* value);
   void addKeyRaw(const String& key, Statement* value);
   void setKeyRaw(const String& key);
+  void removeKeys(Namespace& space);
+  bool compareKeys(Namespace& space, bool& result);
+  bool versionCompareKeys(Namespace& space, int& result);
 
   void addResolvableKey(const String& key, const String& value);
 
