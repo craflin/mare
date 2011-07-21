@@ -1,6 +1,7 @@
 
 BUILDDIR := Debug
 TARGET := $(BUILDDIR)/mare
+INCLUDEPATHS := src/libmare
 FILES := $(shell find src -name \*.cpp)
 OBJECTS := $(foreach file,$(patsubst %.cpp,%.o,$(FILES)),$(BUILDDIR)/$(file))
 
@@ -13,7 +14,7 @@ prebuild:
 
 $(BUILDDIR)/%.o: %.cpp | prebuild
 	@echo "$<"
-	@$(CXX) -MMD -Wall -g -o $@ -c $<
+	@$(CXX) -MMD -Wall -g $(patsubst %,-I%,$(INCLUDEPATHS)) -o $@ -c $<
 
 $(TARGET): $(OBJECTS) | prebuild
 	@echo Linking $(notdir $@)...
