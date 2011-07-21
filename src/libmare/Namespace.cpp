@@ -317,7 +317,7 @@ void Namespace::setKeyRaw(const String& key)
 
 void Namespace::removeKeys(Namespace& space)
 {
-  if(!compile() || !space.compile())
+  if(!space.compile())
     return;
   for(const Map<String, Namespace*>::Node* i = space.variables.getFirst(); i; i = i->getNext())
   {
