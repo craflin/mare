@@ -3,6 +3,7 @@
 
 #include "Tools/String.h"
 #include "Tools/List.h"
+#include "Tools/Map.h"
 #include "Tools/Scope.h"
 
 class Namespace;
@@ -20,20 +21,21 @@ public:
 
   bool enterKey(const String& key, bool allowInheritance = true);
   void enterUnnamedKey();
-  void enterDefaultKey(const String& key);
+  void enterNewKey(const String& key);
 
   bool leaveKey();
+  //bool leaveUnnamedKey();
   void getKeys(List<String>& keys);
   void getKeys(const String& key, List<String>& keys, bool allowInheritance = true);
   String getFirstKey();
   String getFirstKey(const String& key, bool allowInheritance = true);
 
+  void setKey(const String& key);
+
   void addDefaultKey(const String& key);
   void addDefaultKey(const String& key, const String& value);
-  void setDefaultKey(const String& key);
-  void addResolvableKey(const String& key, const String& value = String());
-
-  //void resetKey();
+  //void addDefaultKey(const String& key, const String& value, const String& subValue);
+  void addDefaultKey(const String& key, const Map<String, String>& value);
 
   void pushKey();
   bool popKey();

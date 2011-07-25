@@ -10,30 +10,32 @@ class Statement;
 class Namespace : public Scope, public Scope::Object
 {
 public:
-  Namespace(Scope& scope, Namespace* parent, Engine* engine, Statement* statement, Namespace* next, bool inherited) : Scope::Object(scope), parent(parent), statement(statement), next(next), engine(engine), inherited(inherited), compiled(false), compiling(false), unnamedSpace(0) {}
+  Namespace(Scope& scope, Namespace* parent, Engine* engine, Statement* statement, Namespace* next, bool inherited) : Scope::Object(scope), parent(parent), defaultStatement(0), statement(statement), next(next), engine(engine), inherited(inherited), compiled(false), compiling(false), unnamedSpace(0), inheritedSpaces(0) {}
   
   inline Namespace* getParent() {return parent;}
-  bool resolveScript(const String& name, Namespace*& space);
+  bool resolveScript2(const String& name, Namespace*& space);
   Namespace* enterKey(const String& name, bool allowInheritance);
-  Namespace* enterUnnamedKey();
-  Namespace* enterDefaultKey(const String& name);
+  Namespace* enterUnnamedKey(Statement* statement);
+  Namespace* enterNewKey(const String& name);
   void getKeys(List<String>& keys);
   String getFirstKey();
   inline Engine& getEngine() {return *engine;}
 
-  void addKey(const String& key, Statement* value);
-  void addKeyRaw(const String& key, Statement* value);
-  void setKeyRaw(const String& key);
+  void addKey(const String& key, Statement* value); // TODO: rename to registerKey?
+  void addKeyRaw(const String& key, Statement* value); // TODO: rename to registerKeyRaw?
+  void setKeyRaw(const String& key); // TODO: remove this and add something like clearKeys()
   void removeKeys(Namespace& space);
   bool compareKeys(Namespace& space, bool& result);
   bool versionCompareKeys(Namespace& space, int& result);
 
-  void addResolvableKey(const String& key, const String& value);
-
-  //void reset();
+  void addDefaultStatement(Statement* statement);
+  void addDefaultKey(const String& key);
+  void addDefaultKey(const String& key, const String& value);
+  void addDefaultKey(const String& key, const Map<String, String>& value);
 
 private:
   Namespace* parent;
+  Statement* defaultStatement;
   Statement* statement;
   Namespace* next;
   Engine* engine;
@@ -43,8 +45,11 @@ private:
   Map<String, Namespace*> variables;
   Namespace* unnamedSpace;
 
+  Namespace* inheritedSpaces;
+
   bool compile();
   String evaluateString(const String& string);
 
+  friend class Engine;
   friend class ReferenceStatement; // temporary hack
 };

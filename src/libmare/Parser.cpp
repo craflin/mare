@@ -364,15 +364,15 @@ Statement* Parser::readExpression()
   if(currentToken.id == Token::interrogation)
   {
     nextToken();
-    IfStatement* ifStatement = new IfStatement(engine);
-    ifStatement->condition = statement;
-    ifStatement->thenStatements = readExpression();
+    ConditionalStatement* conditionalStatement = new ConditionalStatement(engine);
+    conditionalStatement->condition = statement;
+    conditionalStatement->thenStatements = readExpression();
     if(currentToken.id == Token::colon)
     {
       nextToken();
-      ifStatement->elseStatements = readExpression();
+      conditionalStatement->elseStatements = readExpression();
     }
-    return ifStatement;
+    return conditionalStatement;
   }
   return statement;
 }

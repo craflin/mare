@@ -14,7 +14,6 @@ bool Engine::load(const String& file)
   if(!root)
     return false;
   currentSpace = new Namespace(*this, 0, this, root, 0, false);
-  assert(currentSpace);
   return true;
 }
 
@@ -36,23 +35,22 @@ bool Engine::enterKey(const String& key, bool allowInheritance)
 
 void Engine::enterUnnamedKey()
 {
-  Namespace* subSpace = currentSpace->enterUnnamedKey();
+  Namespace* subSpace = currentSpace->enterUnnamedKey(0);
   assert(subSpace);
   currentSpace = subSpace;
 }
 
-void Engine::enterDefaultKey(const String& key)
+void Engine::enterNewKey(const String& key)
 {
-  Namespace* subSpace = currentSpace->enterDefaultKey(key);
+  Namespace* subSpace = currentSpace->enterNewKey(key);
   assert(subSpace);
   currentSpace = subSpace;
 }
 
 bool Engine::resolveScript(const String& key, Namespace*& result)
 {
-  for(Namespace* space = currentSpace->getParent(); space; space = space->getParent())
-    if(space->resolveScript(key, result))
-      return true;
+  if(currentSpace->getParent())
+    return currentSpace->getParent()->resolveScript2(key, result);
   return false;
 }
 
@@ -61,10 +59,17 @@ bool Engine::leaveKey()
   if(!currentSpace->getParent())
     return false;
   currentSpace = currentSpace->getParent();
-  assert(currentSpace);
   return true;
 }
-
+/*
+bool Engine::leaveUnnamedKey()
+{
+  if(!currentSpace->getParent())
+    return false;
+  currentSpace = currentSpace->getParent();
+  return true;
+}
+*/
 void Engine::getKeys(List<String>& keys)
 {
   currentSpace->getKeys(keys);
@@ -97,31 +102,31 @@ String Engine::getFirstKey(const String& key, bool allowInheritance)
 
 void Engine::addDefaultKey(const String& key)
 {
-  currentSpace->addKeyRaw(key, 0);
+  currentSpace->addDefaultKey(key);
 }
 
 void Engine::addDefaultKey(const String& key, const String& value)
 {
-  enterDefaultKey(key);
-  currentSpace->addResolvableKey(value, String());
-  leaveKey();
+  currentSpace->addDefaultKey(key, value);
+}
+/*
+void Engine::addDefaultKey(const String& key, const String& value, const String& subValue)
+{
+  Map<String, String> values;
+  values.append(value, subValue);
+  currentSpace->addResolvableKey(key, values);
+}
+*/
+void Engine::addDefaultKey(const String& key, const Map<String, String>& value)
+{
+  currentSpace->addDefaultKey(key, value);
 }
 
-void Engine::setDefaultKey(const String& key)
+void Engine::setKey(const String& key)
 {
   currentSpace->setKeyRaw(key);
 }
 
-void Engine::addResolvableKey(const String& key, const String& value)
-{
-  currentSpace->addResolvableKey(key, value);
-}
-/*
-void Engine::resetKey()
-{
-  currentSpace->reset();
-}
-*/
 void Engine::pushKey()
 {
   stashedKeys.append(currentSpace);

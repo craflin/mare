@@ -115,6 +115,8 @@ private:
   Map<String, Option> knownCppOptions;
   Map<String, Option> knownLinkOptions;
 
+  bool readFile();
+
   bool generateSln();
   bool generateVcxprojs();
   bool generateVcxproj(Project& project);

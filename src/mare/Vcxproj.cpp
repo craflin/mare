@@ -107,66 +107,91 @@ bool Vcxproj::generate(const Map<String, String>& userArgs)
   engine.addDefaultKey("vcxproj", "true"); // temp
   engine.addDefaultKey("host", "Win32");
   engine.addDefaultKey("platforms", "Win32");
-  engine.enterDefaultKey("configurations");
-    engine.addResolvableKey("Debug");
-    engine.addResolvableKey("Release");
-  engine.leaveKey();
+  engine.addDefaultKey("configurations", "Debug");
+  engine.addDefaultKey("configurations", "Release");
   engine.addDefaultKey("targets");
   engine.addDefaultKey("buildDir", "$(configuration)");
   engine.addDefaultKey("cppFlags", "/W3 $(if $(Debug),,/O2 /Oy)");
   engine.addDefaultKey("linkFlags", "$(if $(Debug),/INCREMENTAL /DEBUG,/OPT:REF /OPT:ICF)");
-  engine.enterDefaultKey("cppSource");
-    engine.addResolvableKey("command", "__clCompile");
-  engine.leaveKey();
-  engine.enterDefaultKey("cSource");
-    engine.addResolvableKey("command", "__clCompile");
-  engine.leaveKey();
-  engine.enterDefaultKey("rcSource");
-    engine.addResolvableKey("command", "__rcCompile");
-  engine.leaveKey();
-  engine.enterDefaultKey("cppApplication");
-    engine.addResolvableKey("command", "__Application");
-    engine.addResolvableKey("outputs", "$(buildDir)/$(target).exe");
-  engine.leaveKey();
-  engine.enterDefaultKey("cppDynamicLibrary");
-    engine.addResolvableKey("command", "__DynamicLibrary");
-    engine.addResolvableKey("outputs", "$(buildDir)/$(patsubst lib%,%,$(target)).dll");
-  engine.leaveKey();
-  engine.enterDefaultKey("cppStaticLibrary");
-    engine.addResolvableKey("command", "__StaticLibrary");
-    engine.addResolvableKey("outputs", "$(buildDir)/$(patsubst lib%,%,$(target)).lib");
-  engine.leaveKey();
-  engine.enterDefaultKey("cApplication");
-    engine.addResolvableKey("command", "__Application");
-    engine.addResolvableKey("outputs", "$(buildDir)/$(target).exe");
-  engine.leaveKey();
-  engine.enterDefaultKey("cDynamicLibrary");
-    engine.addResolvableKey("command", "__DynamicLibrary");
-    engine.addResolvableKey("outputs", "$(buildDir)/$(patsubst lib%,%,$(target)).dll");
-  engine.leaveKey();
-  engine.enterDefaultKey("cStaticLibrary");
-    engine.addResolvableKey("command", "__StaticLibrary");
-    engine.addResolvableKey("outputs", "$(buildDir)/$(patsubst lib%,%,$(target)).lib");
-  engine.leaveKey();
+  {
+    Map<String, String> cSource;
+    cSource.append("command", "__clCompile");
+    engine.addDefaultKey("cppSource", cSource);
+    engine.addDefaultKey("cSource", cSource);
+  }
+  {
+    Map<String, String> rcSource;
+    rcSource.append("command", "__rcCompile");
+    engine.addDefaultKey("rcSource", rcSource);
+  }
+  {
+    Map<String, String> cApplication;
+    cApplication.append("command", "__Application");
+    cApplication.append("outputs", "$(buildDir)/$(target).exe");
+    engine.addDefaultKey("cppApplication", cApplication);
+    engine.addDefaultKey("cApplication", cApplication);
+  }
+  {
+    Map<String, String> cDynamicLibrary;
+    cDynamicLibrary.append("command", "__DynamicLibrary");
+    cDynamicLibrary.append("outputs", "$(buildDir)/$(patsubst lib%,%,$(target)).dll");
+    engine.addDefaultKey("cppDynamicLibrary", cDynamicLibrary);
+    engine.addDefaultKey("cDynamicLibrary", cDynamicLibrary);
+  }
+  {
+    Map<String, String> cStaticLibrary;
+    cStaticLibrary.append("command", "__StaticLibrary");
+    cStaticLibrary.append("outputs", "$(buildDir)/$(patsubst lib%,%,$(target)).lib");
+    engine.addDefaultKey("cppStaticLibrary", cStaticLibrary);
+    engine.addDefaultKey("cStaticLibrary", cStaticLibrary);
+  }
 
+  /*
   // add user arguments
   engine.enterUnnamedKey();
   for(const Map<String, String>::Node* i = userArgs.getFirst(); i; i = i->getNext())
     engine.addDefaultKey(i->key, i->data);
+    */
+
+  if(!readFile())
+    return false;
+
+  // generate solution file
+  if(!generateSln())
+    return false;
+
+  // generate project files
+  if(!generateVcxprojs())
+    return false;
+
+  return true;
+}
+
+bool Vcxproj::readFile()
+{
 
   // get some global keys
   solutionName = engine.getFirstKey("name");
+  /*
   List<String> inputPlatforms;
   engine.getKeys("platforms", inputPlatforms);
   List<String> target;
   engine.getKeys("target", target);
   for(const List<String>::Node* i = target.getFirst(); i; i = i->getNext())
     activesProjects.append(i->data, 0);
+    */
+
+  List<String> inputPlatforms, inputConfigurations, inputTargets;
+  engine.getKeys("platforms", inputPlatforms);
+  engine.getKeys("configurations", inputConfigurations);
+  engine.getKeys("targets", inputTargets);
+
+  engine.enterKey("platforms");
 
   for(const List<String>::Node* i = inputPlatforms.getFirst(); i; i = i->getNext())
   {
     const String& platform = i->data;
-    engine.enterUnnamedKey();
+    engine.enterKey(platform);
     engine.addDefaultKey("platform", platform);
     engine.addDefaultKey(platform, "true"); // temp
 
@@ -174,22 +199,21 @@ bool Vcxproj::generate(const Map<String, String>& userArgs)
     engine.enterKey("configurations");
 
     // get configuration project list
-    List<String> configurations;
-    engine.getKeys(configurations);
-    for(const List<String>::Node* i = configurations.getFirst(); i; i = i->getNext())
+    for(const List<String>::Node* i = inputConfigurations.getFirst(); i; i = i->getNext())
     {
       const String& configName = i->data;
       const String configKey = configName + "|" + platform;
       const Config& config = configs.append(configKey, Config(configName, platform));
 
-      engine.enterKey(configName);
+      if(!engine.enterKey(configName))
+      {
+        engine.error(String().format(256, "cannot find configuration \"%s\"", configName.getData()));
+        return false;
+      }
       engine.addDefaultKey("configuration", configName);
       engine.addDefaultKey(configName, "true"); // temp
 
-      List<String> targets;
-      engine.enterKey("targets");
-      engine.getKeys(targets);
-      for(const List<String>::Node* i = targets.getFirst(); i; i = i->getNext())
+      for(const List<String>::Node* i = inputTargets.getFirst(); i; i = i->getNext())
       {
         Map<String, Project>::Node* node = projects.find(i->data);
         Project* project;
@@ -208,7 +232,11 @@ bool Vcxproj::generate(const Map<String, String>& userArgs)
         }
         Project::Config& projectConfig = project->configs.append(configKey, Project::Config(config.name, config.platform));
 
-        engine.enterKey(i->data);
+        if(!engine.enterKey(i->data))
+        {
+          engine.error(String().format(256, "cannot find target \"%s\"", i->data.getData()));
+          return false;
+        }
         engine.addDefaultKey("target", i->data);
         engine.getKeys("buildCommand", projectConfig.buildCommand, false);
         engine.getKeys("reBuildCommand", projectConfig.reBuildCommand, false);
@@ -300,14 +328,6 @@ bool Vcxproj::generate(const Map<String, String>& userArgs)
   }
   if(solutionName.isEmpty() && !projects.isEmpty())
     solutionName = projects.getFirst()->data.name;
-
-  // generate solution file
-  if(!generateSln())
-    return false;
-
-  // generate project files
-  if(!generateVcxprojs())
-    return false;
 
   return true;
 }

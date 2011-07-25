@@ -86,11 +86,25 @@ private:
   virtual void execute(Namespace& space);
 };
 
-/** "if ... then ... else ..." and " ... ? ... : ..." */
+/** "if ... then ... else ..." */
 class IfStatement : public Statement
 {
 public:
   IfStatement(Scope& scope) : Statement(scope), elseStatements(0) {}
+
+  Statement* condition;
+  Statement* thenStatements;
+  Statement* elseStatements;
+
+private:
+  virtual void execute(Namespace& space);
+};
+
+/** " ... ? ... : ..." */
+class ConditionalStatement : public Statement
+{
+public:
+  ConditionalStatement(Scope& scope) : Statement(scope), elseStatements(0) {}
 
   Statement* condition;
   Statement* thenStatements;

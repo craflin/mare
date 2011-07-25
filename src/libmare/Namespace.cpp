@@ -108,11 +108,11 @@ String Namespace::evaluateString(const String& string)
         Words::split(list, words);
         const char* inputStart = input;
         engine.enterUnnamedKey();
-        engine.enterDefaultKey(var);
+        engine.enterNewKey(var);
         for(List<String>::Node* i = words.getFirst(); i; i = i->getNext())
         {
           engine.pushKey();
-          engine.setDefaultKey(i->data);
+          engine.setKey(i->data);
           engine.leaveKey();
           engine.enterUnnamedKey();
           input = inputStart;
@@ -211,8 +211,13 @@ Namespace* Namespace::enterKey(const String& name, bool allowInheritance)
 
   {
     Map<String, Namespace*>::Node* j = variables.find(name);
-    if(j && (allowInheritance || !j->data->inherited))
-      return j->data;
+    if(j)
+    {
+      if(!j->data)
+        return (j->data = new Namespace(*this, this, engine, 0, 0, false));
+      if(allowInheritance || !j->data->inherited)
+        return j->data;
+    }
   }
 
 failure:
@@ -221,7 +226,7 @@ failure:
     Namespace* space;
     if(engine->resolveScript(name, space))
     {
-      Namespace* newSpace = new Namespace(*this, this, engine, space->statement, space->next, true);
+      Namespace* newSpace = space ? new Namespace(*this, this, engine, space->statement, space->next, true) : new Namespace(*this, this, engine, 0, 0, true);
       variables.append(name, newSpace);
       return newSpace;
     }
@@ -229,46 +234,100 @@ failure:
   return 0;
 }
 
-Namespace* Namespace::enterUnnamedKey()
+Namespace* Namespace::enterUnnamedKey(Statement* statement)
 {
   if(unnamedSpace)
     delete unnamedSpace;
-  unnamedSpace = new Namespace(*this, this, engine, 0, 0, false);
+  unnamedSpace = new Namespace(*this, this, engine, statement, 0, false);
   return unnamedSpace;
 }
 
-Namespace* Namespace::enterDefaultKey(const String& name)
+Namespace* Namespace::enterNewKey(const String& name)
 {
   assert(!compiled);
 
   Map<String, Namespace*>::Node* j = variables.find(name);
-  if(j && !j->data->inherited)
-    return j->data;
+  if(j)
+  {
+    if(!j->data)
+      return (j->data = new Namespace(*this, this, engine, 0, 0, false));
+    if(!j->data->inherited)
+      return j->data;
+  }
 
   Namespace* space = new Namespace(*this, this, engine, 0, 0, false);
   variables.append(name, space);
   return space;
 }
 
-bool Namespace::resolveScript(const String& name, Namespace*& space)
+bool Namespace::resolveScript2(const String& name, Namespace*& result)
 {
-  if(!compile())
+  //assert(!compiling);
+  if(compiling)
+  { // we need this as long as $(foreach ...) is not properly impelemented :)
+    if(parent)
+      return parent->resolveScript2(name, result);
     return false;
-
-  Map<String, Namespace*>::Node* j = variables.find(name);
-  if(j)
-    space = j->data;
-  else
-    return false;
-
-  while(space->compiling)
-  {
-    space = space->next;
-    if(!space)
-      return false;
   }
 
-  return true;
+  // try a local lookup
+  Map<String, Namespace*>::Node* node = variables.find(name);
+  if(node)
+  {
+    result = node->data;
+    if(!result)
+      return true;
+    do
+    {
+      if(!result->compiling)
+        return true;
+      result = result->next;
+    } while(result);
+  }
+
+  // ...
+  Namespace* space = parent;
+  Namespace** ispace = &inheritedSpaces;
+  while(space && *ispace)
+  {
+    Map<String, Namespace*>::Node* node = (*ispace)->variables.find(name);
+    if(node)
+    {
+      result = node->data;
+      if(!result)
+        return true;
+      do
+      {
+        if(!result->compiling)
+          return true;
+        result = result->next;
+      } while(result);
+    }
+    space = space->parent;
+    ispace = &(*ispace)->next;
+  }
+  while(space)
+  {
+    *ispace = new Namespace(*this, space->parent, engine, space->statement, 0, false);
+    (*ispace)->defaultStatement = space->defaultStatement;
+    (*ispace)->compile();
+    Map<String, Namespace*>::Node* node = (*ispace)->variables.find(name);
+    if(node)
+    {
+      result = node->data;
+      if(!result)
+        return true;
+      do
+      {
+        if(!result->compiling)
+          return true;
+        result = result->next;
+      } while(result);
+    }
+    space = space->parent;
+    ispace = &(*ispace)->next;
+  }
+  return false;
 }
 
 void Namespace::addKey(const String& key, Statement* value)
@@ -304,9 +363,9 @@ void Namespace::addKeyRaw(const String& key, Statement* value)
   assert(!key.isEmpty());
   Map<String, Namespace*>::Node* node = variables.find(key);
   if(node)
-    node->data = new Namespace(*this, this, engine, value, node->data, false);
+    node->data = value ? new Namespace(*this, this, engine, value, node->data, false) : 0;
   else
-    variables.append(key, new Namespace(*this, this, engine, value, 0, false));
+    variables.append(key, value ? new Namespace(*this, this, engine, value, 0, false) : 0);
 }
 
 void Namespace::setKeyRaw(const String& key)
@@ -320,11 +379,12 @@ void Namespace::removeKeys(Namespace& space)
   if(!space.compile())
     return;
   for(const Map<String, Namespace*>::Node* i = space.variables.getFirst(); i; i = i->getNext())
-  {
-    Map<String, Namespace*>::Node* node = variables.find(i->key);
-    if(node)
-      variables.remove(node);
-  }
+    if(!i->data || !i->data->inherited)
+    {
+      Map<String, Namespace*>::Node* node = variables.find(i->key);
+      if(node)
+        variables.remove(node);
+    }
 }
 
 bool Namespace::compareKeys(Namespace& space, bool& result)
@@ -332,18 +392,29 @@ bool Namespace::compareKeys(Namespace& space, bool& result)
   if(!compile() || !space.compile())
     return false;
 
-  result = true;
-  if(variables.getSize() != space.variables.getSize())
-    result = false;
-  else
-    for(const Map<String, Namespace*>::Node* i1 = variables.getFirst(), * i2 = space.variables.getFirst(); i2; i1 = i1->getNext(), i2 = i2->getNext())
-      if(i1->key != i2->key)
-      {
-        result = false;
-        break;
-      }
-
-  return true;
+  const Map<String, Namespace*>::Node* i1 = variables.getFirst();
+  const Map<String, Namespace*>::Node* i2 = space.variables.getFirst();
+  for(;;)
+  {
+    while(i1 && i1->data && i1->data->inherited)
+      i1 = i1->getNext();
+    while(i2 && i2->data && i2->data->inherited)
+      i2 = i2->getNext();
+    if(!i1 && !i2)
+    {
+      result = true;
+      return true;
+    }
+    if(!i1 || !i2 || i1->key != i2->key)
+    {
+      result = false;
+      return true;
+    }
+    i1 = i1->getNext();
+    i2 = i2->getNext();
+  }
+  assert(false);
+  return false;
 }
 
 #include <cstdlib>
@@ -358,40 +429,59 @@ bool Namespace::versionCompareKeys(Namespace& space, int& result)
   return true;
 }
 
-void Namespace::addResolvableKey(const String& key, const String& value)
+void Namespace::addDefaultStatement(Statement* statement)
 {
   assert(!compiled);
-  Statement* newStatement;
-  if(value.isEmpty())
-  {
-    StringStatement* stringStatement = new StringStatement(*this);
-    stringStatement->value = key;
-    newStatement = stringStatement;
-  }
+  if(!defaultStatement)
+    defaultStatement = statement;
   else
   {
-    StringStatement* stringStatement = new StringStatement(*this);
-    stringStatement->value = value;
-    AssignStatement* assignStatement = new AssignStatement(*this);
-    assignStatement->variable = key;
-    assignStatement->value = stringStatement;
-    newStatement = assignStatement;
-  }
-  if(!statement)
-    statement = newStatement;
-  else
-  {
-    BlockStatement* blockStatement = dynamic_cast<BlockStatement*>(statement);
+    BlockStatement* blockStatement = dynamic_cast<BlockStatement*>(defaultStatement);
     if(blockStatement)
-      blockStatement->statements.append(newStatement);
+      blockStatement->statements.append(statement);
     else
     {
       blockStatement = new BlockStatement(*this);
+      blockStatement->statements.append(defaultStatement);
       blockStatement->statements.append(statement);
-      blockStatement->statements.append(newStatement);
-      statement = blockStatement;
+      defaultStatement = blockStatement;
     }
   }
+}
+
+void Namespace::addDefaultKey(const String& key)
+{
+  StringStatement* stringStatement = new StringStatement(*this);
+  stringStatement->value = key;
+  addDefaultStatement(stringStatement);
+}
+
+void Namespace::addDefaultKey(const String& key, const String& value)
+{
+  StringStatement* stringStatement = new StringStatement(*this);
+  stringStatement->value = value;
+  AssignStatement* assignStatement = new AssignStatement(*this);
+  assignStatement->variable = key;
+  assignStatement->value = stringStatement;
+  addDefaultStatement(assignStatement);
+}
+
+void Namespace::addDefaultKey(const String& key, const Map<String, String>& value)
+{
+  BlockStatement* blockStatement = new BlockStatement(*this);
+  for(const Map<String, String>::Node* i = value.getFirst(); i; i = i->getNext())
+  {
+    StringStatement* stringStatement = new StringStatement(*this);
+    stringStatement->value = i->data;
+    AssignStatement* assignStatement = new AssignStatement(*this);
+    assignStatement->variable = i->key;
+    assignStatement->value = stringStatement;
+    blockStatement->statements.append(assignStatement);
+  }
+  AssignStatement* assignStatement = new AssignStatement(*this);
+  assignStatement->variable = key;
+  assignStatement->value = blockStatement;
+  addDefaultStatement(assignStatement);
 }
 
 void Namespace::getKeys(List<String>& keys)
@@ -420,17 +510,11 @@ bool Namespace::compile()
   if(compiling)
     return false;
   compiling = true;
+  if(defaultStatement)
+    defaultStatement->execute(*this);
   if(statement)
     statement->execute(*this);
   compiling = false;
   compiled = true;
   return true;
 }
-/*
-void Namespace::reset()
-{
-  compiled = false;
-  variables.clear();
-  spaces.clear();
-}
-*/

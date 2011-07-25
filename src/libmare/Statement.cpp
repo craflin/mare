@@ -13,6 +13,16 @@ void BlockStatement::execute(Namespace& space)
 
 void AssignStatement::execute(Namespace& space)
 {
+  /*
+  if(variable == "testa")
+  {
+    int k = 42;
+  }
+  if(variable == "testb")
+  {
+    int k = 42;
+  }
+  */
   space.addKey(variable, value);
 }
 
@@ -43,7 +53,7 @@ void BinaryStatement::execute(Namespace& space)
   case Token::greaterEqualThan:
   case Token::lowerEqualThan:
     {
-      Namespace* leftSpace = new Namespace(space.getEngine(), &space, &space.getEngine(), rightOperand, 0, false);
+      Namespace* leftSpace = new Namespace(space.getEngine(), &space, &space.getEngine(), leftOperand, 0, false);
       Namespace* rightSpace = new Namespace(space.getEngine(), &space, &space.getEngine(), rightOperand, 0, false);
       bool result = false;
       switch(operation)
@@ -125,6 +135,17 @@ void ReferenceStatement::execute(Namespace& space)
 }
 
 void IfStatement::execute(Namespace& space)
+{
+  Namespace* condSpace = new Namespace(space.getEngine(), &space, &space.getEngine(), condition, 0, false);
+  bool cond = !condSpace->getFirstKey().isEmpty();
+  delete condSpace;
+  if(cond)
+    thenStatements->execute(space);
+  else if(elseStatements)
+    elseStatements->execute(space);
+}
+
+void ConditionalStatement::execute(Namespace& space)
 {
   Namespace* condSpace = new Namespace(space.getEngine(), &space, &space.getEngine(), condition, 0, false);
   bool cond = !condSpace->getFirstKey().isEmpty();
