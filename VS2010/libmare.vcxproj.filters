@@ -63,6 +63,9 @@
       <Filter>Tools</Filter>
     </ClInclude>
     <ClInclude Include="..\src\libmare\Token.h" />
+    <ClInclude Include="..\src\libmare\Tools\Assert.h">
+      <Filter>Tools</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Tools">

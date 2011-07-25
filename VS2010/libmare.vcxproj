@@ -30,6 +30,7 @@
     <ClInclude Include="..\src\libmare\Statement.h" />
     <ClInclude Include="..\src\libmare\Token.h" />
     <ClInclude Include="..\src\libmare\Tools\Array.h" />
+    <ClInclude Include="..\src\libmare\Tools\Assert.h" />
     <ClInclude Include="..\src\libmare\Tools\Directory.h" />
     <ClInclude Include="..\src\libmare\Tools\Error.h" />
     <ClInclude Include="..\src\libmare\Tools\File.h" />
