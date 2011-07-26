@@ -106,18 +106,10 @@ bool Builder::build(const Map<String, String>& userArgs)
   engine.addDefaultKey("host", platform); // the platform on which the compiler is run
   engine.addDefaultKey("platforms", platform); // the target platform of the compiler
 
-  /*
   // add user arguments
-  engine.enterUnnamedKey();
   for(const Map<String, String>::Node* i = userArgs.getFirst(); i; i = i->getNext())
     engine.addDefaultKey(i->key, i->data);
-  */
-  /*
-  // get targets and configurations to build
-  engine.getKeys("platform", inputPlatforms);
-  engine.getKeys("configuration", inputConfigs);
-  engine.getKeys("target", inputTargets);
-  */
+
   // build 
   if(!buildFile())
     return false;

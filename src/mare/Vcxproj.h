@@ -1,9 +1,9 @@
 
 #pragma once
 
-#include "../libmare/Tools/Map.h"
-#include "../libmare/Tools/String.h"
-#include "../libmare/Tools/File.h"
+#include "Tools/Map.h"
+#include "Tools/String.h"
+#include "Tools/File.h"
 
 class Engine;
 

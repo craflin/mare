@@ -146,13 +146,11 @@ bool Vcxproj::generate(const Map<String, String>& userArgs)
     engine.addDefaultKey("cStaticLibrary", cStaticLibrary);
   }
 
-  /*
   // add user arguments
-  engine.enterUnnamedKey();
   for(const Map<String, String>::Node* i = userArgs.getFirst(); i; i = i->getNext())
     engine.addDefaultKey(i->key, i->data);
-    */
 
+  //
   if(!readFile())
     return false;
 

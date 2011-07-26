@@ -45,7 +45,7 @@ static void showUsage(const char* executable)
   showVersion(false);
   puts("");
   printf("Usage: %s [ -f <file> ] [ <options> ] [ config=<config> ] [ <target> ]", basename.getData());
-  puts("        [ <variable>=<value> ] [ clean | rebuild ]");
+  puts("        [ platform=<platform> ] [ <variable>=<value> ] [ clean | rebuild ]");
   puts("");
   puts("Options:");
   puts("");
@@ -61,9 +61,16 @@ static void showUsage(const char* executable)
   puts("        and Release by default). Multiple configurations can be used by adding");
   puts("        config=<config> multiple times.");
   puts("");
-  puts("    <target>, --target=<target>");
+  puts("    <target>, target=<target>, --target=<target>");
   puts("        Build <target> as declared in the marefile. Multiple targets can be");
   puts("        used.");
+  puts("");
+  puts("    platform=<config>, --platform=<config>");
+  puts("        Build the target for platform <platform>. By default the native");
+  puts("        build platform of the mare executable or the native platform of a");
+  puts("        generator (e.g. \"Win32\" for vcxproj) will be used. Multiple platforms");
+  puts("        can be used by adding platform=<platform> multiple times. Available");
+  puts("        platforms can be declared in the mare.");
   puts("");
   puts("    <variable>=<value>, --<variable>[=<value>]");
   puts("        Set any variable <variable> to <value>. This can be used to set");
@@ -101,6 +108,7 @@ int main(int argc, char* argv[])
 {
   Error::program = argv[0];
   Map<String, String> userArgs;
+  List<String> inputPlatforms, inputConfigs, inputTargets;
   String inputFile("Marefile");
   bool showHelp = false;
   bool showDebug = false;
@@ -143,9 +151,15 @@ int main(int argc, char* argv[])
         if(sep)
         {
           String key(arg, sep - arg);
-          if(key == "config")
-            key = "configuration";
-          userArgs.append(key, String(sep + 1, -1));
+          String val(sep + 1, -1);
+          if(key == "platform")
+            inputPlatforms.append(val);
+          else if(key == "config")
+            inputConfigs.append(val);
+          else if(key == "target")
+            inputTargets.append(val);
+          else
+            userArgs.append(key, val);
         }
         else
           userArgs.append(String(arg, -1), String());
@@ -205,9 +219,15 @@ int main(int argc, char* argv[])
       if(sep)
       {
         String key(arg, sep - arg);
-        if(key == "config")
-          key = "configuration";
-        userArgs.append(key, String(sep + 1, -1));
+        String val(sep + 1, -1);
+        if(key == "platform")
+          inputPlatforms.append(val);
+        else if(key == "config")
+          inputConfigs.append(val);
+        else if(key == "target")
+          inputTargets.append(val);
+        else
+          userArgs.append(key, val);
       }
       else
       {
@@ -217,7 +237,7 @@ int main(int argc, char* argv[])
         else if(target == "rebuild")
           rebuild = true;
         else
-          userArgs.append(String("target"), target);
+          inputTargets.append(target);
       }
     }
   }
@@ -259,7 +279,7 @@ int main(int argc, char* argv[])
 
     // direct build
     {
-      Builder builder(engine, showDebug, clean, rebuild, jobs);
+      Builder builder(engine, inputPlatforms, inputConfigs, inputTargets, showDebug, clean, rebuild, jobs);
       if(!builder.build(userArgs))
         return EXIT_FAILURE;
       return EXIT_SUCCESS;

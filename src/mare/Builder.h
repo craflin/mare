@@ -1,9 +1,9 @@
 
 #pragma once
 
-#include "../libmare/Tools/List.h"
-#include "../libmare/Tools/Map.h"
-#include "../libmare/Tools/String.h"
+#include "Tools/List.h"
+#include "Tools/Map.h"
+#include "Tools/String.h"
 
 class Engine;
 
@@ -11,7 +11,8 @@ class Builder
 {
 public:
 
-  Builder(Engine& engine, bool showDebug, bool clean, bool rebuild, int jobs) : engine(engine), showDebug(showDebug), clean(clean), rebuild(rebuild), jobs(jobs) {}
+  Builder(Engine& engine, List<String>& inputPlatforms, List<String>& inputConfigs, List<String>& inputTargets, bool showDebug, bool clean, bool rebuild, int jobs) :
+    engine(engine), showDebug(showDebug), clean(clean), rebuild(rebuild), jobs(jobs), inputPlatforms(inputPlatforms), inputConfigs(inputConfigs), inputTargets(inputTargets) {}
 
   bool build(const Map<String, String>& userArgs);
 
@@ -22,9 +23,9 @@ private:
   bool rebuild;
   int jobs;
 
-  List<String> inputPlatforms;
-  List<String> inputConfigs;
-  List<String> inputTargets;
+  List<String>& inputPlatforms;
+  List<String>& inputConfigs;
+  List<String>& inputTargets;
 
   bool buildFile();
   bool buildConfigurations();
