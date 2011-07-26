@@ -24,7 +24,7 @@ public:
   void enterNewKey(const String& key);
 
   bool leaveKey();
-  //bool leaveUnnamedKey();
+  bool leaveUnnamedKey();
   void getKeys(List<String>& keys);
   void getKeys(const String& key, List<String>& keys, bool allowInheritance = true);
   String getFirstKey();
@@ -48,6 +48,7 @@ private:
 
   bool resolveScript(const String& key, Namespace*& space);
   
-  friend class ReferenceStatement;
+  friend class ReferenceStatement; // hack?
+  friend class IfStatement; // hack?
   friend class Namespace;
 };

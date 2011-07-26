@@ -107,6 +107,8 @@ String Namespace::evaluateString(const String& string)
         List<String> words;
         Words::split(list, words);
         const char* inputStart = input;
+        engine.pushKey();
+        engine.leaveKey();
         engine.enterUnnamedKey();
         engine.enterNewKey(var);
         for(List<String>::Node* i = words.getFirst(); i; i = i->getNext())
@@ -118,10 +120,12 @@ String Namespace::evaluateString(const String& string)
           input = inputStart;
           i->data.clear();
           handle(engine, input, i->data, ",)");
+          engine.leaveUnnamedKey();
           engine.popKey();
         }
         engine.leaveKey();
-        engine.leaveKey();
+        engine.leaveUnnamedKey();
+        engine.popKey();
         if(*input == ',') ++input;
         Words::append(words, output);
       }
@@ -236,10 +240,7 @@ failure:
 
 Namespace* Namespace::enterUnnamedKey(Statement* statement)
 {
-  if(unnamedSpace)
-    delete unnamedSpace;
-  unnamedSpace = new Namespace(*this, this, engine, statement, 0, false);
-  return unnamedSpace;
+  return new Namespace(*this, this, engine, statement, 0, false);
 }
 
 Namespace* Namespace::enterNewKey(const String& name)
@@ -262,13 +263,8 @@ Namespace* Namespace::enterNewKey(const String& name)
 
 bool Namespace::resolveScript2(const String& name, Namespace*& result)
 {
-  //assert(!compiling);
-  if(compiling)
-  { // we need this as long as $(foreach ...) is not properly impelemented :)
-    if(parent)
-      return parent->resolveScript2(name, result);
-    return false;
-  }
+  assert(!compiling);
+  assert(compiled);
 
   // try a local lookup
   Map<String, Namespace*>::Node* node = variables.find(name);
@@ -308,7 +304,7 @@ bool Namespace::resolveScript2(const String& name, Namespace*& result)
   }
   while(space)
   {
-    *ispace = new Namespace(*this, space->parent, engine, space->statement, 0, false);
+    *ispace = new Namespace(*this, parent, engine, space->statement, 0, false);
     (*ispace)->defaultStatement = space->defaultStatement;
     (*ispace)->compile();
     Map<String, Namespace*>::Node* node = (*ispace)->variables.find(name);

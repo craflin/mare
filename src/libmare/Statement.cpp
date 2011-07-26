@@ -136,6 +136,18 @@ void ReferenceStatement::execute(Namespace& space)
 
 void IfStatement::execute(Namespace& space)
 {
+/*
+  Namespace* condSpace = new Namespace(space.getEngine(), &space, &space.getEngine(), condition, 0, false);
+  Namespace* currentSpace = space.getEngine().currentSpace;
+  space.getEngine().currentSpace = condSpace;
+  bool cond = !condSpace->getFirstKey().isEmpty();
+  delete condSpace;
+  space.getEngine().currentSpace = currentSpace;
+  if(cond)
+    thenStatements->execute(space);
+  else if(elseStatements)
+    elseStatements->execute(space);
+*/
   Namespace* condSpace = new Namespace(space.getEngine(), &space, &space.getEngine(), condition, 0, false);
   bool cond = !condSpace->getFirstKey().isEmpty();
   delete condSpace;

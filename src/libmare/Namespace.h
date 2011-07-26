@@ -10,7 +10,7 @@ class Statement;
 class Namespace : public Scope, public Scope::Object
 {
 public:
-  Namespace(Scope& scope, Namespace* parent, Engine* engine, Statement* statement, Namespace* next, bool inherited) : Scope::Object(scope), parent(parent), defaultStatement(0), statement(statement), next(next), engine(engine), inherited(inherited), compiled(false), compiling(false), unnamedSpace(0), inheritedSpaces(0) {}
+  Namespace(Scope& scope, Namespace* parent, Engine* engine, Statement* statement, Namespace* next, bool inherited) : Scope::Object(scope), parent(parent), defaultStatement(0), statement(statement), next(next), engine(engine), inherited(inherited), compiled(false), compiling(false), inheritedSpaces(0) {}
   
   inline Namespace* getParent() {return parent;}
   bool resolveScript2(const String& name, Namespace*& space);
@@ -43,7 +43,6 @@ private:
   bool compiled;
   bool compiling;
   Map<String, Namespace*> variables;
-  Namespace* unnamedSpace;
 
   Namespace* inheritedSpaces;
 

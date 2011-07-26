@@ -61,15 +61,17 @@ bool Engine::leaveKey()
   currentSpace = currentSpace->getParent();
   return true;
 }
-/*
+
 bool Engine::leaveUnnamedKey()
 {
   if(!currentSpace->getParent())
     return false;
+  Namespace* toDelete = currentSpace;
   currentSpace = currentSpace->getParent();
+  delete toDelete;
   return true;
 }
-*/
+
 void Engine::getKeys(List<String>& keys)
 {
   currentSpace->getKeys(keys);

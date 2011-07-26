@@ -167,13 +167,14 @@ bool Builder::buildFile()
 
   for(const List<String>::Node* i = inputPlatforms.getFirst(); i; i = i->getNext())
   {
+    engine.enterUnnamedKey();
+    engine.addDefaultKey("platform", i->data);
+    engine.addDefaultKey(i->data, "true"); // temp
     if(!engine.enterKey(i->data))
     {
       engine.error(String().format(256, "cannot find platform \"%s\"", i->data.getData()));
       return false;
     }
-    engine.addDefaultKey("platform", i->data);
-    engine.addDefaultKey(i->data, "true"); // temp
 
     VERIFY(engine.enterKey("configurations"));
 
@@ -181,7 +182,9 @@ bool Builder::buildFile()
       return false;
 
     engine.leaveKey();
+
     engine.leaveKey();
+    engine.leaveUnnamedKey();
   }
 
   engine.leaveKey();
@@ -192,6 +195,9 @@ bool Builder::buildConfigurations()
 {
   for(const List<String>::Node* i = inputConfigs.getFirst(); i; i = i->getNext())
   {
+    engine.enterUnnamedKey();
+    engine.addDefaultKey("configuration", i->data);
+    engine.addDefaultKey(i->data, "true"); // temp
     if(!engine.enterKey(i->data))
     {
       engine.error(String().format(256, "cannot find configuration \"%s\"", i->data.getData()));
@@ -200,15 +206,13 @@ bool Builder::buildConfigurations()
     if(!buildConfiguration(i->data))
       return false;
     engine.leaveKey();
+    engine.leaveUnnamedKey();
   }
   return true;
 }
 
 bool Builder::buildConfiguration(const String& configuration)
 {
-  engine.addDefaultKey("configuration", configuration);
-  engine.addDefaultKey(configuration, "true"); // temp
-
   VERIFY(engine.enterKey("targets"));
 
   for(const List<String>::Node* node = inputTargets.getFirst(); node; node = node->getNext())
@@ -580,8 +584,9 @@ bool Builder::buildTargets()
       target.active = true;
       ruleSet.activeTargets.append(&target);
     }
-    VERIFY(engine.enterKey(i->data));
+    engine.enterUnnamedKey();
     engine.addDefaultKey("target", i->data);
+    VERIFY(engine.enterKey(i->data));
     
     // add rule for each source file
     if(engine.enterKey("files"))
@@ -593,14 +598,16 @@ bool Builder::buildTargets()
         Rule& rule = target.rules.append();
         rule.target = &target;
         rule.name = i->data;
-        engine.enterKey(i->data);
+        engine.enterUnnamedKey();
         engine.addDefaultKey("file", i->data);
+        VERIFY(engine.enterKey(i->data));
         engine.getKeys("dependencies", rule.targetdeps, false);
         engine.getKeys("inputs", rule.inputs, false);
         engine.getKeys("outputs", rule.outputs, false);
         engine.getKeys("command", rule.command, false);
         engine.getKeys("message", rule.message, false);
         engine.leaveKey();
+        engine.leaveUnnamedKey();
       }
       engine.leaveKey();
     }
@@ -617,6 +624,7 @@ bool Builder::buildTargets()
     engine.getKeys("message", rule.message, false);
 
     engine.leaveKey();
+    engine.leaveUnnamedKey();
   }
 
   ruleSet.resolveDependencies();
