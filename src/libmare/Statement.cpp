@@ -1,6 +1,6 @@
 
-#include <cassert>
 
+#include "Tools/Assert.h"
 #include "Statement.h"
 #include "Namespace.h"
 #include "Engine.h"
@@ -100,7 +100,7 @@ void BinaryStatement::execute(Namespace& space)
         }
         break;
       default:
-        assert(false);
+        ASSERT(false);
         break;
       }
       delete leftSpace;
@@ -111,7 +111,7 @@ void BinaryStatement::execute(Namespace& space)
     break;
 
   default:
-    assert(false);
+    ASSERT(false);
     break;
   }
 }
@@ -127,7 +127,7 @@ void ReferenceStatement::execute(Namespace& space)
   if(space.getEngine().resolveScript(variable, ref))
     if(ref && ref->statement)
     {
-      assert(!ref->compiling);
+      ASSERT(!ref->compiling);
       ref->compiling = true;
       ref->statement->execute(space);
       ref->compiling = false;
@@ -182,7 +182,7 @@ void UnaryStatement::execute(Namespace& space)
     }
     break;
   default:
-    assert(false);
+    ASSERT(false);
     break;
   }
 }

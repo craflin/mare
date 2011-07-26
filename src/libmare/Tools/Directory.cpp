@@ -4,7 +4,6 @@
 * @author Colin Graf
 */
 
-#include <cassert>
 #include <cstring>
 #ifdef _WIN32
 #include <windows.h>
@@ -16,6 +15,7 @@
 #include <fnmatch.h>
 #endif
 
+#include "Assert.h"
 #include "Directory.h"
 #include "List.h"
 #include "Map.h"
@@ -25,7 +25,7 @@ Directory::Directory()
 {
 #ifdef _WIN32
   findFile = INVALID_HANDLE_VALUE;
-  assert(sizeof(ffd) >= sizeof(WIN32_FIND_DATA));
+  ASSERT(sizeof(ffd) >= sizeof(WIN32_FIND_DATA));
 #else
   dp = 0;
 #endif

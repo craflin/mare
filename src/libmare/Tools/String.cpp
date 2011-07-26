@@ -2,8 +2,8 @@
 #include <cstring>
 #include <cstdarg>
 #include <cstdio>
-#include <cassert>
 
+#include "Assert.h"
 #include "String.h"
 
 String::Data String::emptyData("");
@@ -23,7 +23,7 @@ String::~String()
 
 void String::init(unsigned int size, const char* str, unsigned int length)
 {
-  assert(size >= length);
+  ASSERT(size >= length);
   if(firstFreeData)
   {
     data = firstFreeData;
@@ -62,8 +62,8 @@ void String::free()
 
 void String::grow(unsigned int size, unsigned int length)
 {
-  assert(size >= length);
-  assert(length <= data->size);
+  ASSERT(size >= length);
+  ASSERT(length <= data->size);
   if(data->refs > 1)
   {
     Data* otherData = data;

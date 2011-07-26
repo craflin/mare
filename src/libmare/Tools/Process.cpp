@@ -1,5 +1,4 @@
 
-#include <cassert>
 #include <malloc.h>
 #ifdef _WIN32
 #include <windows.h>
@@ -13,6 +12,7 @@
 #include <cstring>
 #endif
 
+#include "Assert.h"
 #include "Process.h"
 #include "Map.h"
 #include "File.h"
@@ -29,7 +29,7 @@ static Map<pid_t, Process*> runningProcesses;
 Process::Process()
 {
 #ifdef _WIN32
-  assert(sizeof(hProcess) >= sizeof(HANDLE));
+  ASSERT(sizeof(hProcess) >= sizeof(HANDLE));
   hProcess = INVALID_HANDLE_VALUE;
 #else
   pid = 0;
@@ -40,7 +40,7 @@ Process::Process()
 Process::~Process()
 {
 #ifdef _WIN32
-  assert(hProcess ==  INVALID_HANDLE_VALUE);
+  ASSERT(hProcess ==  INVALID_HANDLE_VALUE);
   if(hProcess != INVALID_HANDLE_VALUE)
   {
     CloseHandle((HANDLE)hProcess);
@@ -50,7 +50,7 @@ Process::~Process()
       runningProcessHandles.remove(index);
   }
 #else
-  assert(pid ==  0);
+  ASSERT(pid ==  0);
 #endif
 }
 
@@ -245,7 +245,7 @@ success:
 
   CloseHandle(pi.hThread);
 
-  assert(pi.hProcess);
+  ASSERT(pi.hProcess);
   hProcess = pi.hProcess;
   runningProcessHandles.append(pi.hProcess);
 
@@ -402,7 +402,7 @@ success:
       fprintf(stderr, "%s: %s\n", Error::program, error.getString().getData());
       exit(EXIT_FAILURE);
     }
-    assert(false); // unreachable
+    ASSERT(false); // unreachable
     return 0;
   }
 #endif
@@ -435,7 +435,7 @@ unsigned int Process::waitOne()
   if(index == WAIT_FAILED)
     return 0;
   index -= WAIT_OBJECT_0;
-  assert(index >= 0 && index < runningProcessHandles.getSize());
+  ASSERT(index >= 0 && index < runningProcessHandles.getSize());
 
   HANDLE handle = runningProcessHandles.getFirst()[index];
   runningProcessHandles.remove(index);

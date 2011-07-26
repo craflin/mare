@@ -1,6 +1,5 @@
 
-#include <cassert>
-
+#include "Tools/Assert.h"
 #include "Engine.h"
 #include "Namespace.h"
 #include "Parser.h"
@@ -36,14 +35,14 @@ bool Engine::enterKey(const String& key, bool allowInheritance)
 void Engine::enterUnnamedKey()
 {
   Namespace* subSpace = currentSpace->enterUnnamedKey(0);
-  assert(subSpace);
+  ASSERT(subSpace);
   currentSpace = subSpace;
 }
 
 void Engine::enterNewKey(const String& key)
 {
   Namespace* subSpace = currentSpace->enterNewKey(key);
-  assert(subSpace);
+  ASSERT(subSpace);
   currentSpace = subSpace;
 }
 

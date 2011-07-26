@@ -1,6 +1,5 @@
 
 #include <cstring>
-#include <cassert>
 #ifdef _WIN32
 #include <windows.h>
 #else
@@ -11,13 +10,14 @@
 #include <unistd.h>
 #endif
 
+#include "Assert.h"
 #include "File.h"
 #include "String.h"
 
 File::File()
 {
 #ifdef _WIN32
-  assert(sizeof(void*) >= sizeof(HANDLE));
+  ASSERT(sizeof(void*) >= sizeof(HANDLE));
   fp = INVALID_HANDLE_VALUE;
 #else
   fp = 0;
@@ -205,7 +205,7 @@ bool File::getWriteTime(const String& file, long long& writeTime)
   HANDLE hFind = FindFirstFileA(file.getData(), &wfd);
   if(hFind == INVALID_HANDLE_VALUE) 
     return false;
-  assert(sizeof(DWORD) == 4);
+  ASSERT(sizeof(DWORD) == 4);
   writeTime = ((long long)wfd.ftLastWriteTime.dwHighDateTime) << 32LL | ((long long)wfd.ftLastWriteTime.dwLowDateTime);
   FindClose(hFind);
   return true;

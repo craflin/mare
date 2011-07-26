@@ -1,7 +1,7 @@
 
 #include <cstring>
-#include <cassert>
 
+#include "Tools/Assert.h"
 #include "Tools/File.h"
 #include "Tools/Directory.h"
 #include "Tools/Words.h"
@@ -245,7 +245,7 @@ Namespace* Namespace::enterUnnamedKey(Statement* statement)
 
 Namespace* Namespace::enterNewKey(const String& name)
 {
-  assert(!compiled);
+  ASSERT(!compiled);
 
   Map<String, Namespace*>::Node* j = variables.find(name);
   if(j)
@@ -263,8 +263,8 @@ Namespace* Namespace::enterNewKey(const String& name)
 
 bool Namespace::resolveScript2(const String& name, Namespace*& result)
 {
-  assert(!compiling);
-  assert(compiled);
+  ASSERT(!compiling);
+  ASSERT(compiled);
 
   // try a local lookup
   Map<String, Namespace*>::Node* node = variables.find(name);
@@ -355,8 +355,8 @@ void Namespace::addKey(const String& key, Statement* value)
 
 void Namespace::addKeyRaw(const String& key, Statement* value)
 {
-  assert(!compiled);
-  assert(!key.isEmpty());
+  ASSERT(!compiled);
+  ASSERT(!key.isEmpty());
   Map<String, Namespace*>::Node* node = variables.find(key);
   if(node)
     node->data = value ? new Namespace(*this, this, engine, value, node->data, false) : 0;
@@ -409,7 +409,7 @@ bool Namespace::compareKeys(Namespace& space, bool& result)
     i1 = i1->getNext();
     i2 = i2->getNext();
   }
-  assert(false);
+  ASSERT(false);
   return false;
 }
 
@@ -427,7 +427,7 @@ bool Namespace::versionCompareKeys(Namespace& space, int& result)
 
 void Namespace::addDefaultStatement(Statement* statement)
 {
-  assert(!compiled);
+  ASSERT(!compiled);
   if(!defaultStatement)
     defaultStatement = statement;
   else

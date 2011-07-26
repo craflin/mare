@@ -1,6 +1,5 @@
 
-#include <cassert>
-
+#include "Assert.h"
 #include "Scope.h"
 
 Scope::Object::Object(Scope& scope) : scope(scope), previous(0)
@@ -30,6 +29,6 @@ Scope& Scope::operator=(const Scope& other)
 {
   while(first)
     delete first;
-  assert(other.first == 0);
+  ASSERT(other.first == 0);
   return *this;
 }
