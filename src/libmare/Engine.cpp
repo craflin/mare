@@ -111,14 +111,7 @@ void Engine::addDefaultKey(const String& key, const String& value)
 {
   currentSpace->addDefaultKey(key, value);
 }
-/*
-void Engine::addDefaultKey(const String& key, const String& value, const String& subValue)
-{
-  Map<String, String> values;
-  values.append(value, subValue);
-  currentSpace->addResolvableKey(key, values);
-}
-*/
+
 void Engine::addDefaultKey(const String& key, const Map<String, String>& value)
 {
   currentSpace->addDefaultKey(key, value);
@@ -142,5 +135,3 @@ bool Engine::popKey()
   stashedKeys.removeLast();
   return true;
 }
-
-
