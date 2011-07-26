@@ -13,16 +13,6 @@ void BlockStatement::execute(Namespace& space)
 
 void AssignStatement::execute(Namespace& space)
 {
-  /*
-  if(variable == "testa")
-  {
-    int k = 42;
-  }
-  if(variable == "testb")
-  {
-    int k = 42;
-  }
-  */
   space.addKey(variable, value);
 }
 

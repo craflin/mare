@@ -191,10 +191,9 @@ bool Vcxproj::readFile()
   for(const List<String>::Node* i = inputPlatforms.getFirst(); i; i = i->getNext())
   {
     const String& platform = i->data;
-    engine.enterUnnamedKey();
+    engine.enterKey(platform);
     engine.addDefaultKey("platform", platform);
     engine.addDefaultKey(platform, "true"); // temp
-    engine.enterKey(platform);
 
     // enter configurations space
     engine.enterKey("configurations");
@@ -206,16 +205,15 @@ bool Vcxproj::readFile()
       const String configKey = configName + "|" + platform;
       const Config& config = configs.append(configKey, Config(configName, platform));
 
-      engine.enterUnnamedKey();
-      engine.addDefaultKey("configuration", configName);
-      engine.addDefaultKey(configName, "true"); // temp
       if(!engine.enterKey(configName))
       {
         engine.error(String().format(256, "cannot find configuration \"%s\"", configName.getData()));
         return false;
       }
-	  
-	  VERIFY(engine.enterKey("targets"));
+      engine.addDefaultKey("configuration", configName);
+      engine.addDefaultKey(configName, "true"); // temp
+
+      VERIFY(engine.enterKey("targets"));
 
       for(const List<String>::Node* i = inputTargets.getFirst(); i; i = i->getNext())
       {
@@ -236,13 +234,12 @@ bool Vcxproj::readFile()
         }
         Project::Config& projectConfig = project->configs.append(configKey, Project::Config(config.name, config.platform));
 
-        engine.enterUnnamedKey();
-        engine.addDefaultKey("target", i->data);
         if(!engine.enterKey(i->data))
         {
           engine.error(String().format(256, "cannot find target \"%s\"", i->data.getData()));
           return false;
         }
+        engine.addDefaultKey("target", i->data);
         engine.getKeys("buildCommand", projectConfig.buildCommand, false);
         engine.getKeys("reBuildCommand", projectConfig.reBuildCommand, false);
         engine.getKeys("cleanCommand", projectConfig.cleanCommand, false);
@@ -281,10 +278,9 @@ bool Vcxproj::readFile()
             Map<String, Project::File>::Node* node = project->files.find(i->data);
             Project::File& file = node ? node->data : project->files.append(i->data);
             Project::File::Config& fileConfig = file.configs.append(configKey);
-            engine.enterUnnamedKey();
-            engine.addDefaultKey("file", i->data);
             if(engine.enterKey(i->data))
             {
+              engine.addDefaultKey("file", i->data);
               engine.getKeys("command", fileConfig.command, false);
               file.filter = engine.getFirstKey("folder");
               String firstCommand = fileConfig.command.isEmpty() ? String() : fileConfig.command.getFirst()->data;
@@ -311,7 +307,6 @@ bool Vcxproj::readFile()
               }
               engine.leaveKey();
             }
-            engine.leaveUnnamedKey();
           }
           for(Map<String, Project::File>::Node* i = project->files.getFirst(); i; i = i->getNext())
             if(i->data.type.isEmpty())
@@ -326,16 +321,13 @@ bool Vcxproj::readFile()
           engine.leaveKey();
         }
         engine.leaveKey();
-        engine.leaveUnnamedKey();
       }
       engine.leaveKey();
       engine.leaveKey();
-      engine.leaveUnnamedKey();
     }
 
     engine.leaveKey();
     engine.leaveKey();
-    engine.leaveUnnamedKey();
   }
   if(solutionName.isEmpty() && !projects.isEmpty())
     solutionName = projects.getFirst()->data.name;

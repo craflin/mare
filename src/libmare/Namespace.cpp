@@ -264,7 +264,7 @@ Namespace* Namespace::enterNewKey(const String& name)
 bool Namespace::resolveScript2(const String& name, Namespace*& result)
 {
   ASSERT(!compiling);
-  ASSERT(compiled);
+  VERIFY(compile());
 
   // try a local lookup
   Map<String, Namespace*>::Node* node = variables.find(name);
@@ -281,48 +281,6 @@ bool Namespace::resolveScript2(const String& name, Namespace*& result)
     } while(result);
   }
 
-  // ...
-  Namespace* space = parent;
-  Namespace** ispace = &inheritedSpaces;
-  while(space && *ispace)
-  {
-    Map<String, Namespace*>::Node* node = (*ispace)->variables.find(name);
-    if(node)
-    {
-      result = node->data;
-      if(!result)
-        return true;
-      do
-      {
-        if(!result->compiling)
-          return true;
-        result = result->next;
-      } while(result);
-    }
-    space = space->parent;
-    ispace = &(*ispace)->next;
-  }
-  while(space)
-  {
-    *ispace = new Namespace(*this, parent, engine, space->statement, 0, false);
-    (*ispace)->defaultStatement = space->defaultStatement;
-    (*ispace)->compile();
-    Map<String, Namespace*>::Node* node = (*ispace)->variables.find(name);
-    if(node)
-    {
-      result = node->data;
-      if(!result)
-        return true;
-      do
-      {
-        if(!result->compiling)
-          return true;
-        result = result->next;
-      } while(result);
-    }
-    space = space->parent;
-    ispace = &(*ispace)->next;
-  }
   return false;
 }
 
@@ -504,7 +462,10 @@ bool Namespace::compile()
   if(compiled)
     return true;
   if(compiling)
+  {
+    ASSERT(false);
     return false;
+  }
   compiling = true;
   if(defaultStatement)
     defaultStatement->execute(*this);

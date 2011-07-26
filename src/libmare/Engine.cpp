@@ -48,8 +48,9 @@ void Engine::enterNewKey(const String& key)
 
 bool Engine::resolveScript(const String& key, Namespace*& result)
 {
-  if(currentSpace->getParent())
-    return currentSpace->getParent()->resolveScript2(key, result);
+  for(Namespace* space = currentSpace->getParent(); space; space = space->getParent())
+    if(space->resolveScript2(key, result))
+      return true;
   return false;
 }
 
