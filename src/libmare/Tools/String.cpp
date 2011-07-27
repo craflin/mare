@@ -145,6 +145,19 @@ String& String::append(const char* str, unsigned int length)
   return *this;
 }
 
+String& String::prepend(const String& str)
+{
+  // TODO: optimize this using memmove when possible?
+  String old(*this);
+  unsigned int newLength = data->length + str.data->length;
+  grow(newLength, 0);
+  memcpy((char*)data->str, str.data->str, str.data->length);
+  memcpy(((char*)data->str) + str.data->length, old.data->str, old.data->length);
+  ((char*)data->str)[newLength] = '\0';
+  data->length = newLength;
+  return *this;
+}
+
 void String::clear()
 {
   if(data->refs == 1)

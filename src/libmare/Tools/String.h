@@ -40,6 +40,8 @@ public:
 
   String& format(unsigned int size, const char* format, ...);
 
+  String& prepend(const String& str);
+
   String& append(char c);
   String& append(const String& str);
   String& append(const char* str, unsigned int length);
