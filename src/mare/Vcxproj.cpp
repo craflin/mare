@@ -729,7 +729,7 @@ bool Vcxproj::generateVcxproj(Project& project)
           }
         }
         else
-          fileWrite("      <ExcludedFromBuild Condition=\"'$(Configuration)|$(Platform)'=='<?lua=config.config?>'\">true</ExcludedFromBuild>\r\n");
+          fileWrite(String("      <ExcludedFromBuild Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">true</ExcludedFromBuild>\r\n");
       }
       fileWrite("    </CustomBuild>\r\n");
     }
