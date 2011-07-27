@@ -165,7 +165,7 @@ bool Builder::buildFile()
       return false;
     }
     engine.addDefaultKey("platform", i->data);
-    engine.addDefaultKey(i->data, "true"); // temp
+    engine.addDefaultKey(i->data, i->data);
 
     VERIFY(engine.enterKey("configurations"));
 
@@ -191,7 +191,7 @@ bool Builder::buildConfigurations()
       return false;
     }
     engine.addDefaultKey("configuration", i->data);
-    engine.addDefaultKey(i->data, "true"); // temp
+    engine.addDefaultKey(i->data, i->data);
 
     if(!buildConfiguration(i->data))
       return false;

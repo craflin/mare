@@ -18,7 +18,7 @@ targets = {
       "src/mare/**.cpp" = cppSource
       "src/mare/**.h"
     }
-    if !Win32 {
+    if platform != "Win32" {
       files -= "src/mare/Tools/Win32/**"
     }
   }
@@ -33,12 +33,12 @@ targets = {
 
 configurations = {
   Debug = {
-    if vcxproj {
+    if tool == "vcxproj" {
       linkFlags += "/SUBSYSTEM:CONSOLE"
     }
   }
   Release = {
-    if vcxproj {
+    if tool == "vcxproj" {
       linkFlags += "/SUBSYSTEM:CONSOLE"
       cppFlags -= "/O2"
       cppFlags += "/O1 /MT /GF"

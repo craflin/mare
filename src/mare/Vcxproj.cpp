@@ -104,7 +104,7 @@ bool Vcxproj::generate(const Map<String, String>& userArgs)
   // TODO: more options?
   
   engine.addDefaultKey("tool", "vcxproj");
-  engine.addDefaultKey("vcxproj", "true"); // temp
+  engine.addDefaultKey("vcxproj", "vcxproj");
   engine.addDefaultKey("host", "Win32");
   engine.addDefaultKey("platforms", "Win32");
   engine.addDefaultKey("configurations", "Debug");
@@ -183,7 +183,7 @@ bool Vcxproj::readFile()
     const String& platform = i->data;
     engine.enterKey(platform);
     engine.addDefaultKey("platform", platform);
-    engine.addDefaultKey(platform, "true"); // temp
+    engine.addDefaultKey(platform, platform);
 
     // enter configurations space
     engine.enterKey("configurations");
@@ -201,7 +201,7 @@ bool Vcxproj::readFile()
         return false;
       }
       engine.addDefaultKey("configuration", configName);
-      engine.addDefaultKey(configName, "true"); // temp
+      engine.addDefaultKey(configName, configName);
 
       VERIFY(engine.enterKey("targets"));
 
