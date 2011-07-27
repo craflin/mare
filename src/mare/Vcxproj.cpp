@@ -107,8 +107,7 @@ bool Vcxproj::generate(const Map<String, String>& userArgs)
   engine.addDefaultKey("vcxproj", "vcxproj");
   engine.addDefaultKey("host", "Win32");
   engine.addDefaultKey("platforms", "Win32");
-  engine.addDefaultKey("configurations", "Debug");
-  engine.addDefaultKey("configurations", "Release");
+  engine.addDefaultKey("configurations", "Debug Release");
   engine.addDefaultKey("targets");
   engine.addDefaultKey("buildDir", "$(configuration)");
   engine.addDefaultKey("cppFlags", "/W3 $(if $(Debug),,/O2 /Oy)");

@@ -16,8 +16,7 @@ bool Builder::build(const Map<String, String>& userArgs)
   engine.addDefaultKey("CC", "gcc");
   engine.addDefaultKey("CXX", "g++");
   engine.addDefaultKey("AR", "ar");
-  engine.addDefaultKey("configurations", "Debug");
-  engine.addDefaultKey("configurations", "Release");
+  engine.addDefaultKey("configurations", "Debug Release");
   engine.addDefaultKey("targets");
   engine.addDefaultKey("buildDir", "$(configuration)");
   engine.addDefaultKey("cppFlags", "-Wall $(if $(Debug),-g,-Os -fomit-frame-pointer)");
