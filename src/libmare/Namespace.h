@@ -21,10 +21,10 @@ public:
   String getFirstKey();
   inline Engine& getEngine() {return *engine;}
 
-  void addKey(const String& key, Statement* value); // TODO: rename to registerKey?
-  void addKeyRaw(const String& key, Statement* value); // TODO: rename to registerKeyRaw?
-  void setKeyRaw(const String& key); // TODO: remove this and add something like clearKeys()
-  void removeKeys(Namespace& space);
+  void addKey(const String& key, Statement* value);
+  void addKeyRaw(const String& key, Statement* value);
+  void setKeyRaw(const String& key);
+  void removeKeysRaw(Namespace& space);
   bool compareKeys(Namespace& space, bool& result);
   bool versionCompareKeys(Namespace& space, int& result);
 

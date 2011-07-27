@@ -30,7 +30,7 @@ void BinaryStatement::execute(Namespace& space)
     {
       leftOperand->execute(space);
       Namespace* rightSpace = new Namespace(space.getEngine(), &space, &space.getEngine(), rightOperand, 0, false);
-      space.removeKeys(*rightSpace);
+      space.removeKeysRaw(*rightSpace);
       delete rightSpace;
     }
     break;
@@ -96,7 +96,7 @@ void BinaryStatement::execute(Namespace& space)
       delete leftSpace;
       delete rightSpace;
       if(result)
-        space.addKey("true", 0);
+        space.addKeyRaw("true", 0);
     }
     break;
 
@@ -145,7 +145,7 @@ void UnaryStatement::execute(Namespace& space)
       bool result = opSpace->getFirstKey().isEmpty();
       delete opSpace;
       if(result)
-        space.addKey("true", 0);
+        space.addKeyRaw("true", 0);
     }
     break;
   default:

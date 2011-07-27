@@ -328,7 +328,7 @@ void Namespace::setKeyRaw(const String& key)
   variables.append(key, 0);
 }
 
-void Namespace::removeKeys(Namespace& space)
+void Namespace::removeKeysRaw(Namespace& space)
 {
   if(!space.compile())
     return;
