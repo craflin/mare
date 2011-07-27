@@ -109,7 +109,7 @@ private:
 
   String solutionName;
   Map<String, Config> configs;
-  Map<String, void*> activesProjects;
+  Map<String, void*> buildProjects;
   Map<String, Project> projects;
   Map<String, ProjectFilter> projectFilters;
   Map<String, Option> knownCppOptions;

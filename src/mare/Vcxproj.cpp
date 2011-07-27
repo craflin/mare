@@ -170,15 +170,7 @@ bool Vcxproj::readFile()
 
   // get some global keys
   solutionName = engine.getFirstKey("name");
-  /*
-  List<String> inputPlatforms;
-  engine.getKeys("platforms", inputPlatforms);
-  List<String> target;
-  engine.getKeys("target", target);
-  for(const List<String>::Node* i = target.getFirst(); i; i = i->getNext())
-    activesProjects.append(i->data, 0);
-    */
-
+  
   List<String> inputPlatforms, inputConfigurations, inputTargets;
   engine.getKeys("platforms", inputPlatforms);
   engine.getKeys("configurations", inputConfigurations);
@@ -327,6 +319,28 @@ bool Vcxproj::readFile()
     engine.leaveKey();
     engine.leaveKey();
   }
+
+  // find "active" projects (first project and all its dependencies)
+  if(!projects.isEmpty())
+  {
+    struct A
+    {
+      static void addProjectDeps(const Project& project, Vcxproj& vcxproj)
+      {
+        vcxproj.buildProjects.append(project.name);
+        for(const Map<String, void*>::Node* i = project.dependencies.getFirst(); i; i = i->getNext())
+          if(!vcxproj.buildProjects.find(i->key))
+          {
+            Map<String, Project>::Node* subproject = vcxproj.projects.find(i->key);
+            if(subproject)
+              addProjectDeps(subproject->data, vcxproj);
+          }
+      }
+    };
+    A::addProjectDeps(projects.getFirst()->data, *this);
+  }
+
+  //
   if(solutionName.isEmpty() && !projects.isEmpty())
     solutionName = projects.getFirst()->data.name;
 
@@ -380,7 +394,7 @@ bool Vcxproj::generateSln()
       else
         projectConfigKey = project.configs.getFirst()->data.name + "|" + config.platform;
       fileWrite(String("\t\t{") + project.guid + "}." + configKey + ".ActiveCfg = " + projectConfigKey + "\r\n");
-      if(activesProjects.isEmpty() || activesProjects.find(project.name))
+      if(buildProjects.isEmpty() || buildProjects.find(project.name))
         fileWrite(String("\t\t{") + project.guid + "}." + configKey + ".Build.0 = " + projectConfigKey + "\r\n");
     }
   }
