@@ -16,6 +16,11 @@ void AssignStatement::execute(Namespace& space)
   space.addKey(variable, value);
 }
 
+void RemoveStatement::execute(Namespace& space)
+{
+  space.removeKey(variable);
+}
+
 void BinaryStatement::execute(Namespace& space)
 {
   switch(operation)

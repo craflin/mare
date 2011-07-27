@@ -31,17 +31,10 @@ targets = {
   }
 }
 
-configurations = {
-  Debug = {
-    if tool == "vcxproj" {
-      linkFlags += "/SUBSYSTEM:CONSOLE"
-    }
-  }
-  Release = {
-    if tool == "vcxproj" {
-      linkFlags += "/SUBSYSTEM:CONSOLE"
-      cppFlags -= "/O2"
-      cppFlags += "/O1 /MT /GF"
-    }
-  }
+linkFlags += {
+  if tool == "vcxproj" { "/SUBSYSTEM:CONSOLE" }
+}
+
+cppFlags += { 
+  if tool == "vcxproj" && configuration == "Release" { -"/O2", "/O1 /MT /GF" }
 }

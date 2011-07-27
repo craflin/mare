@@ -48,7 +48,7 @@ private:
   /** statement ::= ( 'if' expression statements [ 'else' statements ] | assignment ) { ( ',' | ';' ) } */
   Statement* readStatement();
 
-  /** assignment ::= ( string | quotedstring ) [ ( '=' | '+=' | '-=' ) expression*/
+  /** assignment ::= '-' ( string | quotedstring ) | ( string | quotedstring ) [ ( '=' | '+=' | '-=' ) expression  */
   Statement* readAssignment();
 
   /** expression ::= orformula [ '?' expression ':' expression ] */

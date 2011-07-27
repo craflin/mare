@@ -13,7 +13,7 @@ mare s1:
 file ::= { statement } EOF
 statements ::= '{' { statement } '}' | statement 
 statement ::= ( 'if' expression statements [ 'else' statements ] | assignment ) { ( ',' | ';' ) }
-assignment ::= ( string | quotedstring ) [ ( '=' | '+=' | '-=' ) expression ]
+assignment ::= '-' ( string | quotedstring ) | ( string | quotedstring ) [ ( '=' | '+=' | '-=' ) expression ]
 
 expression ::= orformula [ '?' expression ':' expression ]
 orformula ::= andformula { '||' andformula }

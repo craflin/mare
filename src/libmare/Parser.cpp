@@ -337,25 +337,35 @@ Statement* Parser::readStatement()
 
 Statement* Parser::readAssignment()
 {
-  AssignStatement* statement = new AssignStatement(engine);
-  readString(statement->variable);
-  if(currentToken.id == Token::plusAssignment || currentToken.id == Token::minusAssignment)
-  {
-    BinaryStatement* binaryStatement = new BinaryStatement(engine);
-    binaryStatement->operation = currentToken.id;
-    nextToken();
-    ReferenceStatement* refStatement = new ReferenceStatement(engine);
-    refStatement->variable = statement->variable;
-    binaryStatement->leftOperand = refStatement;
-    binaryStatement->rightOperand = readConcatination();
-    statement->value = binaryStatement;
-  }
-  else if(currentToken.id == Token::assignment)
+  if(currentToken.id == Token::minus)
   {
     nextToken();
-    statement->value = readConcatination();
+    RemoveStatement* statement = new RemoveStatement(engine);
+    readString(statement->variable);
+    return statement;
   }
-  return statement;
+  else
+  {
+    AssignStatement* statement = new AssignStatement(engine);
+    readString(statement->variable);
+    if(currentToken.id == Token::plusAssignment || currentToken.id == Token::minusAssignment)
+    {
+      BinaryStatement* binaryStatement = new BinaryStatement(engine);
+      binaryStatement->operation = currentToken.id;
+      nextToken();
+      ReferenceStatement* refStatement = new ReferenceStatement(engine);
+      refStatement->variable = statement->variable;
+      binaryStatement->leftOperand = refStatement;
+      binaryStatement->rightOperand = readConcatination();
+      statement->value = binaryStatement;
+    }
+    else if(currentToken.id == Token::assignment)
+    {
+      nextToken();
+      statement->value = readConcatination();
+    }
+    return statement;
+  }
 }
 
 Statement* Parser::readExpression()

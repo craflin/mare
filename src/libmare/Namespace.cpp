@@ -311,6 +311,33 @@ void Namespace::addKey(const String& key, Statement* value)
   }
 }
 
+void Namespace::removeKey(const String& key)
+{
+  // evaluate variables
+  String evaluatedKey = evaluateString(key);
+
+  // split words
+  List<String> words;
+  Words::split(evaluatedKey, words);
+
+  // add each word
+  for(const List<String>::Node* i = words.getFirst(); i; i = i->getNext())
+  {
+    const String& word = i->data;
+
+    // expand wildcards
+    if(strpbrk(word.getData(), "*?")) 
+    {
+      List<String> files;
+      Directory::findFiles(word, files);
+      for(const List<String>::Node* i = files.getFirst(); i; i = i->getNext())
+        removeKeyRaw(i->data);
+    }
+    else
+      removeKeyRaw(word);
+  }
+}
+
 void Namespace::addKeyRaw(const String& key, Statement* value)
 {
   ASSERT(!compiled);
@@ -320,6 +347,15 @@ void Namespace::addKeyRaw(const String& key, Statement* value)
     node->data = value ? new Namespace(*this, this, engine, value, node->data, false) : 0;
   else
     variables.append(key, value ? new Namespace(*this, this, engine, value, 0, false) : 0);
+}
+
+void Namespace::removeKeyRaw(const String& key)
+{
+  ASSERT(!compiled);
+  ASSERT(!key.isEmpty());
+  Map<String, Namespace*>::Node* node = variables.find(key);
+  if(node)
+    variables.remove(node);
 }
 
 void Namespace::setKeyRaw(const String& key)

@@ -39,6 +39,17 @@ private:
   virtual void execute(Namespace& space);
 };
 
+class RemoveStatement : public Statement
+{
+public:
+  RemoveStatement(Scope& scope) : Statement(scope) {}
+
+  String variable;
+
+private:
+  virtual void execute(Namespace& space);
+};
+
 class BinaryStatement : public Statement
 {
 public:
