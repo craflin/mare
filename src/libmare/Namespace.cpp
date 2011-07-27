@@ -62,20 +62,7 @@ String Namespace::evaluateString(const String& string)
     }
     static void handleCommand(Engine& engine, const String& cmd, const char*& input, String& output)
     {
-      if(cmd == "patsubst")
-      {
-        String pattern, replace, text;
-        handle(engine, input, pattern, ",)"); if(*input == ',') ++input;
-        handle(engine, input, replace, ",)"); if(*input == ',') ++input;
-        handle(engine, input, text, ",)"); if(*input == ',') ++input;
-
-        List<String> words;
-        Words::split(text, words);
-        for(List<String>::Node* i = words.getFirst(); i; i = i->getNext())
-          i->data.patsubst(pattern, replace);
-        Words::append(words, output);
-      }
-      else if(cmd == "subst")
+      if(cmd == "subst")
       {
         String from, to, text;
         handle(engine, input, from, ",)"); if(*input == ',') ++input;
@@ -88,47 +75,20 @@ String Namespace::evaluateString(const String& string)
           i->data.subst(from, to);
         Words::append(words, output);
       }
-      else if(cmd == "firstword")
+      else if(cmd == "patsubst")
       {
-        String text;
+        String pattern, replace, text;
+        handle(engine, input, pattern, ",)"); if(*input == ',') ++input;
+        handle(engine, input, replace, ",)"); if(*input == ',') ++input;
         handle(engine, input, text, ",)"); if(*input == ',') ++input;
 
         List<String> words;
         Words::split(text, words);
-        if(!words.isEmpty())
-          output.append(words.getFirst()->data);
-      }
-      else if(cmd == "foreach")
-      {
-        String var, list;
-        handle(engine, input, var, ",)"); if(*input == ',') ++input;
-        handle(engine, input, list, ",)"); if(*input == ',') ++input;
-
-        List<String> words;
-        Words::split(list, words);
-        const char* inputStart = input;
-        engine.pushKey();
-        engine.leaveKey();
-        engine.enterUnnamedKey();
-        engine.enterNewKey(var);
         for(List<String>::Node* i = words.getFirst(); i; i = i->getNext())
-        {
-          engine.pushKey();
-          engine.setKey(i->data);
-          engine.leaveKey();
-          engine.enterUnnamedKey();
-          input = inputStart;
-          i->data.clear();
-          handle(engine, input, i->data, ",)");
-          engine.leaveUnnamedKey();
-          engine.popKey();
-        }
-        engine.leaveKey();
-        engine.leaveUnnamedKey();
-        engine.popKey();
-        if(*input == ',') ++input;
+          i->data.patsubst(pattern, replace);
         Words::append(words, output);
       }
+      // TODO: strip, findstring
       else if(cmd == "filter" || cmd == "filter-out")
       {
         String pattern, text;
@@ -161,20 +121,98 @@ String Namespace::evaluateString(const String& string)
           }
         Words::append(words, output);
       }
-      else if(cmd == "readfile")
+      // TODO: sort, word, wordlist, words
+      else if(cmd == "firstword")
       {
-        String filepath;
-        handle(engine, input, filepath, ",)"); if(*input == ',') ++input;
+        String text;
+        handle(engine, input, text, ",)"); if(*input == ',') ++input;
 
-        File file;
-        if(file.open(filepath))
-        {
-          char buffer[2048];
-          int i;
-          while((i = file.read(buffer, sizeof(buffer))) > 0)
-            output.append(buffer, i);
-        }
+        List<String> words;
+        Words::split(text, words);
+        if(!words.isEmpty())
+          // TODO: handle words with spaces correctly
+          output.append(words.getFirst()->data);
       }
+      else if(cmd == "lastword")
+      {
+        String text;
+        handle(engine, input, text, ",)"); if(*input == ',') ++input;
+
+        List<String> words;
+        Words::split(text, words);
+        if(!words.isEmpty())
+          // TODO: handle words with spaces correctly
+          output.append(words.getLast()->data);
+      }
+      else if(cmd == "dir")
+      {
+        String files;
+        handle(engine, input, files, ",)"); if(*input == ',') ++input;
+
+        List<String> words;
+        Words::split(files, words);
+        for(List<String>::Node* i = words.getFirst(); i; i = i->getNext())
+          i->data = File::getDirname(i->data);
+        Words::append(words, output);
+      }
+      else if(cmd == "notdir")
+      {
+        String files;
+        handle(engine, input, files, ",)"); if(*input == ',') ++input;
+        
+        List<String> words;
+        Words::split(files, words);
+        for(List<String>::Node* i = words.getFirst(); i; i = i->getNext())
+          i->data = File::getBasename(i->data);
+        Words::append(words, output);
+      }
+      else if(cmd == "suffix")
+      {
+        String files;
+        handle(engine, input, files, ",)"); if(*input == ',') ++input;
+        
+        List<String> words;
+        Words::split(files, words);
+        for(List<String>::Node* i = words.getFirst(); i; i = i->getNext())
+          i->data = File::getExtension(i->data);
+        Words::append(words, output);
+      }
+      else if(cmd == "basename")
+      {
+        String files;
+        handle(engine, input, files, ",)"); if(*input == ',') ++input;
+        
+        List<String> words;
+        Words::split(files, words);
+        for(List<String>::Node* i = words.getFirst(); i; i = i->getNext())
+          i->data = File::getWithoutExtension(i->data);
+        Words::append(words, output);
+      }
+      else if(cmd == "addsuffix")
+      {
+        String suffix, files;
+        handle(engine, input, suffix, ",)"); if(*input == ',') ++input;
+        handle(engine, input, files, ",)"); if(*input == ',') ++input;
+        
+        List<String> words;
+        Words::split(files, words);
+        for(List<String>::Node* i = words.getFirst(); i; i = i->getNext())
+          i->data.append(suffix);
+        Words::append(words, output);
+      }
+      else if(cmd == "addprefix")
+      {
+        String prefix, files;
+        handle(engine, input, prefix, ",)"); if(*input == ',') ++input;
+        handle(engine, input, files, ",)"); if(*input == ',') ++input;
+        
+        List<String> words;
+        Words::split(files, words);
+        for(List<String>::Node* i = words.getFirst(); i; i = i->getNext())
+          i->data.prepend(prefix);
+        Words::append(words, output);
+      }
+      // TODO: wildcard, realpath, abspath
       else if(cmd == "if")
       {
         String condition;
@@ -188,6 +226,53 @@ String Namespace::evaluateString(const String& string)
         {
           handle(engine, input, output, ",)", false); if(*input == ',') ++input;
           handle(engine, input, output, ",)"); if(*input == ',') ++input;
+        }
+      }
+      // TODO: or, and
+      else if(cmd == "foreach")
+      {
+        String var, list;
+        handle(engine, input, var, ",)"); if(*input == ',') ++input;
+        handle(engine, input, list, ",)"); if(*input == ',') ++input;
+
+        List<String> words;
+        Words::split(list, words);
+        const char* inputStart = input;
+        engine.pushKey();
+        engine.leaveKey();
+        engine.enterUnnamedKey();
+        engine.enterNewKey(var);
+        for(List<String>::Node* i = words.getFirst(); i; i = i->getNext())
+        {
+          engine.pushKey();
+          engine.setKey(i->data);
+          engine.leaveKey();
+          engine.enterUnnamedKey();
+          input = inputStart;
+          i->data.clear();
+          handle(engine, input, i->data, ",)");
+          engine.leaveUnnamedKey();
+          engine.popKey();
+        }
+        engine.leaveKey();
+        engine.leaveUnnamedKey();
+        engine.popKey();
+        if(*input == ',') ++input;
+        Words::append(words, output);
+      }
+      // TODO: call, value, eval, origin, falvor, error, warning, info?
+      else if(cmd == "readfile")
+      {
+        String filepath;
+        handle(engine, input, filepath, ",)"); if(*input == ',') ++input;
+
+        File file;
+        if(file.open(filepath))
+        {
+          char buffer[2048];
+          int i;
+          while((i = file.read(buffer, sizeof(buffer))) > 0)
+            output.append(buffer, i);
         }
       }
     }
