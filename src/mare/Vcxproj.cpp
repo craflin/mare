@@ -1,4 +1,5 @@
 
+#include <cstring>
 #include <cstdlib>
 
 #include "Tools/Words.h"
@@ -814,6 +815,18 @@ bool Vcxproj::generateVcxprojFilter(Project& project)
     for(const List<String>::Node* i = filtersToAdd.getFirst(); i; i = i->getNext())
     {
       String filterName = root.isEmpty() ? i->data : i->data.substr(root.getLength() + 1);
+      if(root.isEmpty())
+      { // remove leading ../ and ./
+        for(;;)
+        {
+          if(strncmp(filterName.getData(), "../", 3) == 0)
+            filterName = filterName.substr(3);
+          else if(strncmp(filterName.getData(), "./", 2) == 0)
+            filterName = filterName.substr(2);
+          else
+            break;
+        }
+      }
       filterName.subst("/", "\\");
       if(!filters.find(filterName))
         filters.append(filterName, createSomethingLikeGUID(filterName));
