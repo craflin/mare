@@ -261,6 +261,28 @@ String Namespace::evaluateString(const String& string)
         Words::append(words, output);
       }
       // TODO: call, value, eval, origin, falvor, error, warning, info?
+      else if(cmd == "lower")
+      {
+        String text;
+        handle(engine, input, text, ",)"); if(*input == ',') ++input;
+        
+        List<String> words;
+        Words::split(text, words);
+        for(List<String>::Node* i = words.getFirst(); i; i = i->getNext())
+          i->data.lowercase();
+        Words::append(words, output);
+      }
+      else if(cmd == "upper")
+      {
+        String text;
+        handle(engine, input, text, ",)"); if(*input == ',') ++input;
+        
+        List<String> words;
+        Words::split(text, words);
+        for(List<String>::Node* i = words.getFirst(); i; i = i->getNext())
+          i->data.uppercase();
+        Words::append(words, output);
+      }
       else if(cmd == "readfile")
       {
         String filepath;
