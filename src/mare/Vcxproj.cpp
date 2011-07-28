@@ -521,6 +521,8 @@ bool Vcxproj::generateVcxproj(Project& project)
     {
       String path = config.buildDir;
       path.subst("/", "\\");
+      if(config.firstOutput.isEmpty())
+        fileWrite(String("    <OutDir Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">" + path + "\\</OutDir>\r\n");
       fileWrite(String("    <IntDir Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">" + path + "\\</IntDir>\r\n");
     }
     if(config.firstCommand == "__Makefile")
