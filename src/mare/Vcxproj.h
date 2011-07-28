@@ -65,6 +65,7 @@ private:
         List<String> command;
         List<String> outputs;
         List<String> inputs;
+        List<String> dependencies;
       };
 
       String type;
@@ -109,7 +110,6 @@ private:
 
   String solutionName;
   Map<String, Config> configs;
-  Map<String, void*> buildProjects;
   Map<String, Project> projects;
   Map<String, ProjectFilter> projectFilters;
   Map<String, Option> knownCppOptions;

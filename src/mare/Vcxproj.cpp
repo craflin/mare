@@ -295,6 +295,10 @@ bool Vcxproj::readFile()
                 else
                   file.type = type;
               }
+              engine.getKeys("dependencies", fileConfig.dependencies, false);
+              for(const List<String>::Node* i = fileConfig.dependencies.getFirst(); i; i = i->getNext())
+                if(!project->dependencies.find(i->data))
+                  project->dependencies.append(i->data);
               engine.leaveKey();
             }
           }
@@ -320,35 +324,37 @@ bool Vcxproj::readFile()
     engine.leaveKey();
   }
 
-  // find "active" projects (first project and all its dependencies)
-  if(!projects.isEmpty())
-  {
-    struct A
-    {
-      static void addProjectDeps(const Project& project, Vcxproj& vcxproj)
-      {
-        vcxproj.buildProjects.append(project.name);
-        for(const Map<String, void*>::Node* i = project.dependencies.getFirst(); i; i = i->getNext())
-          if(!vcxproj.buildProjects.find(i->key))
-          {
-            Map<String, Project>::Node* subproject = vcxproj.projects.find(i->key);
-            if(subproject)
-              addProjectDeps(subproject->data, vcxproj);
-          }
-      }
-    };
-    A::addProjectDeps(projects.getFirst()->data, *this);
-  }
-
-  //
-  if(solutionName.isEmpty() && !projects.isEmpty())
-    solutionName = projects.getFirst()->data.name;
-
   return true;
 }
 
 bool Vcxproj::generateSln()
 {
+  // find "active" projects (first project and all its dependencies)
+  Map<String, void*> buildProjects;
+  if(!projects.isEmpty())
+  {
+    struct A
+    {
+      static void addProjectDeps(const Project& project, Vcxproj& vcxproj, Map<String, void*>& buildProjects)
+      {
+        buildProjects.append(project.name);
+        for(const Map<String, void*>::Node* i = project.dependencies.getFirst(); i; i = i->getNext())
+          if(!buildProjects.find(i->key))
+          {
+            Map<String, Project>::Node* subproject = vcxproj.projects.find(i->key);
+            if(subproject)
+              addProjectDeps(subproject->data, vcxproj, buildProjects);
+          }
+      }
+    };
+    A::addProjectDeps(projects.getFirst()->data, *this, buildProjects);
+  }
+
+  // create solution file name
+  if(solutionName.isEmpty() && !projects.isEmpty())
+    solutionName = projects.getFirst()->data.name;
+
+  // open output file
   fileOpen(solutionName + ".sln");
 
   // header
@@ -687,9 +693,9 @@ bool Vcxproj::generateVcxproj(Project& project)
   }
 
   fileWrite("  <ItemGroup>\r\n");
-  for(const Map<String, Project::File>::Node* i = project.files.getFirst(); i; i = i->getNext())
+  for(Map<String, Project::File>::Node* i = project.files.getFirst(); i; i = i->getNext())
   {
-    const Project::File& file = i->data;
+    Project::File& file = i->data;
     String path = i->key;
     path.subst("/", "\\");
 
@@ -699,10 +705,11 @@ bool Vcxproj::generateVcxproj(Project& project)
       const String& fileName = i->key;
       for(const Map<String, Project::Config>::Node* i = project.configs.getFirst(); i; i = i->getNext())
       {
-        const Map<String, Project::File::Config>::Node* node = file.configs.find(i->key);
+        const String& configKey = i->key;
+        Map<String, Project::File::Config>::Node* node = file.configs.find(i->key);
         if(node)
         {
-          const Project::File::Config& config = node->data;
+          Project::File::Config& config = node->data;
           if(!config.message.isEmpty())
             fileWrite(String("      <Message Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">" + join(config.message, ' ') + "</Message>\r\n");
           if(!config.command.isEmpty())
@@ -710,6 +717,22 @@ bool Vcxproj::generateVcxproj(Project& project)
           else
             {
             // TODO: warning or error
+          }
+
+          // resolve target dependencies (add outputs of the target to the list of input files)
+          {
+            for(const List<String>::Node* i = config.dependencies.getFirst(); i; i = i->getNext())
+            {
+              const Map<String, Project>::Node* node = projects.find(i->data);
+              if(node)
+              {
+                const Project& depProj = node->data;
+                const Map<String, Project::Config>::Node* node = depProj.configs.find(configKey);
+                if(node)
+                  for(const List<String>::Node* i = node->data.outputs.getFirst(); i; i = i->getNext())
+                    config.inputs.append(i->data);
+              }
+            }
           }
 
           List<String> additionalInputs;
