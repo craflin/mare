@@ -214,7 +214,7 @@ bool Vcxproj::readFile()
         else
         {
           project = &projects.append(i->data, Project(i->data, createSomethingLikeGUID(i->data)));
-          String filterName = engine.getFirstKey("folder");
+          String filterName = engine.getFirstKey("folder", false);
           if(!filterName.isEmpty())
           {
             Map<String, ProjectFilter>::Node* node = projectFilters.find(filterName);
@@ -272,7 +272,7 @@ bool Vcxproj::readFile()
             {
               engine.addDefaultKey("file", i->data);
               engine.getKeys("command", fileConfig.command, false);
-              file.filter = engine.getFirstKey("folder");
+              file.filter = engine.getFirstKey("folder", false);
               String firstCommand = fileConfig.command.isEmpty() ? String() : fileConfig.command.getFirst()->data;
               String type;
               if(firstCommand == "__clCompile")
