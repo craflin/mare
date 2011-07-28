@@ -2,6 +2,7 @@
 #include <cstring>
 #include <cstdarg>
 #include <cstdio>
+#include <ctype.h>
 
 #include "Assert.h"
 #include "String.h"
@@ -365,3 +366,18 @@ static bool szWildMatch1(const char* pat, const char* str, const char*& matchsta
   return false;
 }
 
+String& String::lowercase()
+{
+  grow(data->length, data->length); // detach
+  for(char* str = (char*)data->str; *str; ++str)
+    *str = tolower(*str);
+  return *this;
+}
+
+String& String::uppercase()
+{
+  grow(data->length, data->length); // detach
+  for(char* str = (char*)data->str; *str; ++str)
+    *str = toupper(*str);
+  return *this;
+}

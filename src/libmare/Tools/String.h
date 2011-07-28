@@ -56,6 +56,9 @@ public:
 
   int subst(const String& from, const String& to);
 
+  String& lowercase();
+  String& uppercase();
+
 private:
   class Data
   {
