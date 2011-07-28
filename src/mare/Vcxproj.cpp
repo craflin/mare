@@ -970,8 +970,12 @@ String Vcxproj::join(const List<String>& items, char sep, const String& suffix) 
 
 String Vcxproj::joinCommands(const List<String>& commands) const
 {
+  List<String> commands2;
+  commands2 = commands;
+  if(!commands2.isEmpty())
+    commands2.getFirst()->data.subst("/", "\\");
   String result;
-  Words::append(commands, result);
+  Words::append(commands2, result);
   return result;
   // TODO: something for more than a single command?
 }
