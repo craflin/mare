@@ -376,7 +376,7 @@ success:
     }
   }
 
-  const char** argv = (const char**)alloca(command.getSize() + 1);
+  const char** argv = (const char**)alloca(sizeof(const char*) * (command.getSize() + 1));
   int i = 0;
   for(const List<String>::Node* j = command.getFirst(); j; j = j->getNext())
     argv[i++] = j->data.getData();
