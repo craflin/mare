@@ -6,7 +6,11 @@
 
 #include "Engine.h"
 #include "Tools/File.h"
+#ifdef _WIN32
 #include "Tools/Win32/getopt.h"
+#else
+#include <getopt.h>
+#endif
 
 #include "Builder.h"
 #include "Vcxproj.h"
