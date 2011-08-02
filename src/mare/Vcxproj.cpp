@@ -153,6 +153,8 @@ bool Vcxproj::generate(const Map<String, String>& userArgs)
   //
   if(!readFile())
     return false;
+  if(!resolveDependencies())
+    return false;
 
   // generate solution file
   if(!generateSln())
@@ -238,7 +240,21 @@ bool Vcxproj::readFile()
         engine.getKeys("cleanCommand", projectConfig.cleanCommand, false);
         engine.getKeys("postBuildCommand", projectConfig.postBuildCommand, false);
         projectConfig.buildDir = engine.getFirstKey("buildDir", true);
-        projectConfig.firstCommand = engine.getFirstKey("command", false);
+
+        engine.getKeys("message", projectConfig.message, false);
+        engine.getKeys("command", projectConfig.command, false);
+        projectConfig.type = "Utility";
+        if(!projectConfig.command.isEmpty())
+        {
+          const String& firstCommand = projectConfig.command.getFirst()->data;
+          if(firstCommand == "__Application" || firstCommand == "__StaticLibrary" || 
+            firstCommand == "__DynamicLibrary" || firstCommand == "__Makefile")
+          {
+            projectConfig.type = firstCommand.substr(2);
+            projectConfig.command.clear();
+          }
+        }
+
         engine.getKeys("cppFlags", projectConfig.cppFlags, true);
         List<String> linkFlags;
         engine.getKeys("linkFlags", linkFlags, true);
@@ -246,13 +262,13 @@ bool Vcxproj::readFile()
           projectConfig.linkFlags.append(i->data, 0);
         projectConfig.firstOutput = engine.getFirstKey("outputs", false);
         engine.getKeys("outputs", projectConfig.outputs, false);
+        engine.getKeys("inputs", projectConfig.inputs, false);
         engine.getKeys("defines", projectConfig.defines, true);
         engine.getKeys("includePaths", projectConfig.includePaths, true);
         engine.getKeys("libPaths", projectConfig.libPaths, true);
         engine.getKeys("libs", projectConfig.libs, true);
-        List<String> dependencies;
-        engine.getKeys("dependencies", dependencies, false);
-        for(const List<String>::Node* i = dependencies.getFirst(); i; i = i->getNext())
+        engine.getKeys("dependencies", projectConfig.dependencies, false);
+        for(const List<String>::Node* i = projectConfig.dependencies.getFirst(); i; i = i->getNext())
           if(!project->dependencies.find(i->data))
             project->dependencies.append(i->data);
         List<String> root;
@@ -324,6 +340,69 @@ bool Vcxproj::readFile()
     engine.leaveKey();
   }
 
+  return true;
+}
+
+bool Vcxproj::resolveDependencies()
+{
+  for(Map<String, Project>::Node* i = projects.getFirst(); i; i = i->getNext())
+  {
+    Project& project = i->data;
+
+    for(Map<String, Project::Config>::Node* i = project.configs.getFirst(); i; i = i->getNext())
+    {
+      const String& configKey = i->key;
+      Project::Config& config = i->data;
+      if(config.command.isEmpty())
+        continue;
+
+      // resolve target dependencies (add outputs of the target to the list of input files)
+      for(const List<String>::Node* i = config.dependencies.getFirst(); i; i = i->getNext())
+      {
+        const Map<String, Project>::Node* node = projects.find(i->data);
+        if(node)
+        {
+          const Project& depProj = node->data;
+          const Map<String, Project::Config>::Node* node = depProj.configs.find(configKey);
+          if(node)
+            for(const List<String>::Node* i = node->data.outputs.getFirst(); i; i = i->getNext())
+              config.inputs.append(i->data);
+        }
+      }
+    }
+
+    for(Map<String, Project::File>::Node* i = project.files.getFirst(); i; i = i->getNext())
+    {
+      Project::File& file = i->data;
+      if(file.type != "CustomBuild")
+        continue;
+
+      const String& fileName = i->key;
+      for(const Map<String, Project::Config>::Node* i = project.configs.getFirst(); i; i = i->getNext())
+      {
+        const String& configKey = i->key;
+        Map<String, Project::File::Config>::Node* node = file.configs.find(i->key);
+        if(!node)
+          continue;
+
+        Project::File::Config& config = node->data;
+
+        // resolve target dependencies (add outputs of the target to the list of input files)
+        for(const List<String>::Node* i = config.dependencies.getFirst(); i; i = i->getNext())
+        {
+          const Map<String, Project>::Node* node = projects.find(i->data);
+          if(node)
+          {
+            const Project& depProj = node->data;
+            const Map<String, Project::Config>::Node* node = depProj.configs.find(configKey);
+            if(node)
+              for(const List<String>::Node* i = node->data.outputs.getFirst(); i; i = i->getNext())
+                config.inputs.append(i->data);
+          }
+        }
+      }
+    }
+  }
   return true;
 }
 
@@ -475,11 +554,7 @@ bool Vcxproj::generateVcxproj(Project& project)
   {
     const Project::Config& config = i->data;
     fileWrite(String("  <PropertyGroup Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\" Label=\"Configuration\">\r\n");
-    String configurationType("Utility");
-    if(config.firstCommand == "__Application" || config.firstCommand == "__StaticLibrary" || 
-      config.firstCommand == "__DynamicLibrary" || config.firstCommand == "__Makefile")
-      configurationType = config.firstCommand.substr(2);
-    fileWrite(String("    <ConfigurationType>") + configurationType + "</ConfigurationType>\r\n");
+    fileWrite(String("    <ConfigurationType>") + config.type + "</ConfigurationType>\r\n");
 
     if(config.name == "Debug") 
       fileWrite("    <UseDebugLibraries>true</UseDebugLibraries>\r\n"); // i have no idea what this option does and how to change it in the project settings in visual studio
@@ -525,7 +600,7 @@ bool Vcxproj::generateVcxproj(Project& project)
         fileWrite(String("    <OutDir Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">" + path + "\\</OutDir>\r\n");
       fileWrite(String("    <IntDir Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">" + path + "\\</IntDir>\r\n");
     }
-    if(config.firstCommand == "__Makefile")
+    if(config.type == "Makefile")
     {
       fileWrite(String("    <NMakeBuildCommandLine Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">" + joinCommands(config.buildCommand) + "</NMakeBuildCommandLine>\r\n");
       fileWrite(String("    <NMakeReBuildCommandLine Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">" + joinCommands(config.reBuildCommand) + "</NMakeReBuildCommandLine>\r\n");
@@ -596,7 +671,7 @@ bool Vcxproj::generateVcxproj(Project& project)
       fileWrite("    </PostBuildEvent>\r\n");
     }
 
-    if(config.firstCommand != "__Makefile")
+    if(config.type != "Makefile")
     {/*
       fileWrite("    <Midl>\r\n");
       fileWrite("      <WarningLevel>0</WarningLevel>\r\n");
@@ -690,6 +765,34 @@ bool Vcxproj::generateVcxproj(Project& project)
         fileWrite(String("      <AdditionalLibraryDirectories>") + join(config.libPaths) + ";%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>\r\n");
 
       fileWrite("    </Link>\r\n");
+
+      /*
+      that does not work:
+      if(!config.command.isEmpty())
+      {
+        fileWrite("    <CustomBuild>\r\n");
+
+        if(!config.message.isEmpty())
+          fileWrite(String("      <Message>") + join(config.message, ' ') + "</Message>\r\n");
+        if(!config.command.isEmpty())
+          fileWrite(String("      <Command>") + joinCommands(config.command) + "</Command>\r\n");
+        else
+        {
+          // TODO: warning or error
+        }
+        if(!config.inputs.isEmpty())
+          fileWrite(String("      <AdditionalInputs>") + join(config.inputs) + "</AdditionalInputs>\r\n");
+
+        if(!config.outputs.isEmpty())
+          fileWrite(String("      <Outputs>") + join(config.outputs) + "</Outputs>\r\n");
+        else
+        {
+          // TODO: warning or error
+        }
+
+        fileWrite("    </CustomBuild>\r\n");
+      }
+      */
     }
     fileWrite("  </ItemDefinitionGroup>\r\n");
   }
@@ -717,24 +820,8 @@ bool Vcxproj::generateVcxproj(Project& project)
           if(!config.command.isEmpty())
             fileWrite(String("      <Command Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">" + joinCommands(config.command) + "</Command>\r\n");
           else
-            {
-            // TODO: warning or error
-          }
-
-          // resolve target dependencies (add outputs of the target to the list of input files)
           {
-            for(const List<String>::Node* i = config.dependencies.getFirst(); i; i = i->getNext())
-            {
-              const Map<String, Project>::Node* node = projects.find(i->data);
-              if(node)
-              {
-                const Project& depProj = node->data;
-                const Map<String, Project::Config>::Node* node = depProj.configs.find(configKey);
-                if(node)
-                  for(const List<String>::Node* i = node->data.outputs.getFirst(); i; i = i->getNext())
-                    config.inputs.append(i->data);
-              }
-            }
+            // TODO: warning or error
           }
 
           List<String> additionalInputs;

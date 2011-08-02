@@ -42,9 +42,13 @@ private:
       List<String> preLinkCommand;
       List<String> postBuildCommand;
       String buildDir;
-      String firstCommand;
+      String type;
+      List<String> command;
+      List<String> message;
       String firstOutput;
       List<String> outputs;
+      List<String> inputs;
+      List<String> dependencies;
       List<String> cppFlags;
       Map<String, void*> linkFlags;
       List<String> defines;
@@ -116,6 +120,7 @@ private:
   Map<String, Option> knownLinkOptions;
 
   bool readFile();
+  bool resolveDependencies();
 
   bool generateSln();
   bool generateVcxprojs();
