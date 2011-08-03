@@ -84,7 +84,7 @@ bool Vcxproj::generate(const Map<String, String>& userArgs)
   // TODO: serveral linker tabs?
 
   // debugging tab:
-  knownLinkOptions.append("/DEBUG", Option("GenerateDebugInformation", "true"));  
+  knownLinkOptions.append("/DEBUG", Option("GenerateDebugInformation", "true"));
   // TODO: more options?
 
   // system tab:
@@ -103,7 +103,7 @@ bool Vcxproj::generate(const Map<String, String>& userArgs)
   knownLinkOptions.append("/LTCG");
   // TODO: more LTCG options?
   // TODO: more options?
-  
+
   engine.addDefaultKey("tool", "vcxproj");
   engine.addDefaultKey("vcxproj", "vcxproj");
   engine.addDefaultKey("host", "Win32");
@@ -172,7 +172,7 @@ bool Vcxproj::readFile()
 
   // get some global keys
   solutionName = engine.getFirstKey("name");
-  
+
   List<String> inputPlatforms, inputConfigurations, inputTargets;
   engine.getKeys("platforms", inputPlatforms);
   engine.getKeys("configurations", inputConfigurations);
@@ -247,7 +247,7 @@ bool Vcxproj::readFile()
         if(!projectConfig.command.isEmpty())
         {
           const String& firstCommand = projectConfig.command.getFirst()->data;
-          if(firstCommand == "__Application" || firstCommand == "__StaticLibrary" || 
+          if(firstCommand == "__Application" || firstCommand == "__StaticLibrary" ||
             firstCommand == "__DynamicLibrary" || firstCommand == "__Makefile")
           {
             projectConfig.type = firstCommand.substr(2);
@@ -397,7 +397,6 @@ bool Vcxproj::resolveDependencies()
       if(file.type != "CustomBuild")
         continue;
 
-      const String& fileName = i->key;
       for(const Map<String, Project::Config>::Node* i = project.configs.getFirst(); i; i = i->getNext())
       {
         const String& configKey = i->key;
@@ -550,7 +549,7 @@ bool Vcxproj::generateVcxproj(Project& project)
 
   fileWrite("<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n");
   fileWrite("<Project DefaultTargets=\"Build\" ToolsVersion=\"4.0\" xmlns=\"http://schemas.microsoft.com/developer/msbuild/2003\">\r\n");
-  
+
   fileWrite("  <ItemGroup Label=\"ProjectConfigurations\">\r\n");
   for(const Map<String, Project::Config>::Node* i = project.configs.getFirst(); i; i = i->getNext())
   {
@@ -561,7 +560,7 @@ bool Vcxproj::generateVcxproj(Project& project)
     fileWrite("    </ProjectConfiguration>\r\n");
   }
   fileWrite("  </ItemGroup>\r\n");
-  
+
   fileWrite("  <PropertyGroup Label=\"Globals\">\r\n");
   //fileWrite(String("    <ProjectName>") + project.name + "</ProjectName>\r\n");
   fileWrite(String("    <ProjectGuid>{") + project.guid + "}</ProjectGuid>\r\n");
@@ -576,20 +575,20 @@ bool Vcxproj::generateVcxproj(Project& project)
     fileWrite(String("  <PropertyGroup Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\" Label=\"Configuration\">\r\n");
     fileWrite(String("    <ConfigurationType>") + config.type + "</ConfigurationType>\r\n");
 
-    if(config.name == "Debug") 
+    if(config.name == "Debug")
       fileWrite("    <UseDebugLibraries>true</UseDebugLibraries>\r\n"); // i have no idea what this option does and how to change it in the project settings in visual studio
     else                                                                // appearantly it changes some compiler/linker default values?
       fileWrite("    <UseDebugLibraries>false</UseDebugLibraries>\r\n");
     if(config.linkFlags.find("/LTCG"))
       fileWrite("    <WholeProgramOptimization>true</WholeProgramOptimization>\r\n");
-    
+
     fileWrite("  </PropertyGroup>\r\n");
   }
 
   fileWrite("  <Import Project=\"$(VCTargetsPath)\\Microsoft.Cpp.props\" />\r\n");
   fileWrite("  <ImportGroup Label=\"ExtensionSettings\">\r\n");
   fileWrite("  </ImportGroup>\r\n");
-  
+
   for(const Map<String, Project::Config>::Node* i = project.configs.getFirst(); i; i = i->getNext())
   {
     //const Project::Config& config = i->data;
@@ -601,7 +600,7 @@ bool Vcxproj::generateVcxproj(Project& project)
 
   fileWrite("  <PropertyGroup>\r\n");
   //fileWrite("    <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>\r\n");
-  
+
   for(const Map<String, Project::Config>::Node* i = project.configs.getFirst(); i; i = i->getNext())
   {
     const Project::Config& config = i->data;
@@ -666,12 +665,12 @@ bool Vcxproj::generateVcxproj(Project& project)
   }
 
   fileWrite("  </PropertyGroup>\r\n");
-  
+
   for(const Map<String, Project::Config>::Node* i = project.configs.getFirst(); i; i = i->getNext())
   {
     const Project::Config& config = i->data;
     fileWrite(String("  <ItemDefinitionGroup Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">\r\n");
-    
+
     if(!config.postBuildCommand.isEmpty())
     {
       fileWrite("    <PreBuildEvent>\r\n");
@@ -706,7 +705,7 @@ bool Vcxproj::generateVcxproj(Project& project)
         for(const List<String>::Node* i = config.cppFlags.getFirst(); i; i = i->getNext())
           if(!knownCppOptions.find(i->data))
             additionalOptions.append(i->data);
-      
+
         if(!additionalOptions.isEmpty())
           fileWrite(String("      <AdditionalOptions>") + join(additionalOptions, ' ') + " %(AdditionalOptions)</AdditionalOptions>\r\n");
 
@@ -729,23 +728,23 @@ bool Vcxproj::generateVcxproj(Project& project)
           }
         }
       }
-      
+
       if(!config.includePaths.isEmpty())
         fileWrite(String("      <AdditionalIncludeDirectories>") + join(config.includePaths) + ";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>\r\n");
       if(!config.defines.isEmpty())
         fileWrite(String("      <PreprocessorDefinitions>") + join(config.defines) + ";%(PreprocessorDefinitions)</PreprocessorDefinitions>\r\n");
       fileWrite("    </ClCompile>\r\n");
-      
+
       fileWrite("    <ResourceCompile>\r\n");
       if(!config.defines.isEmpty())
         fileWrite(String("      <PreprocessorDefinitions>") + join(config.defines) + ";%(PreprocessorDefinitions)</PreprocessorDefinitions>\r\n");
       fileWrite("    </ResourceCompile>\r\n");
-      
+
       fileWrite("    <ProjectReference>\r\n");
       //fileWrite("      <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>\r\n");
       fileWrite("      <LinkLibraryDependencies>false</LinkLibraryDependencies>\r\n");
       fileWrite("    </ProjectReference>\r\n");
-      
+
       fileWrite("    <Link>\r\n");
 
       {
@@ -753,7 +752,7 @@ bool Vcxproj::generateVcxproj(Project& project)
         for(const Map<String, void*>::Node* i = config.linkFlags.getFirst(); i; i = i->getNext())
           if(!knownLinkOptions.find(i->key))
             additionalOptions.append(i->key);
-      
+
         if(!additionalOptions.isEmpty())
           fileWrite(String("      <AdditionalOptions>") + join(additionalOptions, ' ') + " %(AdditionalOptions)</AdditionalOptions>\r\n");
 
@@ -830,7 +829,6 @@ bool Vcxproj::generateVcxproj(Project& project)
       const String& fileName = i->key;
       for(const Map<String, Project::Config>::Node* i = project.configs.getFirst(); i; i = i->getNext())
       {
-        const String& configKey = i->key;
         Map<String, Project::File::Config>::Node* node = file.configs.find(i->key);
         if(node)
         {
@@ -899,7 +897,7 @@ bool Vcxproj::generateVcxproj(Project& project)
     }
     fileWrite("  </ItemGroup>\r\n");
   }
-  
+
   fileWrite("  <Import Project=\"$(VCTargetsPath)\\Microsoft.Cpp.targets\" />\r\n");
   fileWrite("  <ImportGroup Label=\"ExtensionTargets\">\r\n");
   fileWrite("  </ImportGroup>\r\n");
@@ -976,8 +974,8 @@ bool Vcxproj::generateVcxprojFilter(Project& project)
     fileWrite("    </Filter>\r\n");
   }
   fileWrite("  </ItemGroup>\r\n");
-  
-  
+
+
   fileWrite("  <ItemGroup>\r\n");
   for(const Map<String, Project::File>::Node* i = project.files.getFirst(); i; i = i->getNext())
   {
@@ -993,9 +991,9 @@ bool Vcxproj::generateVcxprojFilter(Project& project)
       fileWrite(String("    </") + file.type + ">\r\n");
     }
   }
-  
+
   fileWrite("  </ItemGroup>\r\n");
-  
+
   fileWrite("</Project>\r\n");
 
   fileClose();
