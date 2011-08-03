@@ -6,6 +6,7 @@
 
 #include "Engine.h"
 #include "Tools/File.h"
+#include "Tools/Directory.h"
 #ifdef _WIN32
 #include "Tools/Win32/getopt.h"
 #else
@@ -86,6 +87,9 @@ static void showUsage(const char* executable)
   puts("    rebuild, --rebuild");
   puts("        Rebuild all output files of the selected target.");
   puts("");
+  puts("    -C <dir>, --directory=<dir>");
+  puts("        Change working directory to <dir> before doing anything else.");
+  puts("");
   puts("    -d");
   puts("        Print debugging information while processing normally.");
   puts("");
@@ -113,7 +117,7 @@ int main(int argc, char* argv[])
   Error::program = argv[0];
   Map<String, String> userArgs;
   List<String> inputPlatforms, inputConfigs, inputTargets;
-  String inputFile("Marefile");
+  String inputFile("Marefile"), inputDir;
   bool showHelp = false;
   bool showDebug = false;
   bool clean = false;
@@ -128,6 +132,7 @@ int main(int argc, char* argv[])
       {"file", required_argument , 0, 'f'},
       {"help", no_argument , 0, 'h'},
       {"version", no_argument , 0, 'v'},
+      {"directory", required_argument , 0, 'C'},
       {"clean", no_argument , 0, 0},
       {"rebuild", no_argument , 0, 0},
       {"vcxproj", required_argument , 0, 0},
@@ -174,7 +179,7 @@ int main(int argc, char* argv[])
     argv = nargv;
 
     // parse normal arguments
-    while((c = getopt_long(argc, argv, "c:df:hj:v", long_options, &option_index)) != -1)
+    while((c = getopt_long(argc, argv, "C:df:hj:v", long_options, &option_index)) != -1)
       switch(c)
       {
       case 0:
@@ -196,6 +201,9 @@ int main(int argc, char* argv[])
           else if(opt == "rebuild")
             rebuild = true;
         }
+        break;
+      case 'C':
+        inputDir = String(optarg, -1);
         break;
       case 'd':
         showDebug = true;
@@ -243,6 +251,16 @@ int main(int argc, char* argv[])
         else
           inputTargets.append(target);
       }
+    }
+  }
+
+  // change working directory?
+  if(!inputDir.isEmpty())
+  {
+    if(!Directory::change(inputDir))
+    {
+      // TODO: error message
+      return EXIT_FAILURE;
     }
   }
 
