@@ -198,12 +198,65 @@ String File::getWithoutExtension(const String& file)
   return String();
 }
 
+String File::simplifyPath(const String& path)
+{
+  String result(path.getLength());
+  const char* data = path.getData();
+  const char* start = data;
+  const char* end;
+  String chunck;
+  bool isAbsolut = *data == '/' || *data == '\\';
+  for(;;)
+  {
+    while(*start && (*start == '/' || *start == '\\'))
+      ++start;
+    end = start;
+    while(*end && *end != '/' && *end != '\\')
+      ++end;
+
+    if(end == start)
+      break;
+
+    chunck = path.substr(start - data, end - start);
+    if(chunck == ".." && !result.isEmpty())
+    {
+      const char* data = result.getData();
+      const char* pos = data + result.getLength() - 1;
+      for(;; --pos)
+        if(pos < data || *pos == '/' || *pos == '\\')
+        {
+          if(strcmp(pos + 1, "..") != 0)
+          {
+            if(pos < data)
+              result.setLength(0);
+            else
+              result.setLength(pos - data);
+            goto cont;
+          }
+          break;
+        }
+    }
+    else if(chunck == ".")
+      goto cont;
+
+    if(!result.isEmpty() || isAbsolut)
+      result.append('/');
+    result.append(chunck);
+
+  cont:
+    if(!*end)
+      break;
+    start = end + 1;
+  }
+  return result;
+}
+
 bool File::getWriteTime(const String& file, long long& writeTime)
 {
 #ifdef _WIN32
   WIN32_FIND_DATAA wfd;
   HANDLE hFind = FindFirstFileA(file.getData(), &wfd);
-  if(hFind == INVALID_HANDLE_VALUE) 
+  if(hFind == INVALID_HANDLE_VALUE)
     return false;
   ASSERT(sizeof(DWORD) == 4);
   writeTime = ((long long)wfd.ftLastWriteTime.dwHighDateTime) << 32LL | ((long long)wfd.ftLastWriteTime.dwLowDateTime);
@@ -223,7 +276,7 @@ bool File::exists(const String& file)
 #ifdef _WIN32
   WIN32_FIND_DATAA wfd;
   HANDLE hFind = FindFirstFileA(file.getData(), &wfd);
-  if(hFind == INVALID_HANDLE_VALUE) 
+  if(hFind == INVALID_HANDLE_VALUE)
     return false;
   //bool isDir = (wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != FILE_ATTRIBUTE_DIRECTORY;
   FindClose(hFind);

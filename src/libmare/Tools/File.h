@@ -28,6 +28,7 @@ public:
   static String getBasename(const String& file);
   static String getExtension(const String& file);
   static String getWithoutExtension(const String& file);
+  static String simplifyPath(const String& path);
 
   static bool getWriteTime(const String& file, long long& writeTime);
 
