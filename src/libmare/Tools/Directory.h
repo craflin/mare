@@ -30,7 +30,7 @@ public:
 
   /**
   * Searches the next matching entry in the opened directory
-  * @param dirsOnly 
+  * @param dirsOnly
   * @param path The path of the next matching entry
   * @param isDir Whether the next entry is a directory
   * @return Whether a matching entry was found
@@ -44,6 +44,8 @@ public:
   static bool create(const String& dir);
 
   static bool remove(const String& dir);
+
+  static bool change(const String& dir);
 
 private:
 

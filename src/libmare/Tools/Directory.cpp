@@ -244,7 +244,7 @@ bool Directory::exists(const String& dir)
 #ifdef _WIN32
   WIN32_FIND_DATAA wfd;
   HANDLE hFind = FindFirstFileA(dir.getData(), &wfd);
-  if(hFind == INVALID_HANDLE_VALUE) 
+  if(hFind == INVALID_HANDLE_VALUE)
     return false;
   bool isDir = (wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY;
   FindClose(hFind);
@@ -269,8 +269,8 @@ bool Directory::create(const String& dir)
     createdDirs.append(dir, true);
     return true;
   }
-  
-  
+
+
   const char* start = dir.getData();
   const char* pos = &start[dir.getLength() - 1];
   for(; pos >= start; --pos)
@@ -293,4 +293,13 @@ bool Directory::create(const String& dir)
 #endif
   createdDirs.append(dir, result);
   return result;
+}
+
+bool Directory::change(const String& dir)
+{
+#ifdef _WIN32
+  return SetCurrentDirectory(dir.getData()) != FALSE;
+#else
+  return chdir(dir.getData()) == 0;
+#endif
 }
