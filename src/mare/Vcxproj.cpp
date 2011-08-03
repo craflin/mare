@@ -356,19 +356,39 @@ bool Vcxproj::resolveDependencies()
       if(config.command.isEmpty())
         continue;
 
-      // resolve target dependencies (add outputs of the target to the list of input files)
-      for(const List<String>::Node* i = config.dependencies.getFirst(); i; i = i->getNext())
-      {
-        const Map<String, Project>::Node* node = projects.find(i->data);
+      // create a CustomBuild rule to build the target
+      Project::File* file = 0;
+      for(const List<String>::Node* i = config.inputs.getFirst(); i; i = i->getNext())
+      { // try using an input file that was added by the user
+        Map<String, Project::File>::Node* node = project.files.find(i->data);
         if(node)
         {
-          const Project& depProj = node->data;
-          const Map<String, Project::Config>::Node* node = depProj.configs.find(configKey);
-          if(node)
-            for(const List<String>::Node* i = node->data.outputs.getFirst(); i; i = i->getNext())
-              config.inputs.append(i->data);
+          file = &node->data;
+          if(file->type == "None" || file->type == "ClInclude")
+            goto foundFile;
         }
       }
+      for(const List<String>::Node* i = config.inputs.getFirst(); i; i = i->getNext())
+      { // try using any unused input file
+        Map<String, Project::File>::Node* node = project.files.find(i->data);
+        if(!node)
+        {
+          file = &project.files.append(i->data);
+          goto foundFile;
+        }
+      }
+      // TODO: error message
+      return false;
+
+    foundFile:
+      file->type = "CustomBuild";
+      Map<String, Project::File::Config>::Node* node = file->configs.find(configKey);
+      Project::File::Config& fileConfig = node ? node->data : file->configs.append(configKey);
+      fileConfig.command = config.command;
+      fileConfig.dependencies = config.dependencies;
+      fileConfig.inputs = config.inputs;
+      fileConfig.message = config.message;
+      fileConfig.outputs = config.outputs;
     }
 
     for(Map<String, Project::File>::Node* i = project.files.getFirst(); i; i = i->getNext())
