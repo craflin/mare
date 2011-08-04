@@ -206,7 +206,10 @@ unsigned int Process::start(const List<String>& command)
   String commandLine;
   if(i)
   {
-    commandLine.append(i->data);
+    if(strncmp(i->data.getData(), "../", 3) == 0 || strncmp(i->data.getData(), "..\\", 3) == 0)
+      commandLine.append(programPath);
+    else
+      commandLine.append(i->data);
     for(i = i->getNext(); i; i = i->getNext())
     {
       commandLine.append(' ');
