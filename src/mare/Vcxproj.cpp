@@ -235,9 +235,8 @@ bool Vcxproj::readFile()
         engine.getKeys("buildCommand", projectConfig.buildCommand, false);
         engine.getKeys("reBuildCommand", projectConfig.reBuildCommand, false);
         engine.getKeys("cleanCommand", projectConfig.cleanCommand, false);
-        engine.getKeys("buildCommand", projectConfig.buildCommand, false);
+        engine.getKeys("preBuildCommand", projectConfig.preBuildCommand, false);
         engine.getKeys("preLinkCommand", projectConfig.preLinkCommand, false);
-        engine.getKeys("cleanCommand", projectConfig.cleanCommand, false);
         engine.getKeys("postBuildCommand", projectConfig.postBuildCommand, false);
         projectConfig.buildDir = engine.getFirstKey("buildDir", true);
 
@@ -671,10 +670,10 @@ bool Vcxproj::generateVcxproj(Project& project)
     const Project::Config& config = i->data;
     fileWrite(String("  <ItemDefinitionGroup Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">\r\n");
 
-    if(!config.postBuildCommand.isEmpty())
+    if(!config.preBuildCommand.isEmpty())
     {
       fileWrite("    <PreBuildEvent>\r\n");
-      fileWrite(String("      <Command>") + joinCommands(config.postBuildCommand) + "</Command>\r\n");
+      fileWrite(String("      <Command>") + joinCommands(config.preBuildCommand) + "</Command>\r\n");
       fileWrite("    </PreBuildEvent>\r\n");
     }
     if(!config.preLinkCommand.isEmpty())
