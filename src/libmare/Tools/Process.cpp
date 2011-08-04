@@ -227,6 +227,7 @@ unsigned int Process::start(const List<String>& command)
 
   if(!CreateProcess(programPath.getData(), (char*)commandLine.getData(), NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
   {
+    error = GetLastError();
     if(!programPath.isEmpty())
     {
       String resolvedSymlink;
@@ -235,13 +236,14 @@ unsigned int Process::start(const List<String>& command)
         programPath = resolvedSymlink;
         if(CreateProcess(programPath.getData(), (char*)commandLine.getData(), NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
           goto success;
+        else
+          error = GetLastError();
       }
     }
 
     if(!cachedProgramPath)
       cachedProgramPaths.append(program, programPath);
 
-    error = GetLastError();
     return 0;
   }
 success:
