@@ -362,6 +362,8 @@ clean:
       printf("debug: %s\n", command.getData());
     }
 
+    fflush(stdout);
+
     if(command.isEmpty())
     {
       pid = 0;
