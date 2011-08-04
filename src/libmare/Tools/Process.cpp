@@ -174,7 +174,10 @@ unsigned int Process::start(const List<String>& command)
           testPath.append('\\');
           testPath.append(program);
           if(fileComplete(testPath, testExtensions, result))
+          {
+            result = File::simplifyPath(result);
             break;
+          }
         }
       }
       return result;
@@ -327,7 +330,10 @@ success:
           testPath.append('/');
           testPath.append(program);
           if(fileComplete(testPath, testExtensions, result))
+          {
+            result = File::simplifyPath(result);
             break;
+          }
         }
       }
       return result;
@@ -351,7 +357,7 @@ success:
           testPath.append(program);
           if(File::exists(testPath))
           {
-            result = testPath;
+            result = File::simplifyPath(testPath);
             return result;
           }
         }
