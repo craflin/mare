@@ -177,7 +177,8 @@ unsigned int Process::start(const List<String>& command)
           testPath.append(program);
           if(fileComplete(testPath, testExtensions, result))
           {
-            result = File::simplifyPath(result);
+            if(strncmp(program.getData(), "../", 3) == 0 || strncmp(program.getData(), "..\\", 3) == 0)
+              result = File::simplifyPath(result);
             break;
           }
         }
@@ -338,10 +339,7 @@ success:
           testPath.append('/');
           testPath.append(program);
           if(fileComplete(testPath, testExtensions, result))
-          {
-            result = File::simplifyPath(result);
             break;
-          }
         }
       }
       return result;
@@ -365,8 +363,8 @@ success:
           testPath.append(program);
           if(File::exists(testPath))
           {
-            result = File::simplifyPath(testPath);
-            return result;
+            result = testPath;
+            break;
           }
         }
       }
