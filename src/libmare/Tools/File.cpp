@@ -50,16 +50,10 @@ bool File::unlink(const String& file)
 {
 #ifdef _WIN32
   if(!DeleteFile(file.getData()))
-  {
-    error = GetLastError();
     return false;
-  }
 #else
   if(::unlink(file.getData()) != 0)
-  {
-    error = errno;
     return false;
-  }
 #endif
   return true;
 }
@@ -68,7 +62,10 @@ bool File::open(const String& file, Flags flags)
 {
 #ifdef _WIN32
   if(fp != INVALID_HANDLE_VALUE)
+  {
+    SetLastError(ERROR_INVALID_HANDLE);
     return false;
+  }
   DWORD desiredAccess = 0, creationDisposition = 0;
   if(flags & writeFlag)
   {
@@ -83,20 +80,14 @@ bool File::open(const String& file, Flags flags)
   }
   fp = CreateFileA(file.getData(), desiredAccess, FILE_SHARE_READ, NULL, creationDisposition, FILE_ATTRIBUTE_NORMAL, NULL);
   if(fp == INVALID_HANDLE_VALUE)
-  {
-    error = GetLastError();
     return false;
-  }
 #else
   if(fp)
     return false;
   const char* mode = (flags & (writeFlag | readFlag)) == (writeFlag | readFlag) ? "w+" : (flags & writeFlag ? "w" : "r");
   fp = fopen(file.getData(), mode);
   if(!fp)
-  {
-    error = errno;
     return false;
-  }
 #endif
 
   return true;
@@ -107,18 +98,12 @@ int File::read(char* buffer, int len)
 #ifdef _WIN32
   DWORD i;
   if(!ReadFile((HANDLE)fp, buffer, len, &i, NULL))
-  {
-    error = GetLastError();
     return 0;
-  }
   return i;
 #else
   size_t i = fread(buffer, 1, len, (FILE*)fp);
   if(i == 0)
-  {
-    error = errno;
     return 0;
-  }
   return (int)i;
 #endif
 }
@@ -128,23 +113,10 @@ int File::write(const char* buffer, int len)
 #ifdef _WIN32
   DWORD i;
   if(!WriteFile((HANDLE)fp, buffer, len, &i, NULL))
-  {
-    error = GetLastError();
     return 0;
-  }
-  if(i != len)
-  {
-    error = GetLastError();
-    return i;
-  }
   return i;
 #else
   size_t i = fwrite(buffer, 1, len, (FILE*)fp);
-  if((int)i != len)
-  {
-    error = errno;
-    return (int)i;
-  }
   return (int)i;
 #endif
 }
@@ -289,4 +261,3 @@ bool File::exists(const String& file)
   return true;
 #endif
 }
-

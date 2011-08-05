@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "Error.h"
+#include "String.h"
 
 class File
 {
@@ -15,14 +15,11 @@ public:
   File();
   ~File();
 
-  bool unlink(const String& file);
   bool open(const String& file, Flags flags = readFlag);
   void close();
   int read(char* buffer, int len);
   int write(const char* buffer, int len);
   bool write(const String& data);
-
-  inline const Error& getErrno() {return error;}
 
   static String getDirname(const String& file);
   static String getBasename(const String& file);
@@ -33,8 +30,8 @@ public:
   static bool getWriteTime(const String& file, long long& writeTime);
 
   static bool exists(const String& file);
+  static bool unlink(const String& file);
 
 private:
   void* fp;
-  Error error;
 };

@@ -7,6 +7,7 @@
 #include "Engine.h"
 #include "Tools/File.h"
 #include "Tools/Directory.h"
+#include "Tools/Error.h"
 #ifdef _WIN32
 #include "Tools/Win32/getopt.h"
 #else

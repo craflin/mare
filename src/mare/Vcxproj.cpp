@@ -6,6 +6,7 @@
 #include "Tools/File.h"
 #include "Tools/md5.h"
 #include "Tools/Assert.h"
+#include "Tools/Error.h"
 #include "Engine.h"
 
 #include "Vcxproj.h"
@@ -1003,7 +1004,7 @@ void Vcxproj::fileOpen(const String& name)
 {
   if(!file.open(name, File::writeFlag))
   {
-    engine.error(file.getErrno().getString());
+    engine.error(Error::getString());
     exit(EXIT_FAILURE);
   }
 }
@@ -1012,7 +1013,7 @@ void Vcxproj::fileWrite(const String& data)
 {
   if(!file.write(data))
   {
-    engine.error(file.getErrno().getString());
+    engine.error(Error::getString());
     exit(EXIT_FAILURE);
   }
 }

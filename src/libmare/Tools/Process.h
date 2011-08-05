@@ -4,7 +4,6 @@
 
 #include "List.h"
 #include "String.h"
-#include "Error.h"
 
 class Process
 {
@@ -17,8 +16,6 @@ public:
 
   unsigned int join();
 
-  inline const Error& getErrno() {return error;}
-
   static unsigned int waitOne();
 
   static unsigned  int getProcessorCount();
@@ -30,5 +27,4 @@ private:
   unsigned int pid;
   unsigned int exitCode;
 #endif
-  Error error;
 };

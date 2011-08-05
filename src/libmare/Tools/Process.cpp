@@ -18,6 +18,8 @@
 #include "File.h"
 #ifdef _WIN32
 #include "Array.h"
+#else
+#include "Error.h"
 #endif
 
 #ifdef _WIN32
@@ -227,7 +229,7 @@ unsigned int Process::start(const List<String>& command)
 
   if(!CreateProcess(programPath.getData(), (char*)commandLine.getData(), NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
   {
-    error = GetLastError();
+    DWORD lastError = GetLastError();
     if(!programPath.isEmpty())
     {
       String resolvedSymlink;
@@ -237,13 +239,14 @@ unsigned int Process::start(const List<String>& command)
         if(CreateProcess(programPath.getData(), (char*)commandLine.getData(), NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
           goto success;
         else
-          error = GetLastError();
+          lastError = GetLastError();
       }
     }
 
     if(!cachedProgramPath)
       cachedProgramPaths.append(program, programPath);
 
+    SetLastError(lastError);
     return 0;
   }
 success:
@@ -395,10 +398,7 @@ success:
 
   int r = vfork();
   if(r == -1)
-  {
-    error = errno;
     return 0;
-  }
   else if(r != 0) // parent
   {
     pid = r;
@@ -409,8 +409,7 @@ success:
   {
     if(execv(programPath.getData(), (char* const*)argv) == -1)
     {
-      Error error = errno;
-      fprintf(stderr, "%s: %s\n", Error::program, error.getString().getData());
+      fprintf(stderr, "%s: %s\n", Error::program, Error::getString().getData());
       exit(EXIT_FAILURE);
     }
     ASSERT(false); // unreachable
@@ -423,7 +422,10 @@ unsigned int Process::join()
 {
 #ifdef _WIN32
   if(hProcess == INVALID_HANDLE_VALUE)
+  {
+    SetLastError(ERROR_INVALID_HANDLE);
     return 0;
+  }
   DWORD exitCode = 0;
   GetExitCodeProcess(hProcess, &exitCode);
   CloseHandle((HANDLE)hProcess);
@@ -431,7 +433,10 @@ unsigned int Process::join()
   return exitCode;
 #else
   if(!pid)
+  {
+    errno = EINVAL;
     return 0;
+  }
   pid = 0;
   return exitCode;
 #endif
@@ -441,7 +446,10 @@ unsigned int Process::waitOne()
 {
 #ifdef _WIN32
   if(runningProcessHandles.isEmpty())
+  {
+    SetLastError(ERROR_NOT_READY);
     return 0;
+  }
   DWORD index = WaitForMultipleObjects(runningProcessHandles.getSize(), runningProcessHandles.getFirst(), FALSE, INFINITE);
   if(index == WAIT_FAILED)
     return 0;

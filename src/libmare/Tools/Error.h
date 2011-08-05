@@ -1,20 +1,12 @@
 
 #pragma once
 
-class String;
+#include "String.h"
 
 class Error
 {
 public:
-
-  Error() : err(0) {}
-
-  Error(unsigned int err) : err(err) {}
-
-  String getString() const;
+  static String getString();
 
   static const char* program;
-
-private:
-  unsigned int err;
 };

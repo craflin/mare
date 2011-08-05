@@ -3,14 +3,14 @@
 #include <windows.h>
 #else
 #include <cstring>
+#include <cerrno>
 #endif
 
 #include "Error.h"
-#include "String.h"
 
 const char* Error::program;
 
-String Error::getString() const
+String Error::getString()
 {
 #ifdef _WIN32
   String result;
@@ -18,7 +18,7 @@ String Error::getString() const
         FORMAT_MESSAGE_FROM_SYSTEM |
         FORMAT_MESSAGE_IGNORE_INSERTS,
         NULL,
-        err,
+        GetLastError(),
         MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
         (LPTSTR) result.getData(256),
         256, NULL );
@@ -26,6 +26,6 @@ String Error::getString() const
     result.setLength(len);
   return result;
 #else
-  return String(strerror(err), -1);
+  return String(strerror(errno), -1);
 #endif
 }

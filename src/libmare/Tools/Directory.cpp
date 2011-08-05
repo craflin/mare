@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <fnmatch.h>
+#include <cerrno>
 #endif
 
 #include "Assert.h"
@@ -63,7 +64,10 @@ bool Directory::open(const String& dirpath, const String& pattern)
 {
 #ifdef _WIN32
   if(findFile != INVALID_HANDLE_VALUE)
+  {
+    SetLastError(ERROR_INVALID_HANDLE);
     return false;
+  }
 
   this->dirpath = dirpath;
   String searchPath = dirpath;
@@ -78,7 +82,10 @@ bool Directory::open(const String& dirpath, const String& pattern)
   return true;
 #else
   if(dp)
+  {
+    errno = EINVAL;
     return false;
+  }
 
   this->dirpath = dirpath;
   this->pattern = pattern;
@@ -92,15 +99,20 @@ bool Directory::read(bool dirsOnly, String& name, bool& isDir)
 {
 #ifdef _WIN32
   if(!findFile)
+  {
+    SetLastError(ERROR_INVALID_HANDLE);
     return false;
+  }
   for(;;)
   {
     if(bufferedEntry)
       bufferedEntry = false;
     else if(!FindNextFile((HANDLE)findFile, (LPWIN32_FIND_DATA)ffd))
     {
+      DWORD lastError = GetLastError();
       FindClose((HANDLE)findFile);
       findFile = INVALID_HANDLE_VALUE;
+      SetLastError(lastError);
       return false;
     }
     isDir = (((LPWIN32_FIND_DATA)ffd)->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY;
@@ -114,15 +126,20 @@ bool Directory::read(bool dirsOnly, String& name, bool& isDir)
   }
 #else
   if(!dp)
+  {
+    errno = EINVAL;
     return false;
+  }
 
   for(;;)
   {
     struct dirent* dent = readdir((DIR*)dp);
     if(!dent)
     {
+      int lastErrno = errno;
       closedir((DIR*)dp);
       dp = 0;
+      errno = lastErrno;
       return false;
     }
     const char* const str = dent->d_name;
@@ -259,6 +276,8 @@ bool Directory::exists(const String& dir)
 
 bool Directory::create(const String& dir)
 {
+  // TODO: set errno correctly
+
   static Map<String, bool> createdDirs;
   Map<String, bool>::Node* i  = createdDirs.find(dir);
   if(i)

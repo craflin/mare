@@ -8,6 +8,7 @@
 #include "Tools/File.h"
 #include "Tools/Directory.h"
 #include "Tools/Words.h"
+#include "Tools/Error.h"
 #include "Engine.h"
 
 bool Builder::build(const Map<String, String>& userArgs)
@@ -319,11 +320,8 @@ clean:
     {
       if(File::exists(i->data))
       {
-        File file;
-        if(!file.unlink(i->data))
-        {
-          engine.error(file.getErrno().getString());
-        }
+        if(!File::unlink(i->data))
+          engine.error(Error::getString());
       }
       if(!rebuild)
       {
@@ -377,7 +375,7 @@ clean:
     pid = process.start(command);
     if(!pid)
     {
-      engine.error(process.getErrno().getString());
+      engine.error(Error::getString());
       return false;
     }
     return true;

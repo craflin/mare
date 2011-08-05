@@ -4,6 +4,7 @@
 
 #include "Parser.h"
 #include "Tools/String.h"
+#include "Tools/Error.h"
 #include "Statement.h"
 
 Parser::Parser(Engine& engine) : engine(engine), readBufferPos(0), readBufferEnd(0), currentLine(1) {}
@@ -17,7 +18,7 @@ Statement* Parser::parse(const String& file, Engine::ErrorHandler errorHandler, 
   {
     if(!this->file.open(file))
     {
-      errorHandler(errorHandlerUserData, 0, this->file.getErrno().getString());
+      errorHandler(errorHandlerUserData, 0, Error::getString());
       throw false;
     }
     nextChar(); // read first character
