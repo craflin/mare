@@ -448,6 +448,17 @@ bool Vcxproj::generateSln()
     A::addProjectDeps(projects.getFirst()->data, *this, buildProjects);
   }
 
+  // remove projects not creating any output files
+  for(Map<String, Project>::Node* i = projects.getFirst(), * nexti; i; i = nexti)
+  {
+    nexti = i->getNext();
+    for(const Map<String, Project::Config>::Node* j = i->data.configs.getFirst(); j; j = j->getNext())
+      if(!j->data.command.isEmpty() || !j->data.outputs.isEmpty())
+        goto next;
+    projects.remove(i);
+  next:;
+  }
+
   // create solution file name
   if(solutionName.isEmpty() && !projects.isEmpty())
     solutionName = projects.getFirst()->data.name;
