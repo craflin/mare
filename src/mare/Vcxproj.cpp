@@ -210,6 +210,7 @@ bool Vcxproj::readFile()
 
       for(const List<String>::Node* i = inputTargets.getFirst(); i; i = i->getNext())
       {
+        bool isNewProject = false;
         Map<String, Project>::Node* node = projects.find(i->data);
         Project* project;
         if(node)
@@ -217,13 +218,7 @@ bool Vcxproj::readFile()
         else
         {
           project = &projects.append(i->data, Project(i->data, createSomethingLikeGUID(i->data)));
-          String filterName = engine.getFirstKey("folder", false);
-          if(!filterName.isEmpty())
-          {
-            Map<String, ProjectFilter>::Node* node = projectFilters.find(filterName);
-            ProjectFilter& filter = node ? node->data : projectFilters.append(filterName, ProjectFilter(createSomethingLikeGUID(filterName)));
-            filter.projects.append(project);
-          }
+          isNewProject = true;
         }
         Project::Config& projectConfig = project->configs.append(configKey, Project::Config(config.name, config.platform));
 
@@ -233,6 +228,18 @@ bool Vcxproj::readFile()
           return false;
         }
         engine.addDefaultKey("target", i->data);
+
+        if(isNewProject)
+        {
+          String filterName = engine.getFirstKey("folder", false);
+          if(!filterName.isEmpty())
+          {
+            Map<String, ProjectFilter>::Node* node = projectFilters.find(filterName);
+            ProjectFilter& filter = node ? node->data : projectFilters.append(filterName, ProjectFilter(createSomethingLikeGUID(filterName)));
+            filter.projects.append(project);
+          }
+        }
+
         engine.getKeys("buildCommand", projectConfig.buildCommand, false);
         engine.getKeys("reBuildCommand", projectConfig.reBuildCommand, false);
         engine.getKeys("cleanCommand", projectConfig.cleanCommand, false);
