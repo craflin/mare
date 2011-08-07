@@ -242,7 +242,7 @@ public:
 
   bool startExecution(Engine& engine, unsigned int& pid, bool clean, bool rebuild, bool showDebug)
   {
-    assert(finishedDependencies == dependencies.getSize());
+    ASSERT(finishedDependencies == dependencies.getSize());
 
     if(clean)
       goto clean;
@@ -527,7 +527,7 @@ public:
       for(Map<Rule*, String>::Node* i = rule->propagations.getFirst(); i; i = i->getNext())
       {
         Rule& rule = *i->key;
-        assert(!rule.dependencies.isEmpty());
+        ASSERT(!rule.dependencies.isEmpty());
         ++rule.finishedDependencies;
         if(rule.finishedDependencies == rule.dependencies.getSize())
         {
