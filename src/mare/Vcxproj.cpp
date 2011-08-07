@@ -1,6 +1,7 @@
 
 #include <cstring>
 #include <cstdlib>
+#include <cstdio>
 
 #include "Tools/Words.h"
 #include "Tools/File.h"
@@ -1025,6 +1026,7 @@ void Vcxproj::fileOpen(const String& name)
     engine.error(Error::getString());
     exit(EXIT_FAILURE);
   }
+  openedFile = name;
 }
 
 void Vcxproj::fileWrite(const String& data)
@@ -1034,6 +1036,17 @@ void Vcxproj::fileWrite(const String& data)
     engine.error(Error::getString());
     exit(EXIT_FAILURE);
   }
+}
+
+void Vcxproj::fileClose()
+{
+  file.close();
+  if(!openedFile.isEmpty())
+  {
+    puts(openedFile.getData());
+    fflush(stdout);
+  }
+  openedFile.clear();
 }
 
 String Vcxproj::createSomethingLikeGUID(const String& name)

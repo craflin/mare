@@ -119,6 +119,8 @@ private:
   Map<String, Option> knownCppOptions;
   Map<String, Option> knownLinkOptions;
 
+  String openedFile; /**< The file that is currently written */
+
   bool readFile();
   bool resolveDependencies();
 
@@ -129,7 +131,7 @@ private:
 
   void fileOpen(const String& name);
   void fileWrite(const String& data);
-  void fileClose() {file.close();}
+  void fileClose();
 
   String createSomethingLikeGUID(const String& name);
   String join(const List<String>& items, char sep = ';', const String& suffix = String()) const;
