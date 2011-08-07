@@ -679,7 +679,7 @@ bool Vcxproj::generateVcxproj(Project& project)
     {
       String basename = File::getBasename(config.firstOutput);
       fileWrite(String("    <TargetName Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">" + File::getWithoutExtension(basename) + "</TargetName>\r\n");
-      fileWrite(String("    <TargetExt Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">." + File::getExtension(basename) + "</TargetExt>\r\n");
+      fileWrite(String("    <TargetExt Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">" + (strchr(basename.getData(), '.') ? String(".") + File::getExtension(basename) : String()) + "</TargetExt>\r\n");
     }
   }
 
