@@ -166,8 +166,8 @@ String File::getWithoutExtension(const String& file)
     if(*pos == '.')
       return file.substr(0, pos - start);
     else if(*pos == '\\' || *pos == '/')
-      return String();
-  return String();
+      return file;
+  return file;
 }
 
 String File::simplifyPath(const String& path)
