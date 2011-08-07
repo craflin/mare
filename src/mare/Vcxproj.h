@@ -133,8 +133,9 @@ private:
   void fileWrite(const String& data);
   void fileClose();
 
-  String createSomethingLikeGUID(const String& name);
-  String join(const List<String>& items, char sep = ';', const String& suffix = String()) const;
-  String joinCommands(const List<String>& commands) const;
+  static String createSomethingLikeGUID(const String& name);
+  static String join(const List<String>& items, char sep = ';', const String& suffix = String());
+  static String joinCommands(const List<String>& commands);
+  static String Vcxproj::xmlEscape(const String& text);
 };
 

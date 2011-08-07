@@ -1086,32 +1086,60 @@ String Vcxproj::createSomethingLikeGUID(const String& name)
   return result;
 }
 
-String Vcxproj::join(const List<String>& items, char sep, const String& suffix) const
+String Vcxproj::join(const List<String>& items, char sep, const String& suffix)
 {
   String result;
   const List<String>::Node* i = items.getFirst();
   if(i)
   {
-    result = i->data;
+    result = xmlEscape(i->data);
     result.append(suffix);
     for(i = i->getNext(); i; i = i->getNext())
     {
       result.append(sep);
-      result.append(i->data);
+      result.append(xmlEscape(i->data));
       result.append(suffix);
     }
   }
   return result;
 }
 
-String Vcxproj::joinCommands(const List<String>& commands) const
+String Vcxproj::joinCommands(const List<String>& commands)
 {
-  List<String> commands2;
-  commands2 = commands;
-  if(!commands2.isEmpty())
-    commands2.getFirst()->data.subst("/", "\\");
   String result;
-  Words::append(commands2, result);
+  const List<String>::Node* i = commands.getFirst();
+  if(i)
+  {
+    String program(i->data);
+    program.subst("/", "\\");
+    result.append(xmlEscape(program));
+    for(i = i->getNext(); i; i = i->getNext())
+    {
+      result.append(' ');
+      result.append(xmlEscape(i->data));
+    }
+  }
   return result;
   // TODO: something for more than a single command?
+}
+
+String Vcxproj::xmlEscape(const String& text)
+{
+  const char* str = text.getData();
+  for(; *str; ++str)
+    if(*str == '<' || *str == '>' || *str == '&')
+      goto escape;
+  return text;
+escape:
+  String result(text);
+  result.setLength(str - text.getData());
+  for(; *str; ++str)
+    switch(*str)
+    {
+    case '<': result.append("&lt;"); break;
+    case '>': result.append("&gt;"); break;
+    case '&': result.append("&amp;"); break;
+    default: result.append(*str); break;
+    }
+  return result;
 }
