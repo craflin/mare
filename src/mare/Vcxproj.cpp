@@ -461,7 +461,7 @@ bool Vcxproj::generateSln()
   {
     nexti = i->getNext();
     for(const Map<String, Project::Config>::Node* j = i->data.configs.getFirst(); j; j = j->getNext())
-      if(!j->data.command.isEmpty() || !j->data.outputs.isEmpty())
+      if(!j->data.command.isEmpty() || !j->data.outputs.isEmpty() || !j->data.type.isEmpty())
         goto next;
     projects.remove(i);
   next:;
