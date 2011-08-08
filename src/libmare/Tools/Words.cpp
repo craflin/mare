@@ -1,5 +1,6 @@
 
 #include <cctype>
+#include <cstring>
 
 #include "Words.h"
 
@@ -58,14 +59,8 @@ void Words::append(const List<String>& words, String& text)
       unsigned int textlen = text.getLength();
       char* str = text.getData(buflen) + textlen;
       *(str++) = '"';
-      for(const char*  p = word.getData(); *p; ++p)
-        if(*p == '"')
-        {
-          *(str++) = '\\';
-          *(str++) = '"';
-        }
-        else
-          *(str++) = *p;
+      memcpy(str, word.getData(), word.getLength());
+      str += word.getLength();
       *(str++) = '"';
       text.setLength(str - text.getData());
     }

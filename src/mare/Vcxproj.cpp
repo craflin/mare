@@ -2,6 +2,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <cstdio>
+#include <cctype>
 
 #include "Tools/Words.h"
 #include "Tools/File.h"
@@ -1112,11 +1113,29 @@ String Vcxproj::joinCommands(const List<String>& commands)
   {
     String program(i->data);
     program.subst("/", "\\");
-    result.append(xmlEscape(program));
+    for(const char* str = program.getData(); *str; ++str)
+        if(isspace(*str))
+        {
+          result.append('"');
+          result.append(xmlEscape(program));
+          result.append('"');
+          goto next;
+        }
+      result.append(xmlEscape(program));
+    next: ;
     for(i = i->getNext(); i; i = i->getNext())
     {
       result.append(' ');
+      for(const char* str = i->data.getData(); *str; ++str)
+        if(isspace(*str))
+        {
+          result.append('"');
+          result.append(xmlEscape(i->data));
+          result.append('"');
+          goto next2;
+        }
       result.append(xmlEscape(i->data));
+    next2: ;
     }
   }
   return result;
