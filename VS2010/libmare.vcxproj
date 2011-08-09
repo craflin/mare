@@ -21,7 +21,7 @@
     <ClCompile Include="..\src\libmare\Tools\Process.cpp" />
     <ClCompile Include="..\src\libmare\Tools\Scope.cpp" />
     <ClCompile Include="..\src\libmare\Tools\String.cpp" />
-    <ClCompile Include="..\src\libmare\Tools\Words.cpp" />
+    <ClCompile Include="..\src\libmare\Tools\Word.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\libmare\Engine.h" />
@@ -39,7 +39,7 @@
     <ClInclude Include="..\src\libmare\Tools\Process.h" />
     <ClInclude Include="..\src\libmare\Tools\Scope.h" />
     <ClInclude Include="..\src\libmare\Tools\String.h" />
-    <ClInclude Include="..\src\libmare\Tools\Words.h" />
+    <ClInclude Include="..\src\libmare\Tools\Word.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{179311C6-6B6F-4E45-BA68-6C7168CCC82D}</ProjectGuid>

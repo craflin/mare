@@ -4,7 +4,7 @@
 #include "Tools/Assert.h"
 #include "Tools/File.h"
 #include "Tools/Directory.h"
-#include "Tools/Words.h"
+#include "Tools/Word.h"
 #include "Namespace.h"
 #include "Statement.h"
 #include "Engine.h"
@@ -70,10 +70,10 @@ String Namespace::evaluateString(const String& string)
         handle(engine, input, text, ",)"); if(*input == ',') ++input;
 
         List<String> words;
-        Words::split(text, words);
+        Word::split(text, words);
         for(List<String>::Node* i = words.getFirst(); i; i = i->getNext())
           i->data.subst(from, to);
-        Words::append(words, output);
+        Word::append(words, output);
       }
       else if(cmd == "patsubst")
       {
@@ -83,10 +83,10 @@ String Namespace::evaluateString(const String& string)
         handle(engine, input, text, ",)"); if(*input == ',') ++input;
 
         List<String> words;
-        Words::split(text, words);
+        Word::split(text, words);
         for(List<String>::Node* i = words.getFirst(); i; i = i->getNext())
           i->data.patsubst(pattern, replace);
-        Words::append(words, output);
+        Word::append(words, output);
       }
       // TODO: strip, findstring
       else if(cmd == "filter" || cmd == "filter-out")
@@ -96,8 +96,8 @@ String Namespace::evaluateString(const String& string)
         handle(engine, input, text, ",)"); if(*input == ',') ++input;
 
         List<String> patternwords, words;
-        Words::split(pattern, patternwords);
-        Words::split(text, words);
+        Word::split(pattern, patternwords);
+        Word::split(text, words);
         if(cmd == "filter")
           for(List<String>::Node* i = words.getFirst(), * next; i; i = next)
           {
@@ -119,7 +119,7 @@ String Namespace::evaluateString(const String& string)
                 break;
               }
           }
-        Words::append(words, output);
+        Word::append(words, output);
       }
       // TODO: sort, word, wordlist, words
       else if(cmd == "firstword")
@@ -128,7 +128,7 @@ String Namespace::evaluateString(const String& string)
         handle(engine, input, text, ",)"); if(*input == ',') ++input;
 
         List<String> words;
-        Words::split(text, words);
+        Word::split(text, words);
         if(!words.isEmpty())
           // TODO: handle words with spaces correctly
           output.append(words.getFirst()->data);
@@ -139,7 +139,7 @@ String Namespace::evaluateString(const String& string)
         handle(engine, input, text, ",)"); if(*input == ',') ++input;
 
         List<String> words;
-        Words::split(text, words);
+        Word::split(text, words);
         if(!words.isEmpty())
           // TODO: handle words with spaces correctly
           output.append(words.getLast()->data);
@@ -150,10 +150,10 @@ String Namespace::evaluateString(const String& string)
         handle(engine, input, files, ",)"); if(*input == ',') ++input;
 
         List<String> words;
-        Words::split(files, words);
+        Word::split(files, words);
         for(List<String>::Node* i = words.getFirst(); i; i = i->getNext())
           i->data = File::getDirname(i->data);
-        Words::append(words, output);
+        Word::append(words, output);
       }
       else if(cmd == "notdir")
       {
@@ -161,10 +161,10 @@ String Namespace::evaluateString(const String& string)
         handle(engine, input, files, ",)"); if(*input == ',') ++input;
         
         List<String> words;
-        Words::split(files, words);
+        Word::split(files, words);
         for(List<String>::Node* i = words.getFirst(); i; i = i->getNext())
           i->data = File::getBasename(i->data);
-        Words::append(words, output);
+        Word::append(words, output);
       }
       else if(cmd == "suffix")
       {
@@ -172,10 +172,10 @@ String Namespace::evaluateString(const String& string)
         handle(engine, input, files, ",)"); if(*input == ',') ++input;
         
         List<String> words;
-        Words::split(files, words);
+        Word::split(files, words);
         for(List<String>::Node* i = words.getFirst(); i; i = i->getNext())
           i->data = File::getExtension(i->data);
-        Words::append(words, output);
+        Word::append(words, output);
       }
       else if(cmd == "basename")
       {
@@ -183,10 +183,10 @@ String Namespace::evaluateString(const String& string)
         handle(engine, input, files, ",)"); if(*input == ',') ++input;
         
         List<String> words;
-        Words::split(files, words);
+        Word::split(files, words);
         for(List<String>::Node* i = words.getFirst(); i; i = i->getNext())
           i->data = File::getWithoutExtension(i->data);
-        Words::append(words, output);
+        Word::append(words, output);
       }
       else if(cmd == "addsuffix")
       {
@@ -195,10 +195,10 @@ String Namespace::evaluateString(const String& string)
         handle(engine, input, files, ",)"); if(*input == ',') ++input;
         
         List<String> words;
-        Words::split(files, words);
+        Word::split(files, words);
         for(List<String>::Node* i = words.getFirst(); i; i = i->getNext())
           i->data.append(suffix);
-        Words::append(words, output);
+        Word::append(words, output);
       }
       else if(cmd == "addprefix")
       {
@@ -207,10 +207,10 @@ String Namespace::evaluateString(const String& string)
         handle(engine, input, files, ",)"); if(*input == ',') ++input;
         
         List<String> words;
-        Words::split(files, words);
+        Word::split(files, words);
         for(List<String>::Node* i = words.getFirst(); i; i = i->getNext())
           i->data.prepend(prefix);
-        Words::append(words, output);
+        Word::append(words, output);
       }
       // TODO: wildcard, realpath, abspath
       else if(cmd == "if")
@@ -236,7 +236,7 @@ String Namespace::evaluateString(const String& string)
         handle(engine, input, list, ",)"); if(*input == ',') ++input;
 
         List<String> words;
-        Words::split(list, words);
+        Word::split(list, words);
         const char* inputStart = input;
         engine.pushKey();
         engine.leaveKey();
@@ -258,7 +258,7 @@ String Namespace::evaluateString(const String& string)
         engine.leaveUnnamedKey();
         engine.popKey();
         if(*input == ',') ++input;
-        Words::append(words, output);
+        Word::append(words, output);
       }
       // TODO: call, value, eval, origin, falvor, error, warning, info?
       else if(cmd == "lower")
@@ -267,10 +267,10 @@ String Namespace::evaluateString(const String& string)
         handle(engine, input, text, ",)"); if(*input == ',') ++input;
         
         List<String> words;
-        Words::split(text, words);
+        Word::split(text, words);
         for(List<String>::Node* i = words.getFirst(); i; i = i->getNext())
           i->data.lowercase();
-        Words::append(words, output);
+        Word::append(words, output);
       }
       else if(cmd == "upper")
       {
@@ -278,10 +278,10 @@ String Namespace::evaluateString(const String& string)
         handle(engine, input, text, ",)"); if(*input == ',') ++input;
         
         List<String> words;
-        Words::split(text, words);
+        Word::split(text, words);
         for(List<String>::Node* i = words.getFirst(); i; i = i->getNext())
           i->data.uppercase();
-        Words::append(words, output);
+        Word::append(words, output);
       }
       else if(cmd == "readfile")
       {
@@ -305,7 +305,7 @@ String Namespace::evaluateString(const String& string)
       List<String> keys;
       engine.getKeys(variable, keys, true);
       engine.popKey();
-      Words::append(keys, output);
+      Word::append(keys, output);
     }
   };
 
@@ -398,7 +398,7 @@ void Namespace::addKey(const String& key, Statement* value)
 
   // split words
   List<String> words;
-  Words::split(evaluatedKey, words);
+  Word::split(evaluatedKey, words);
 
   // add each word
   for(const List<String>::Node* i = words.getFirst(); i; i = i->getNext())
@@ -425,7 +425,7 @@ void Namespace::removeKey(const String& key)
 
   // split words
   List<String> words;
-  Words::split(evaluatedKey, words);
+  Word::split(evaluatedKey, words);
 
   // add each word
   for(const List<String>::Node* i = words.getFirst(); i; i = i->getNext())

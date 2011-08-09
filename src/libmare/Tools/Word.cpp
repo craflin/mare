@@ -2,7 +2,7 @@
 #include <cctype>
 #include <cstring>
 
-#include "Words.h"
+#include "Word.h"
 
 inline static const char* strspace(const char* str)
 {
@@ -12,7 +12,7 @@ inline static const char* strspace(const char* str)
   return str;
 }
 
-void Words::split(const String& text, List<String>& words)
+void Word::split(const String& text, List<String>& words)
 {
   const char* str = text.getData();
   while(*str)
@@ -45,7 +45,7 @@ void Words::split(const String& text, List<String>& words)
   }
 }
 
-void Words::append(const List<String>& words, String& text)
+void Word::append(const List<String>& words, String& text)
 {
   for(const List<String>::Node* i = words.getFirst(); i; i = i->getNext())
   {

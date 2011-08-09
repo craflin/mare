@@ -23,7 +23,7 @@
     <ClCompile Include="..\src\libmare\Tools\String.cpp">
       <Filter>Tools</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\libmare\Tools\Words.cpp">
+    <ClCompile Include="..\src\libmare\Tools\Word.cpp">
       <Filter>Tools</Filter>
     </ClCompile>
   </ItemGroup>
@@ -59,11 +59,11 @@
     <ClInclude Include="..\src\libmare\Tools\String.h">
       <Filter>Tools</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\libmare\Tools\Words.h">
-      <Filter>Tools</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\libmare\Token.h" />
     <ClInclude Include="..\src\libmare\Tools\Assert.h">
+      <Filter>Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\libmare\Tools\Word.h">
       <Filter>Tools</Filter>
     </ClInclude>
   </ItemGroup>

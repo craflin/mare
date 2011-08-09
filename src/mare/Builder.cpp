@@ -7,7 +7,7 @@
 #include "Tools/Process.h"
 #include "Tools/File.h"
 #include "Tools/Directory.h"
-#include "Tools/Words.h"
+#include "Tools/Word.h"
 #include "Tools/Error.h"
 #include "Engine.h"
 
@@ -350,13 +350,13 @@ clean:
     }
 
     String message;
-    Words::append(this->message.isEmpty() ? this->command : this->message, message);
+    Word::append(this->message.isEmpty() ? this->command : this->message, message);
     puts(message.getData());
 
     if(showDebug)
     {
       String command;
-      Words::append(this->command, command);
+      Word::append(this->command, command);
       printf("debug: %s\n", command.getData());
     }
 
