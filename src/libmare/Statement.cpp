@@ -57,7 +57,7 @@ void BinaryStatement::execute(Namespace& space)
         result = !leftSpace->getFirstKey().isEmpty() && !rightSpace->getFirstKey().isEmpty();
         break;
       case Token::or_:
-        result = !!leftSpace->getFirstKey().isEmpty() || !rightSpace->getFirstKey().isEmpty();
+        result = !leftSpace->getFirstKey().isEmpty() || !rightSpace->getFirstKey().isEmpty();
         break;
       case Token::equal:
         leftSpace->compareKeys(*rightSpace, result);
