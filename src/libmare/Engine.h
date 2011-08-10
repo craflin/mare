@@ -7,6 +7,7 @@
 #include "Tools/Scope.h"
 
 class Namespace;
+class Word;
 
 class Engine : public Scope
 {
@@ -30,8 +31,6 @@ public:
   String getFirstKey();
   String getFirstKey(const String& key, bool allowInheritance = true);
 
-  void setKey(const String& key);
-
   void addDefaultKey(const String& key);
   void addDefaultKey(const String& key, const String& value);
   void addDefaultKey(const String& key, const Map<String, String>& value);
@@ -45,7 +44,9 @@ private:
   Namespace* currentSpace;
   List<Namespace*> stashedKeys;
 
-  bool resolveScript(const String& key, Namespace*& space);
+  bool resolveScript(const String& key, Word*& word, Namespace*& space);
+  void setKey(const Word& key);
+  void appendKeys(String& output);
   
   friend class ReferenceStatement; // hack?
   friend class IfStatement; // hack?

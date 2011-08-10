@@ -69,9 +69,9 @@ String Namespace::evaluateString(const String& string)
         handle(engine, input, to, ",)"); if(*input == ',') ++input;
         handle(engine, input, text, ",)"); if(*input == ',') ++input;
 
-        List<String> words;
+        List<Word> words;
         Word::split(text, words);
-        for(List<String>::Node* i = words.getFirst(); i; i = i->getNext())
+        for(List<Word>::Node* i = words.getFirst(); i; i = i->getNext())
           i->data.subst(from, to);
         Word::append(words, output);
       }
@@ -82,9 +82,9 @@ String Namespace::evaluateString(const String& string)
         handle(engine, input, replace, ",)"); if(*input == ',') ++input;
         handle(engine, input, text, ",)"); if(*input == ',') ++input;
 
-        List<String> words;
+        List<Word> words;
         Word::split(text, words);
-        for(List<String>::Node* i = words.getFirst(); i; i = i->getNext())
+        for(List<Word>::Node* i = words.getFirst(); i; i = i->getNext())
           i->data.patsubst(pattern, replace);
         Word::append(words, output);
       }
@@ -95,24 +95,24 @@ String Namespace::evaluateString(const String& string)
         handle(engine, input, pattern, ",)"); if(*input == ',') ++input;
         handle(engine, input, text, ",)"); if(*input == ',') ++input;
 
-        List<String> patternwords, words;
+        List<Word> patternwords, words;
         Word::split(pattern, patternwords);
         Word::split(text, words);
         if(cmd == "filter")
-          for(List<String>::Node* i = words.getFirst(), * next; i; i = next)
+          for(List<Word>::Node* i = words.getFirst(), * next; i; i = next)
           {
             next = i->getNext();
-            for(List<String>::Node* j = patternwords.getFirst(); j; j = j->getNext())
+            for(List<Word>::Node* j = patternwords.getFirst(); j; j = j->getNext())
               if(i->data.patmatch(j->data))
                 goto keepWord;
             words.remove(i);
           keepWord: ;
           }
         else
-          for(List<String>::Node* i = words.getFirst(), * next; i; i = next)
+          for(List<Word>::Node* i = words.getFirst(), * next; i; i = next)
           {
             next = i->getNext();
-            for(List<String>::Node* j = patternwords.getFirst(); j; j = j->getNext())
+            for(List<Word>::Node* j = patternwords.getFirst(); j; j = j->getNext())
               if(i->data.patmatch(j->data))
               {
                 words.remove(i);
@@ -127,7 +127,7 @@ String Namespace::evaluateString(const String& string)
         String text;
         handle(engine, input, text, ",)"); if(*input == ',') ++input;
 
-        List<String> words;
+        List<Word> words;
         Word::split(text, words);
         if(!words.isEmpty())
           // TODO: handle words with spaces correctly
@@ -138,7 +138,7 @@ String Namespace::evaluateString(const String& string)
         String text;
         handle(engine, input, text, ",)"); if(*input == ',') ++input;
 
-        List<String> words;
+        List<Word> words;
         Word::split(text, words);
         if(!words.isEmpty())
           // TODO: handle words with spaces correctly
@@ -149,9 +149,9 @@ String Namespace::evaluateString(const String& string)
         String files;
         handle(engine, input, files, ",)"); if(*input == ',') ++input;
 
-        List<String> words;
+        List<Word> words;
         Word::split(files, words);
-        for(List<String>::Node* i = words.getFirst(); i; i = i->getNext())
+        for(List<Word>::Node* i = words.getFirst(); i; i = i->getNext())
           i->data = File::getDirname(i->data);
         Word::append(words, output);
       }
@@ -160,9 +160,9 @@ String Namespace::evaluateString(const String& string)
         String files;
         handle(engine, input, files, ",)"); if(*input == ',') ++input;
         
-        List<String> words;
+        List<Word> words;
         Word::split(files, words);
-        for(List<String>::Node* i = words.getFirst(); i; i = i->getNext())
+        for(List<Word>::Node* i = words.getFirst(); i; i = i->getNext())
           i->data = File::getBasename(i->data);
         Word::append(words, output);
       }
@@ -171,9 +171,9 @@ String Namespace::evaluateString(const String& string)
         String files;
         handle(engine, input, files, ",)"); if(*input == ',') ++input;
         
-        List<String> words;
+        List<Word> words;
         Word::split(files, words);
-        for(List<String>::Node* i = words.getFirst(); i; i = i->getNext())
+        for(List<Word>::Node* i = words.getFirst(); i; i = i->getNext())
           i->data = File::getExtension(i->data);
         Word::append(words, output);
       }
@@ -182,9 +182,9 @@ String Namespace::evaluateString(const String& string)
         String files;
         handle(engine, input, files, ",)"); if(*input == ',') ++input;
         
-        List<String> words;
+        List<Word> words;
         Word::split(files, words);
-        for(List<String>::Node* i = words.getFirst(); i; i = i->getNext())
+        for(List<Word>::Node* i = words.getFirst(); i; i = i->getNext())
           i->data = File::getWithoutExtension(i->data);
         Word::append(words, output);
       }
@@ -194,10 +194,10 @@ String Namespace::evaluateString(const String& string)
         handle(engine, input, suffix, ",)"); if(*input == ',') ++input;
         handle(engine, input, files, ",)"); if(*input == ',') ++input;
         
-        List<String> words;
+        List<Word> words;
         Word::split(files, words);
-        for(List<String>::Node* i = words.getFirst(); i; i = i->getNext())
-          i->data.append(suffix);
+        for(List<Word>::Node* i = words.getFirst(); i; i = i->getNext())
+          ((String&)i->data).append(suffix);
         Word::append(words, output);
       }
       else if(cmd == "addprefix")
@@ -206,9 +206,9 @@ String Namespace::evaluateString(const String& string)
         handle(engine, input, prefix, ",)"); if(*input == ',') ++input;
         handle(engine, input, files, ",)"); if(*input == ',') ++input;
         
-        List<String> words;
+        List<Word> words;
         Word::split(files, words);
-        for(List<String>::Node* i = words.getFirst(); i; i = i->getNext())
+        for(List<Word>::Node* i = words.getFirst(); i; i = i->getNext())
           i->data.prepend(prefix);
         Word::append(words, output);
       }
@@ -235,14 +235,14 @@ String Namespace::evaluateString(const String& string)
         handle(engine, input, var, ",)"); if(*input == ',') ++input;
         handle(engine, input, list, ",)"); if(*input == ',') ++input;
 
-        List<String> words;
+        List<Word> words;
         Word::split(list, words);
         const char* inputStart = input;
         engine.pushKey();
         engine.leaveKey();
         engine.enterUnnamedKey();
         engine.enterNewKey(var);
-        for(List<String>::Node* i = words.getFirst(); i; i = i->getNext())
+        for(List<Word>::Node* i = words.getFirst(); i; i = i->getNext())
         {
           engine.pushKey();
           engine.setKey(i->data);
@@ -266,9 +266,9 @@ String Namespace::evaluateString(const String& string)
         String text;
         handle(engine, input, text, ",)"); if(*input == ',') ++input;
         
-        List<String> words;
+        List<Word> words;
         Word::split(text, words);
-        for(List<String>::Node* i = words.getFirst(); i; i = i->getNext())
+        for(List<Word>::Node* i = words.getFirst(); i; i = i->getNext())
           i->data.lowercase();
         Word::append(words, output);
       }
@@ -277,9 +277,9 @@ String Namespace::evaluateString(const String& string)
         String text;
         handle(engine, input, text, ",)"); if(*input == ',') ++input;
         
-        List<String> words;
+        List<Word> words;
         Word::split(text, words);
-        for(List<String>::Node* i = words.getFirst(); i; i = i->getNext())
+        for(List<Word>::Node* i = words.getFirst(); i; i = i->getNext())
           i->data.uppercase();
         Word::append(words, output);
       }
@@ -302,10 +302,12 @@ String Namespace::evaluateString(const String& string)
     {
       engine.pushKey();
       engine.leaveKey();
-      List<String> keys;
-      engine.getKeys(variable, keys, true);
+      if(engine.enterKey(variable, true))
+      {
+        engine.appendKeys(output);
+        engine.leaveKey();
+      }
       engine.popKey();
-      Word::append(keys, output);
     }
   };
 
@@ -321,7 +323,8 @@ Namespace* Namespace::enterKey(const String& name, bool allowInheritance)
     goto failure;
 
   {
-    Map<String, Namespace*>::Node* j = variables.find(name);
+    Word key(name, false);
+    Map<Word, Namespace*>::Node* j = variables.find(key);
     if(j)
     {
       if(!j->data)
@@ -334,11 +337,12 @@ Namespace* Namespace::enterKey(const String& name, bool allowInheritance)
 failure:
   if(allowInheritance)
   {
+    Word* word;
     Namespace* space;
-    if(engine->resolveScript(name, space))
+    if(engine->resolveScript(name, word, space))
     {
       Namespace* newSpace = space ? new Namespace(*this, this, engine, space->statement, space->next, true) : new Namespace(*this, this, engine, 0, 0, true);
-      variables.append(name, newSpace);
+      variables.append(*word, newSpace);
       return newSpace;
     }
   }
@@ -354,7 +358,8 @@ Namespace* Namespace::enterNewKey(const String& name)
 {
   ASSERT(!compiled);
 
-  Map<String, Namespace*>::Node* j = variables.find(name);
+  Word key(name, false);
+  Map<Word, Namespace*>::Node* j = variables.find(key);
   if(j)
   {
     if(!j->data)
@@ -364,20 +369,22 @@ Namespace* Namespace::enterNewKey(const String& name)
   }
 
   Namespace* space = new Namespace(*this, this, engine, 0, 0, false);
-  variables.append(name, space);
+  variables.append(key, space);
   return space;
 }
 
-bool Namespace::resolveScript2(const String& name, Namespace*& result)
+bool Namespace::resolveScript2(const String& name, Word*& word, Namespace*& result)
 {
   ASSERT(!compiling);
   VERIFY(compile());
 
   // try a local lookup
-  Map<String, Namespace*>::Node* node = variables.find(name);
+  Word key(name, false);
+  Map<Word, Namespace*>::Node* node = variables.find(key);
   if(node)
   {
     result = node->data;
+    word = &node->key;
     if(!result)
       return true;
     do
@@ -397,21 +404,21 @@ void Namespace::addKey(const String& key, Statement* value)
   String evaluatedKey = evaluateString(key);
 
   // split words
-  List<String> words;
+  List<Word> words;
   Word::split(evaluatedKey, words);
 
   // add each word
-  for(const List<String>::Node* i = words.getFirst(); i; i = i->getNext())
+  for(const List<Word>::Node* i = words.getFirst(); i; i = i->getNext())
   {
-    const String& word = i->data;
+    const Word& word = i->data;
 
     // expand wildcards
-    if(strpbrk(word.getData(), "*?")) 
+    if(!word.quoted && strpbrk(word.getData(), "*?")) 
     {
       List<String> files;
       Directory::findFiles(word, files);
       for(const List<String>::Node* i = files.getFirst(); i; i = i->getNext())
-        addKeyRaw(i->data, value);
+        addKeyRaw(Word(i->data, false), value);
     }
     else
       addKeyRaw(word, value);
@@ -424,16 +431,16 @@ void Namespace::removeKey(const String& key)
   String evaluatedKey = evaluateString(key);
 
   // split words
-  List<String> words;
+  List<Word> words;
   Word::split(evaluatedKey, words);
 
   // add each word
-  for(const List<String>::Node* i = words.getFirst(); i; i = i->getNext())
+  for(const List<Word>::Node* i = words.getFirst(); i; i = i->getNext())
   {
-    const String& word = i->data;
+    const Word& word = i->data;
 
     // expand wildcards
-    if(strpbrk(word.getData(), "*?")) 
+    if(!word.quoted && strpbrk(word.getData(), "*?")) 
     {
       List<String> files;
       Directory::findFiles(word, files);
@@ -445,11 +452,11 @@ void Namespace::removeKey(const String& key)
   }
 }
 
-void Namespace::addKeyRaw(const String& key, Statement* value)
+void Namespace::addKeyRaw(const Word& key, Statement* value)
 {
   ASSERT(!compiled);
   ASSERT(!key.isEmpty());
-  Map<String, Namespace*>::Node* node = variables.find(key);
+  Map<Word, Namespace*>::Node* node = variables.find(key);
   if(node)
     node->data = value ? new Namespace(*this, this, engine, value, node->data, false) : 0;
   else
@@ -460,12 +467,13 @@ void Namespace::removeKeyRaw(const String& key)
 {
   ASSERT(!compiled);
   ASSERT(!key.isEmpty());
-  Map<String, Namespace*>::Node* node = variables.find(key);
+  Word wkey(key, false);
+  Map<Word, Namespace*>::Node* node = variables.find(wkey);
   if(node)
     variables.remove(node);
 }
 
-void Namespace::setKeyRaw(const String& key)
+void Namespace::setKeyRaw(const Word& key)
 {
   variables.clear();
   variables.append(key, 0);
@@ -475,10 +483,10 @@ void Namespace::removeKeysRaw(Namespace& space)
 {
   if(!space.compile())
     return;
-  for(const Map<String, Namespace*>::Node* i = space.variables.getFirst(); i; i = i->getNext())
+  for(const Map<Word, Namespace*>::Node* i = space.variables.getFirst(); i; i = i->getNext())
     if(!i->data || !i->data->inherited)
     {
-      Map<String, Namespace*>::Node* node = variables.find(i->key);
+      Map<Word, Namespace*>::Node* node = variables.find(i->key);
       if(node)
         variables.remove(node);
     }
@@ -489,8 +497,8 @@ bool Namespace::compareKeys(Namespace& space, bool& result)
   if(!compile() || !space.compile())
     return false;
 
-  const Map<String, Namespace*>::Node* i1 = variables.getFirst();
-  const Map<String, Namespace*>::Node* i2 = space.variables.getFirst();
+  const Map<Word, Namespace*>::Node* i1 = variables.getFirst();
+  const Map<Word, Namespace*>::Node* i2 = space.variables.getFirst();
   for(;;)
   {
     while(i1 && i1->data && i1->data->inherited)
@@ -585,16 +593,37 @@ void Namespace::getKeys(List<String>& keys)
 {
   if(!compile())
     return;
-  for(Map<String, Namespace*>::Node* node = variables.getFirst(); node; node = node->getNext())
+  for(Map<Word, Namespace*>::Node* node = variables.getFirst(); node; node = node->getNext())
     if(!node->data || !node->data->inherited)
       keys.append(node->key);
+}
+
+void Namespace::appendKeys(String& output)
+{
+  if(!compile())
+    return;
+  for(Map<Word, Namespace*>::Node* i = variables.getFirst(); i; i = i->getNext())
+    if(!i->data || !i->data->inherited)
+    {
+      if(i != variables.getFirst())
+        output.append(' ');
+      const Word& word = i->key;
+      if(word.quoted)
+      {
+        output.append('"');
+        output.append(word);
+        output.append('"');
+      }
+      else
+        output.append(word);
+    }
 }
 
 String Namespace::getFirstKey()
 {
   if(!compile())
     return String();
-  for(Map<String, Namespace*>::Node* node = variables.getFirst(); node; node = node->getNext())
+  for(Map<Word, Namespace*>::Node* node = variables.getFirst(); node; node = node->getNext())
     if(!node->data || !node->data->inherited)
       return node->key;
   return String();

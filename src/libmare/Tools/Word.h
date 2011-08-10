@@ -4,9 +4,19 @@
 #include "String.h"
 #include "List.h"
 
-class Word
+class Word : public String
 {
 public:
-  static void split(const String& text, List<String>& words);
-  static void append(const List<String>& words, String& text);
+  bool quoted;
+
+  Word(const String& word, bool quoted) : String(word), quoted(quoted) {}
+
+  Word& operator=(const String& other);
+
+  bool operator==(const Word& other) const;
+  bool operator!=(const Word& other) const;
+
+  static void split(const String& text, List<Word>& words);
+  static void append(const List<Word>& words, String& text);
+  static String join(const List<String>& words);
 };

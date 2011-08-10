@@ -101,7 +101,7 @@ void BinaryStatement::execute(Namespace& space)
       delete leftSpace;
       delete rightSpace;
       if(result)
-        space.addKeyRaw("true", 0);
+        space.addKeyRaw(Word("true", false), 0);
     }
     break;
 
@@ -118,8 +118,9 @@ void StringStatement::execute(Namespace& space)
 
 void ReferenceStatement::execute(Namespace& space)
 {
+  Word* word;
   Namespace* ref;
-  if(space.getEngine().resolveScript(variable, ref))
+  if(space.getEngine().resolveScript(variable, word, ref))
     if(ref && ref->statement)
     {
       ASSERT(!ref->compiling);
@@ -150,7 +151,7 @@ void UnaryStatement::execute(Namespace& space)
       bool result = opSpace->getFirstKey().isEmpty();
       delete opSpace;
       if(result)
-        space.addKeyRaw("true", 0);
+        space.addKeyRaw(Word("true", false), 0);
     }
     break;
   default:

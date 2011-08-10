@@ -46,10 +46,10 @@ void Engine::enterNewKey(const String& key)
   currentSpace = subSpace;
 }
 
-bool Engine::resolveScript(const String& key, Namespace*& result)
+bool Engine::resolveScript(const String& key, Word*& word, Namespace*& result)
 {
   for(Namespace* space = currentSpace->getParent(); space; space = space->getParent())
-    if(space->resolveScript2(key, result))
+    if(space->resolveScript2(key, word, result))
       return true;
   return false;
 }
@@ -75,6 +75,11 @@ bool Engine::leaveUnnamedKey()
 void Engine::getKeys(List<String>& keys)
 {
   currentSpace->getKeys(keys);
+}
+
+void Engine::appendKeys(String& output)
+{
+  return currentSpace->appendKeys(output);
 }
 
 void Engine::getKeys(const String& key, List<String>& keys, bool allowInheritance)
@@ -117,7 +122,7 @@ void Engine::addDefaultKey(const String& key, const Map<String, String>& value)
   currentSpace->addDefaultKey(key, value);
 }
 
-void Engine::setKey(const String& key)
+void Engine::setKey(const Word& key)
 {
   currentSpace->setKeyRaw(key);
 }

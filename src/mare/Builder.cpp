@@ -349,14 +349,12 @@ clean:
       return true;
     }
 
-    String message;
-    Word::append(this->message.isEmpty() ? this->command : this->message, message);
+    String message = Word::join(this->message.isEmpty() ? this->command : this->message);
     puts(message.getData());
 
     if(showDebug)
     {
-      String command;
-      Word::append(this->command, command);
+      String command = Word::join(this->command);
       printf("debug: %s\n", command.getData());
     }
 

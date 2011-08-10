@@ -3,6 +3,7 @@
 
 #include "Tools/Map.h"
 #include "Tools/Scope.h"
+#include "Tools/Word.h"
 
 class Engine;
 class Statement;
@@ -13,17 +14,18 @@ public:
   Namespace(Scope& scope, Namespace* parent, Engine* engine, Statement* statement, Namespace* next, bool inherited) : Scope::Object(scope), parent(parent), defaultStatement(0), statement(statement), next(next), engine(engine), inherited(inherited), compiled(false), compiling(false) {}
   
   inline Namespace* getParent() {return parent;}
-  bool resolveScript2(const String& name, Namespace*& space);
+  bool resolveScript2(const String& name, Word*& word, Namespace*& space);
   Namespace* enterKey(const String& name, bool allowInheritance);
   Namespace* enterUnnamedKey(Statement* statement);
   Namespace* enterNewKey(const String& name);
   void getKeys(List<String>& keys);
+  void appendKeys(String& output);
   String getFirstKey();
   inline Engine& getEngine() {return *engine;}
 
   void addKey(const String& key, Statement* value);
-  void addKeyRaw(const String& key, Statement* value);
-  void setKeyRaw(const String& key);
+  void addKeyRaw(const Word& key, Statement* value);
+  void setKeyRaw(const Word& key);
   void removeKey(const String& key);
   void removeKeyRaw(const String& key);
   void removeKeysRaw(Namespace& space);
@@ -44,7 +46,7 @@ private:
   bool inherited;
   bool compiled;
   bool compiling;
-  Map<String, Namespace*> variables;
+  Map<Word, Namespace*> variables;
 
   bool compile();
   String evaluateString(const String& string);
