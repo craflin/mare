@@ -252,6 +252,9 @@ bool Vcxproj::readFile()
 
         engine.getKeys("message", projectConfig.message, false);
         engine.getKeys("command", projectConfig.command, false);
+        engine.getKeys("outputs", projectConfig.outputs, false);
+        engine.getKeys("inputs", projectConfig.inputs, false);
+
         projectConfig.type = "Utility";
         if(!projectConfig.command.isEmpty())
         {
@@ -270,8 +273,6 @@ bool Vcxproj::readFile()
         for(const List<String>::Node* i = linkFlags.getFirst(); i; i = i->getNext())
           projectConfig.linkFlags.append(i->data, 0);
         projectConfig.firstOutput = engine.getFirstKey("outputs", false);
-        engine.getKeys("outputs", projectConfig.outputs, false);
-        engine.getKeys("inputs", projectConfig.inputs, false);
         engine.getKeys("defines", projectConfig.defines, true);
         engine.getKeys("includePaths", projectConfig.includePaths, true);
         engine.getKeys("libPaths", projectConfig.libPaths, true);
@@ -461,8 +462,10 @@ bool Vcxproj::generateSln()
   for(Map<String, Project>::Node* i = projects.getFirst(), * nexti; i; i = nexti)
   {
     nexti = i->getNext();
+    if(!i->data.files.isEmpty())
+      continue;
     for(const Map<String, Project::Config>::Node* j = i->data.configs.getFirst(); j; j = j->getNext())
-      if(!j->data.command.isEmpty() || !j->data.outputs.isEmpty() || !j->data.type.isEmpty())
+      if(!j->data.command.isEmpty() || !j->data.outputs.isEmpty() || j->data.type != "Utility")
         goto next;
     projects.remove(i);
   next:;
