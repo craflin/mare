@@ -48,7 +48,7 @@ private:
   bool compiling;
   Map<Word, Namespace*> variables;
 
-  bool compile();
+  void compile();
   String evaluateString(const String& string);
 
   friend class Engine;

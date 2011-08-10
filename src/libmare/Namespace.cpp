@@ -317,22 +317,18 @@ String Namespace::evaluateString(const String& string)
 
 Namespace* Namespace::enterKey(const String& name, bool allowInheritance)
 {
-  if(!compile())
-    goto failure;
+  compile();
 
+  Word key(name, false);
+  Map<Word, Namespace*>::Node* j = variables.find(key);
+  if(j)
   {
-    Word key(name, false);
-    Map<Word, Namespace*>::Node* j = variables.find(key);
-    if(j)
-    {
-      if(!j->data)
-        return (j->data = new Namespace(*this, this, engine, 0, 0, false));
-      if(allowInheritance || !j->data->inherited)
-        return j->data;
-    }
+    if(!j->data)
+      return (j->data = new Namespace(*this, this, engine, 0, 0, false));
+    if(allowInheritance || !j->data->inherited)
+      return j->data;
   }
 
-failure:
   if(allowInheritance)
   {
     Word* word;
@@ -374,7 +370,7 @@ Namespace* Namespace::enterNewKey(const String& name)
 bool Namespace::resolveScript2(const String& name, Word*& word, Namespace*& result)
 {
   ASSERT(!compiling);
-  VERIFY(compile());
+  compile();
 
   // try a local lookup
   Word key(name, false);
@@ -479,8 +475,7 @@ void Namespace::setKeyRaw(const Word& key)
 
 void Namespace::removeKeysRaw(Namespace& space)
 {
-  if(!space.compile())
-    return;
+  space.compile();
   for(const Map<Word, Namespace*>::Node* i = space.variables.getFirst(); i; i = i->getNext())
     if(!i->data || !i->data->inherited)
     {
@@ -492,8 +487,8 @@ void Namespace::removeKeysRaw(Namespace& space)
 
 bool Namespace::compareKeys(Namespace& space, bool& result)
 {
-  if(!compile() || !space.compile())
-    return false;
+  compile();
+  space.compile();
 
   const Map<Word, Namespace*>::Node* i1 = variables.getFirst();
   const Map<Word, Namespace*>::Node* i2 = space.variables.getFirst();
@@ -523,8 +518,8 @@ bool Namespace::compareKeys(Namespace& space, bool& result)
 #include <cstdlib>
 bool Namespace::versionCompareKeys(Namespace& space, int& result)
 {
-  if(!compile() || !space.compile())
-    return false;
+  compile();
+  space.compile();
 
   // TODO: compare versions not numbers
   result = atoi(getFirstKey().getData()) - atoi(space.getFirstKey().getData());
@@ -589,8 +584,7 @@ void Namespace::addDefaultKey(const String& key, const Map<String, String>& valu
 
 void Namespace::getKeys(List<String>& keys)
 {
-  if(!compile())
-    return;
+  compile();
   for(Map<Word, Namespace*>::Node* node = variables.getFirst(); node; node = node->getNext())
     if(!node->data || !node->data->inherited)
       keys.append(node->key);
@@ -598,8 +592,7 @@ void Namespace::getKeys(List<String>& keys)
 
 void Namespace::appendKeys(String& output)
 {
-  if(!compile())
-    return;
+  compile();
   for(Map<Word, Namespace*>::Node* i = variables.getFirst(); i; i = i->getNext())
     if(!i->data || !i->data->inherited)
     {
@@ -619,22 +612,21 @@ void Namespace::appendKeys(String& output)
 
 String Namespace::getFirstKey()
 {
-  if(!compile())
-    return String();
+  compile();
   for(Map<Word, Namespace*>::Node* node = variables.getFirst(); node; node = node->getNext())
     if(!node->data || !node->data->inherited)
       return node->key;
   return String();
 }
 
-bool Namespace::compile()
+void Namespace::compile()
 {
   if(compiled)
-    return true;
+    return;
   if(compiling)
   {
     ASSERT(false);
-    return false;
+    return;
   }
   compiling = true;
   if(defaultStatement)
@@ -643,5 +635,4 @@ bool Namespace::compile()
     statement->execute(*this);
   compiling = false;
   compiled = true;
-  return true;
 }
