@@ -22,17 +22,6 @@ bool Word::operator!=(const Word& other) const
 
 void Word::split(const String& text, List<Word>& words)
 {
-  struct Str
-  {
-    inline static const char* strspace(const char* str)
-    {
-      for(; *str; ++str)
-        if(isspace(*str))
-          return str;
-      return str;
-    }
-  };
-
   const char* str = text.getData();
   for(;;)
   {
@@ -49,7 +38,7 @@ void Word::split(const String& text, List<Word>& words)
           ++end;
         else if(*end == '"')
           break;
-      if(end > str)
+      if(end > str) // TODO: read escaped spaces as ordinary spaces?
         words.append(Word(text.substr(str - text.getData(), end - str), true));
       str = end;
       if(*str)
@@ -57,9 +46,15 @@ void Word::split(const String& text, List<Word>& words)
     }
     else
     {
-      const char* end = Str::strspace(str);
+      const char* end = str;
+      for(; *end; ++end)
+        if(isspace(*end))
+          break;
+      // TODO: read escaped spaces as ordinary spaces
       words.append(Word(text.substr(str - text.getData(), end - str), false));
       str = end;
+      if(*str)
+        ++str;
     }
   }
 }
@@ -75,28 +70,24 @@ void Word::append(const List<Word>& words, String& text)
   text.setCapacity(totalLen + 16);
 
   const List<Word>::Node* i = words.getFirst();
-  const Word& word = i->data;
-  if(word.quoted)
-  {
-    text.append('"');
-    text.append(word);
-    text.append('"');
-  }
-  else // TODO: escape spaces using blackslashes
-    text.append(word);
+  i->data.appendTo(text);
   for(i = i->getNext(); i; i = i->getNext())
   {
     text.append(' ');
-    const Word& word = i->data;
-    if(word.quoted)
-    {
-      text.append('"');
-      text.append(word);
-      text.append('"');
-    }
-    else  // TODO: escape spaces using blackslashes
-      text.append(word);
+    i->data.appendTo(text);
   }
+}
+
+void Word::appendTo(String& text) const
+{
+  if(quoted)
+  {
+    text.append('"');
+    text.append(*this);
+    text.append('"');
+  }
+  else // TODO: escape spaces using blackslashes
+    text.append(*this);
 }
 
 String Word::join(const List<String>& words)

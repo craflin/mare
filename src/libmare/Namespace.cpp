@@ -130,8 +130,7 @@ String Namespace::evaluateString(const String& string)
         List<Word> words;
         Word::split(text, words);
         if(!words.isEmpty())
-          // TODO: handle words with spaces correctly
-          output.append(words.getFirst()->data);
+          words.getFirst()->data.appendTo(output);
       }
       else if(cmd == "lastword")
       {
@@ -141,8 +140,7 @@ String Namespace::evaluateString(const String& string)
         List<Word> words;
         Word::split(text, words);
         if(!words.isEmpty())
-          // TODO: handle words with spaces correctly
-          output.append(words.getLast()->data);
+          words.getLast()->data.appendTo(output);
       }
       else if(cmd == "dir")
       {
