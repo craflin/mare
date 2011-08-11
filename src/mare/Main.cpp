@@ -58,7 +58,7 @@ static void showUsage(const char* executable)
   puts("    -f <file>, --file=<file>");
   puts("        Use <file> as a marefile.");
   puts("");
-  puts("    --vcxproj 2010");
+  puts("    --vcxproj [ 2010 ]");
   puts("        Generate a .sln and .vcxproj files for Visual Studio 2010 from the");
   puts("        marefile.");
   puts("");
@@ -136,7 +136,7 @@ int main(int argc, char* argv[])
       {"directory", required_argument , 0, 'C'},
       {"clean", no_argument , 0, 0},
       {"rebuild", no_argument , 0, 0},
-      {"vcxproj", required_argument , 0, 0},
+      {"vcxproj", optional_argument , 0, 0},
       {0, 0, 0, 0}
     };
 
