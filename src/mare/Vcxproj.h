@@ -136,6 +136,6 @@ private:
   static String createSomethingLikeGUID(const String& name);
   static String join(const List<String>& items, char sep = ';', const String& suffix = String());
   static String joinCommands(const List<String>& commands);
-  static String Vcxproj::xmlEscape(const String& text);
+  static String xmlEscape(const String& text);
 };
 
