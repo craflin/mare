@@ -50,7 +50,7 @@ static void showUsage(const char* executable)
   String basename = File::getBasename(String(executable, -1));
   showVersion(false);
   puts("");
-  printf("Usage: %s [ -f <file> ] [ <options> ] [ config=<config> ] [ <target> ]", basename.getData());
+  printf("Usage: %s [ -f <file> ] [ <options> ] [ config=<config> ] [ <target> ]\n", basename.getData());
   puts("        [ platform=<platform> ] [ <variable>=<value> ] [ clean | rebuild ]");
   puts("");
   puts("Options:");
