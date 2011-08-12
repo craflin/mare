@@ -16,6 +16,7 @@
 
 #include "Mare.h"
 #include "Vcxproj.h"
+#include "CodeLite.h"
 
 static const char* VERSION   = "0.3";
 static const char* COPYRIGHT = "Copyright (C) 2011 Colin Graf";
@@ -62,6 +63,10 @@ static void showUsage(const char* executable)
   puts("    --vcxproj[=<version>]");
   puts("        Convert the marefile into a .sln and .vcxproj files for Visual Studio.");
   puts("        <version> can be set to 2010 or 2012.");
+  puts("");
+  puts("    --codelite");
+  puts("        Generate a .workspace and .project files for CodeLite from the");
+  puts("        marefile.");
   puts("");
   puts("    config=<config>, --config=<config>");
   puts("        Build using configuration <config> as declared in the marefile (Debug");
@@ -129,6 +134,7 @@ int main(int argc, char* argv[])
   bool ignoreDependencies = false;
   int jobs = 0;
   int generateVcxproj = 0;
+  bool generateCodeLite = false;
 
   // parse args
   {
@@ -142,6 +148,7 @@ int main(int argc, char* argv[])
       {"rebuild", no_argument , 0, 0},
       {"ignore-dependencies", no_argument , 0, 0},
       {"vcxproj", optional_argument , 0, 0},
+      {"codelite", no_argument , 0, 0},
       {0, 0, 0, 0}
     };
 
@@ -208,6 +215,8 @@ int main(int argc, char* argv[])
                 ::showHelp(argv[0]);
             }
           }
+          else if(opt == "codelite")
+            generateCodeLite = true;
           else if(opt == "clean")
             clean = true;
           else if(opt == "rebuild")
@@ -310,6 +319,15 @@ int main(int argc, char* argv[])
     {
       Vcxproj vcxprog(engine, generateVcxproj);
       if(!vcxprog.generate(userArgs))
+        return EXIT_FAILURE;
+      return EXIT_SUCCESS;
+    }
+
+    // generate codelite mode?
+    if(generateCodeLite)
+    {
+      CodeLite codeLite(engine);
+      if(!codeLite.generate(userArgs))
         return EXIT_FAILURE;
       return EXIT_SUCCESS;
     }
