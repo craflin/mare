@@ -7,6 +7,7 @@
 
 #include "Tools/Assert.h"
 #include "Tools/Error.h"
+#include "Tools/Word.h"
 
 #include "CodeLite.h"
 
@@ -142,31 +143,33 @@ bool CodeLite::readFile()
         engine.getKeys("buildCommand", projectConfig.buildCommand, false);
         engine.getKeys("reBuildCommand", projectConfig.reBuildCommand, false);
         engine.getKeys("cleanCommand", projectConfig.cleanCommand, false);
+        projectConfig.buildDir = engine.getFirstKey("buildDir", true);
         
         engine.getKeys("command", projectConfig.command, false);
         projectConfig.firstOutput = engine.getFirstKey("outputs", false);
 
-        projectConfig.type = "Utility";
         if(!projectConfig.command.isEmpty())
         {
-          const String& firstCommand = projectConfig.command.getFirst()->data;
-          if(firstCommand == "__Custom")
+          String firstCommand = projectConfig.command.getFirst()->data;
+          if(firstCommand == "__Custom" || firstCommand == "__Application" || firstCommand == "__StaticLibrary" || firstCommand == "__DynamicLibrary")
           {
-            projectConfig.customBuild = true;
-            if(projectConfig.command.getSize() > 1)
+            if(firstCommand == "__Custom")
             {
-              const String& nextCommand = projectConfig.command.getFirst()->getNext()->data;
-              if(nextCommand == "Application" || nextCommand == "StaticLibrary" || nextCommand == "DynamicLibrary")
-                projectConfig.type = nextCommand;
+              projectConfig.customBuild = true;
+              firstCommand = (projectConfig.command.getSize() > 1) ? projectConfig.command.getFirst()->getNext()->data : String();
             }
-            projectConfig.command.clear();
-          }
-          else if(firstCommand == "__Application" || firstCommand == "__StaticLibrary" || firstCommand == "__DynamicLibrary")
-          {
-            projectConfig.type = firstCommand.substr(2);
+            
+            if(firstCommand == "__Application")
+              projectConfig.type = "Executable";
+            else if(firstCommand == "__StaticLibrary")
+              projectConfig.type = "Static Library";
+            else if(firstCommand == "__DynamicLibrary")
+              projectConfig.type = "Dynamic Library";
             projectConfig.command.clear();
           }
         }
+        if(!projectConfig.buildCommand.isEmpty())
+          projectConfig.customBuild = true;
 
         /*
         engine.getKeys("cppFlags", projectConfig.cppFlags, true);
@@ -227,20 +230,25 @@ bool CodeLite::generateWorkspace()
   // write
   fileWrite("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
   fileWrite(String("<CodeLite_Workspace Name=\"") + workspaceName+ "\" Database=\"./" + workspaceName + ".tags\">\n");
-  /*
-  fileWrite("  <Project Name=\"myproject\" Path=\"myproject/myproject.project\" Active=\"Yes\"/>\n");
-  fileWrite("  <Project Name=\"project2\" Path=\"project2/project2.project\"/>\n");
+  for(const Map<String, Project>::Node* i = projects.getFirst(); i; i = i->getNext())
+  {
+    const Project& project = i->data;
+    fileWrite(String("  <Project Name=\"") + project.name + "\" Path=\"" + project.name + ".project\"" + (i == projects.getFirst() ? String(" Active=\"Yes\"") : String()) + "/>\n");
+  }
   fileWrite("  <BuildMatrix>\n");
-  fileWrite("    <WorkspaceConfiguration Name=\"Debug\" Selected=\"yes\">\n");
-  fileWrite("      <Project Name=\"myproject\" ConfigName=\"Debug\"/>\n");
-  fileWrite("      <Project Name=\"project2\" ConfigName=\"Debug\"/>\n");
-  fileWrite("    </WorkspaceConfiguration>\n");
-  fileWrite("    <WorkspaceConfiguration Name=\"Release\" Selected=\"yes\">\n");
-  fileWrite("      <Project Name=\"myproject\" ConfigName=\"Release\"/>\n");
-  fileWrite("      <Project Name=\"project2\" ConfigName=\"Release\"/>\n");
-  fileWrite("    </WorkspaceConfiguration>\n");
+  for(const Map<String, void*>::Node* i = configs.getFirst(); i; i = i->getNext())
+  {
+    const String& configName = i->key;
+
+    fileWrite(String("    <WorkspaceConfiguration Name=\"") + configName + "\" Selected=\"yes\">\n");
+    for(const Map<String, Project>::Node* i = projects.getFirst(); i; i = i->getNext())
+    {
+      const Project& project = i->data;
+      fileWrite(String("      <Project Name=\"") + project.name + "\" ConfigName=\"" + configName + "\"/>\n");
+    }
+    fileWrite("    </WorkspaceConfiguration>\n");
+  }
   fileWrite("  </BuildMatrix>\n");
-  */
   fileWrite("</CodeLite_Workspace>\n");
 
   //
@@ -260,7 +268,82 @@ bool CodeLite::generateProject(Project& project)
 {
   fileOpen(project.name + ".project");
 
-  // ...
+  fileWrite("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
+  fileWrite(String("<CodeLite_Project Name=\"") + project.name + "\" InternalType=\"Console\">\n");
+  fileWrite("  <Description/>\n");
+
+  fileWrite("  <VirtualDirectory Name=\"src\">\n");
+  fileWrite("    <File Name=\"main.cpp\"/>\n");
+  fileWrite("  </VirtualDirectory>\n");
+
+  fileWrite("  <Settings Type=\"Executable\">\n");
+
+  fileWrite("    <GlobalSettings>\n");
+  fileWrite("      <Compiler Options=\"\" C_Options=\"\">\n");
+  fileWrite("        <IncludePath Value=\".\"/>\n");
+  fileWrite("      </Compiler>\n");
+  fileWrite("      <Linker Options=\"\">\n");
+  fileWrite("        <LibraryPath Value=\".\"/>\n");
+  fileWrite("      </Linker>\n");
+  fileWrite("      <ResourceCompiler Options=\"\"/>\n");
+  fileWrite("    </GlobalSettings>\n");
+
+  for(const Map<String, Project::Config>::Node* i = project.configs.getFirst(); i; i = i->getNext())
+  {
+    const Project::Config& config = i->data;
+    fileWrite(String("    <Configuration Name=\"") + config.name + "\" CompilerType=\"gnu g++\" DebuggerType=\"GNU gdb debugger\" Type=\"" + config.type + "\" BuildCmpWithGlobalSettings=\"append\" BuildLnkWithGlobalSettings=\"append\" BuildResWithGlobalSettings=\"append\">\n");
+    if(config.customBuild)
+      fileWrite("      <Compiler Options=\"\" C_Options=\"\" Required=\"no\" PreCompiledHeader=\"\"/>\n");
+    else
+    { // TODO
+      fileWrite("      <Compiler Options=\"-g\" C_Options=\"-g\" Required=\"yes\" PreCompiledHeader=\"\">\n");
+      fileWrite("        <IncludePath Value=\".\"/>\n");
+      fileWrite("      </Compiler>\n");
+    }
+    if(config.customBuild)
+      fileWrite("      <Linker Options=\"\" Required=\"no\"/>\n");
+    else
+    {
+      // TODO
+      fileWrite("      <Linker Options=\"\" Required=\"yes\"/>\n");
+    }
+
+    // TODO
+    fileWrite("      <ResourceCompiler Options=\"\" Required=\"no\"/>\n");
+
+    fileWrite(String("      <General OutputFile=\"") + config.firstOutput + "\" IntermediateDirectory=\"" + config.buildDir + "\" Command=\"./" + config.firstOutput + "\" CommandArguments=\"\" UseSeparateDebugArgs=\"no\" DebugArguments=\"\" WorkingDirectory=\".\" PauseExecWhenProcTerminates=\"yes\"/>\n");
+
+    fileWrite("      <Environment EnvVarSetName=\"&lt;Use Defaults&gt;\" DbgSetName=\"&lt;Use Defaults&gt;\"/>\n");
+    fileWrite("      <Debugger IsRemote=\"no\" RemoteHostName=\"\" RemoteHostPort=\"\" DebuggerPath=\"\">\n");
+    fileWrite("        <PostConnectCommands/>\n");
+    fileWrite("        <StartupCommands/>\n");
+    fileWrite("      </Debugger>\n");
+    fileWrite("      <PreBuild/>\n");
+    fileWrite("      <PostBuild/>\n");
+    fileWrite(String("      <CustomBuild Enabled=\"")+ (config.customBuild ? String("yes") : String("no")) + "\">\n");
+    fileWrite(String("        <RebuildCommand>") + joinCommands(config.reBuildCommand) + "</RebuildCommand>\n");
+    fileWrite(String("        <CleanCommand>") + joinCommands(config.cleanCommand) + "</CleanCommand>\n");
+    fileWrite(String("        <BuildCommand>") + joinCommands(config.buildCommand) + "</BuildCommand>\n");
+    fileWrite("        <PreprocessFileCommand/>\n");
+    fileWrite("        <SingleFileCommand/>\n");
+    fileWrite("        <MakefileGenerationCommand/>\n");
+    fileWrite("        <ThirdPartyToolName>None</ThirdPartyToolName>\n");
+    fileWrite("        <WorkingDirectory/>\n");
+    fileWrite("      </CustomBuild>\n");
+    fileWrite("      <AdditionalRules>\n");
+    fileWrite("        <CustomPostBuild/>\n");
+    fileWrite("        <CustomPreBuild/>\n");
+    fileWrite("      </AdditionalRules>\n");
+    fileWrite("    </Configuration>\n");
+  }
+
+  fileWrite("  </Settings>\n");
+
+  fileWrite("  <Dependencies Name=\"Debug\">\n");
+  fileWrite("    <Project Name=\"myproject\"/>\n");
+  fileWrite("  </Dependencies>\n");
+
+  fileWrite("</CodeLite_Project>\n");
 
   fileClose();
   return true;
@@ -316,38 +399,7 @@ String CodeLite::join(const List<String>& items, char sep, const String& suffix)
 
 String CodeLite::joinCommands(const List<String>& commands)
 {
-  String result;
-  const List<String>::Node* i = commands.getFirst();
-  if(i)
-  {
-    String program(i->data);
-    program.subst("/", "\\");
-    for(const char* str = program.getData(); *str; ++str)
-        if(isspace(*str))
-        {
-          result.append('"');
-          result.append(xmlEscape(program));
-          result.append('"');
-          goto next;
-        }
-      result.append(xmlEscape(program));
-    next: ;
-    for(i = i->getNext(); i; i = i->getNext())
-    {
-      result.append(' ');
-      for(const char* str = i->data.getData(); *str; ++str)
-        if(isspace(*str))
-        {
-          result.append('"');
-          result.append(xmlEscape(i->data));
-          result.append('"');
-          goto next2;
-        }
-      result.append(xmlEscape(i->data));
-    next2: ;
-    }
-  }
-  return result;
+  return Word::join(commands);
   // TODO: something for more than a single command?
 }
 

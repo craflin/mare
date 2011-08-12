@@ -33,8 +33,8 @@ private:
       List<String> preBuildCommand;
       List<String> preLinkCommand;
       List<String> postBuildCommand;
-      String buildDir;
       */
+      String buildDir;
       String type;
       List<String> command;
       //List<String> message;
