@@ -54,9 +54,18 @@ private:
       Config(const String& name) : name(name), customBuild(false) {}
     };
 
+    class File
+    {
+    public:
+      String name;
+      String folder;
+
+      File(const String& name) : name(name) {}
+    };
+
     String name;
     Map<String, Config> configs;
-    Map<String, void*> files;
+    Map<String, File> files;
     Map<String, void*> dependencies;
     Map<String, void*> roots;
 
