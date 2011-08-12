@@ -307,7 +307,7 @@ bool CodeLite::generateProject(Project& project)
         Map<String, void*>::Node* node = f->folders.find(i->data);
         f = (FileTree*)(node ? node->data : f->folders.append(i->data, new FileTree()));
       }
-      f->files.append(File::getBasename(file));
+      f->files.append(file);
     }
 
     void write(CodeLite& codeLite, const String& space) const
