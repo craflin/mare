@@ -113,7 +113,7 @@ bool CodeLite::readFile()
 
       for(const List<String>::Node* i = inputTargets.getFirst(); i; i = i->getNext())
       {
-        
+
         Map<String, Project>::Node* node = projects.find(i->data);
         Project& project = node ? node->data : projects.append(i->data, Project(i->data));
         //bool isNewProject = node && true;
@@ -144,7 +144,7 @@ bool CodeLite::readFile()
         engine.getKeys("reBuildCommand", projectConfig.reBuildCommand, false);
         engine.getKeys("cleanCommand", projectConfig.cleanCommand, false);
         projectConfig.buildDir = engine.getFirstKey("buildDir", true);
-        
+
         engine.getKeys("command", projectConfig.command, false);
         projectConfig.firstOutput = engine.getFirstKey("outputs", false);
 
@@ -158,7 +158,7 @@ bool CodeLite::readFile()
               projectConfig.customBuild = true;
               firstCommand = (projectConfig.command.getSize() > 1) ? projectConfig.command.getFirst()->getNext()->data : String();
             }
-            
+
             if(firstCommand == "__Application")
               projectConfig.type = "Executable";
             else if(firstCommand == "__StaticLibrary")
@@ -278,8 +278,14 @@ bool CodeLite::generateProject(Project& project)
   class FileTree
   {
   public:
-    Map<String, FileTree> folders;
+    Map<String, void*> folders;
     List<String> files;
+
+    FileTree()
+    {
+      for(Map<String, void*>::Node* i = folders.getFirst(); i; i = i->getNext())
+        delete (FileTree*)i->data;
+    }
 
     void addFile(Project& project, const String& file, const String& folder)
     {
@@ -298,18 +304,18 @@ bool CodeLite::generateProject(Project& project)
       FileTree* f = this;
       for(const List<String>::Node* i = foldersToEnter.getFirst(); i; i = i->getNext())
       {
-        Map<String, FileTree>::Node* node = f->folders.find(i->data);
-        f = node ? &node->data : &f->folders.append(i->data);
+        Map<String, void*>::Node* node = f->folders.find(i->data);
+        f = (FileTree*)(node ? node->data : f->folders.append(i->data, new FileTree()));
       }
       f->files.append(File::getBasename(file));
     }
 
     void write(CodeLite& codeLite, const String& space) const
     {
-      for(const Map<String, FileTree>::Node* i = folders.getFirst(); i; i = i->getNext())
+      for(const Map<String, void*>::Node* i = folders.getFirst(); i; i = i->getNext())
       {
         codeLite.fileWrite(space + "  <VirtualDirectory Name=\"" + i->key + "\">\n");
-        i->data.write(codeLite, space + "  ");
+        ((FileTree*)i->data)->write(codeLite, space + "  ");
         codeLite.fileWrite(space + "  </VirtualDirectory>\n");
       }
       for(const List<String>::Node* i = files.getFirst(); i; i = i->getNext())
