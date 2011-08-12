@@ -10,6 +10,7 @@
       <Filter>Tools\Win32</Filter>
     </ClCompile>
     <ClCompile Include="..\src\mare\Mare.cpp" />
+    <ClCompile Include="..\src\mare\CodeLite.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\mare\Vcxproj.h" />
@@ -20,6 +21,7 @@
       <Filter>Tools\Win32</Filter>
     </ClInclude>
     <ClInclude Include="..\src\mare\Mare.h" />
+    <ClInclude Include="..\src\mare\CodeLite.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Tools">
