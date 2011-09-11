@@ -8,6 +8,7 @@
 
 class Namespace;
 class Word;
+class Statement;
 
 class Engine : public Scope
 {
@@ -15,17 +16,21 @@ public:
 
   typedef void (*ErrorHandler)(void* userData, int line, const String& message);
 
-  Engine(ErrorHandler errorHandler, void* userData) : errorHandler(errorHandler), errorUserData(userData), currentSpace(0) {}
+  Engine(ErrorHandler errorHandler, void* userData) : errorHandler(errorHandler), errorUserData(userData), rootStatement(0), currentSpace(0) {}
 
   bool load(const String& file);
   void error(const String& message);
 
+  bool hasKey(const String& key, bool allowInheritance = true);
+
   bool enterKey(const String& key, bool allowInheritance = true);
   void enterUnnamedKey();
   void enterNewKey(const String& key);
+  void enterRootKey();
 
   bool leaveKey();
-  bool leaveUnnamedKey();
+  bool leaveUnnamedKey(); // TODO: remove this
+
   void getKeys(List<String>& keys);
   void getKeys(const String& key, List<String>& keys, bool allowInheritance = true);
   String getFirstKey();
@@ -34,13 +39,14 @@ public:
   void addDefaultKey(const String& key);
   void addDefaultKey(const String& key, const String& value);
   void addDefaultKey(const String& key, const Map<String, String>& value);
-
-  void pushKey();
+  
+  void pushKey(); // TODO: hide these functions
   bool popKey();
 
 private:
   ErrorHandler errorHandler;
   void* errorUserData;
+  Statement* rootStatement;
   Namespace* currentSpace;
   List<Namespace*> stashedKeys;
 

@@ -26,9 +26,8 @@ private:
   List<String>& inputPlatforms;
   List<String>& inputConfigs;
   List<String>& inputTargets;
+  List<String> allTargets;
 
   bool buildFile();
-  bool buildConfigurations();
-  bool buildConfiguration(const String& configuration);
-  bool buildTargets();
+  bool buildTargets(const String& platform, const String& configuration);
 };

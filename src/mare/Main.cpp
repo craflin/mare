@@ -279,6 +279,7 @@ int main(int argc, char* argv[])
     // show help only?
     if(showHelp)
     {
+      engine.enterRootKey();
       if(engine.enterKey("help"))
       {
         List<String> help;

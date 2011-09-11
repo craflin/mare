@@ -18,7 +18,7 @@ bool Builder::build(const Map<String, String>& userArgs)
   engine.addDefaultKey("CXX", "g++");
   engine.addDefaultKey("AR", "ar");
   engine.addDefaultKey("configurations", "Debug Release");
-  engine.addDefaultKey("targets");
+  engine.addDefaultKey("targets"); // an empty target list exists per default
   engine.addDefaultKey("buildDir", "$(configuration)");
   engine.addDefaultKey("cppFlags", "-Wall $(if $(Debug),-g,-Os -fomit-frame-pointer)");
   engine.addDefaultKey("linkFlags", "$(if $(Debug),,-s)");
@@ -119,9 +119,14 @@ bool Builder::build(const Map<String, String>& userArgs)
 
 bool Builder::buildFile()
 {
+  // enter root key
+  engine.enterRootKey();
+
+  // read default or check input platform names
+  VERIFY(engine.enterKey("platforms"));
   if(inputPlatforms.isEmpty())
   {
-    String firstPlatform = engine.getFirstKey("platforms");
+    String firstPlatform = engine.getFirstKey();
     if(!firstPlatform.isEmpty())
       inputPlatforms.append(firstPlatform);
     else
@@ -130,10 +135,20 @@ bool Builder::buildFile()
       return false;
     }
   }
+  else
+    for(const List<String>::Node* i = inputPlatforms.getFirst(); i; i = i->getNext())
+      if(!engine.hasKey(i->data))
+      {
+        engine.error(String().format(256, "cannot find platform \"%s\"", i->data.getData()));
+        return false;
+      }
+  engine.leaveKey();
 
+  // read default or check input configuration names
+  VERIFY(engine.enterKey("configurations"));
   if(inputConfigs.isEmpty())
   {
-    String firstConfiguration = engine.getFirstKey("configurations");
+    String firstConfiguration = engine.getFirstKey();
     if(!firstConfiguration.isEmpty())
       inputConfigs.append(firstConfiguration);
     else
@@ -142,78 +157,54 @@ bool Builder::buildFile()
       return false;
     }
   }
+  else
+    for(const List<String>::Node* i = inputConfigs.getFirst(); i; i = i->getNext())
+      if(!engine.hasKey(i->data))
+      {
+        engine.error(String().format(256, "cannot find configuration \"%s\"", i->data.getData()));
+        return false;
+      }
+  engine.leaveKey();
 
+  // read default or check input target names
+  VERIFY(engine.enterKey("targets"));
+  engine.getKeys(allTargets);
   if(inputTargets.isEmpty())
   {
-    String firstTarget = engine.getFirstKey("targets");
-    if(!firstTarget.isEmpty())
-      inputTargets.append(firstTarget);
+    if(!allTargets.isEmpty())
+      inputTargets.append(allTargets.getFirst()->data);
     else
     {
       engine.error("cannot find any targets");
       return false;
     }
   }
+  else
+    for(const List<String>::Node* i = inputTargets.getFirst(); i; i = i->getNext())
+      if(!engine.hasKey(i->data))
+      {
+        engine.error(String().format(256, "cannot find target \"%s\"", i->data.getData()));
+        return false;
+      }
+  engine.leaveKey();
 
-  VERIFY(engine.enterKey("platforms"));
+  // leave root key
+  engine.leaveUnnamedKey(); 
 
+  // build input targets (with dependencies) foreach input configuration
   for(const List<String>::Node* i = inputPlatforms.getFirst(); i; i = i->getNext())
   {
-    if(!engine.enterKey(i->data))
+    const String& platform = i->data;
+    for(const List<String>::Node* i = inputConfigs.getFirst(); i; i = i->getNext())
     {
-      engine.error(String().format(256, "cannot find platform \"%s\"", i->data.getData()));
-      return false;
+      const String& configuration = i->data;
+      for(const List<String>::Node* i = allTargets.getFirst(); i; i = i->getNext())
+        if(!buildTargets(platform, configuration))
+          return false;
     }
-    engine.addDefaultKey("platform", i->data);
-    engine.addDefaultKey(i->data, i->data);
-
-    VERIFY(engine.enterKey("configurations"));
-
-    if(!buildConfigurations())
-      return false;
-
-    engine.leaveKey();
-
-    engine.leaveKey();
   }
 
-  engine.leaveKey();
   return true;
-}
-
-bool Builder::buildConfigurations()
-{
-  for(const List<String>::Node* i = inputConfigs.getFirst(); i; i = i->getNext())
-  {
-    if(!engine.enterKey(i->data))
-    {
-      engine.error(String().format(256, "cannot find configuration \"%s\"", i->data.getData()));
-      return false;
-    }
-    engine.addDefaultKey("configuration", i->data);
-    engine.addDefaultKey(i->data, i->data);
-
-    if(!buildConfiguration(i->data))
-      return false;
-    engine.leaveKey();
-  }
-  return true;
-}
-
-bool Builder::buildConfiguration(const String& configuration)
-{
-  VERIFY(engine.enterKey("targets"));
-
-  for(const List<String>::Node* node = inputTargets.getFirst(); node; node = node->getNext())
-  {
-    if(!engine.enterKey(node->data))
-    {
-      engine.error(String().format(256, "cannot find target \"%s\"", node->data.getData()));
-      return false;
-    }
-    engine.leaveKey();
-  }
-  return buildTargets();
 }
 
 class Target;
@@ -551,7 +542,7 @@ public:
   }
 };
 
-bool Builder::buildTargets()
+bool Builder::buildTargets(const String& platform, const String& configuration)
 {
   RuleSet ruleSet;
 
@@ -559,19 +550,30 @@ bool Builder::buildTargets()
   for(const List<String>::Node* i = inputTargets.getFirst(); i; i = i->getNext())
     activateTargets.append(i->data, 0);
 
-  List<String> targets;
-  engine.getKeys(targets);
   List<String> files;
-  for(List<String>::Node* i = targets.getFirst(); i; i = i->getNext())
+  for(List<String>::Node* i = allTargets.getFirst(); i; i = i->getNext())
   {
+    engine.enterUnnamedKey();
+    engine.addDefaultKey("platform", platform);
+    engine.addDefaultKey(platform, platform);
+    engine.addDefaultKey("configuration", configuration);
+    engine.addDefaultKey(configuration, configuration);
+    engine.addDefaultKey("target", i->data);
+    //engine.addDefaultKey(i->data, i->data);
+    engine.enterRootKey();
+    VERIFY(engine.enterKey("targets"));
+    if(!engine.enterKey(i->data))
+    {
+      engine.error(String().format(256, "cannot find target \"%s\"", i->data.getData()));
+      return false;
+    }
+
     Target& target = ruleSet.targets.append(i->data);
     if(activateTargets.find(i->data))
     {
       target.active = true;
       ruleSet.activeTargets.append(&target);
     }
-    VERIFY(engine.enterKey(i->data));
-    engine.addDefaultKey("target", i->data);
     
     // add rule for each source file
     if(engine.enterKey("files"))
@@ -583,14 +585,16 @@ bool Builder::buildTargets()
         Rule& rule = target.rules.append();
         rule.target = &target;
         rule.name = i->data;
-        VERIFY(engine.enterKey(i->data));
+        engine.enterUnnamedKey();
         engine.addDefaultKey("file", i->data);
+        VERIFY(engine.enterKey(i->data));
         engine.getKeys("dependencies", rule.targetdeps, false);
         engine.getKeys("inputs", rule.inputs, false);
         engine.getKeys("outputs", rule.outputs, false);
         engine.getKeys("command", rule.command, false);
         engine.getKeys("message", rule.message, false);
-        engine.leaveKey();
+        engine.leaveKey(); // VERIFY(engine.enterKey(i->data));
+        engine.leaveUnnamedKey();
       }
       engine.leaveKey();
     }
@@ -607,6 +611,9 @@ bool Builder::buildTargets()
     engine.getKeys("message", rule.message, false);
 
     engine.leaveKey();
+    engine.leaveKey();
+    engine.leaveUnnamedKey();
+    engine.leaveUnnamedKey();
   }
 
   ruleSet.resolveDependencies();

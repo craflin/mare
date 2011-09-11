@@ -112,7 +112,7 @@ bool Vcxproj::generate(const Map<String, String>& userArgs)
   engine.addDefaultKey("host", "Win32");
   engine.addDefaultKey("platforms", "Win32");
   engine.addDefaultKey("configurations", "Debug Release");
-  engine.addDefaultKey("targets");
+  engine.addDefaultKey("targets"); // an empty target list exists per default
   engine.addDefaultKey("buildDir", "$(configuration)");
   engine.addDefaultKey("cppFlags", "/W3 $(if $(Debug),,/O2 /Oy)");
   engine.addDefaultKey("linkFlags", "$(if $(Debug),/INCREMENTAL /DEBUG,/OPT:REF /OPT:ICF)");
@@ -172,46 +172,42 @@ bool Vcxproj::generate(const Map<String, String>& userArgs)
 
 bool Vcxproj::readFile()
 {
-
   // get some global keys
+  engine.enterRootKey();
   solutionName = engine.getFirstKey("name");
+  List<String> allPlatforms, allConfigurations, allTargets;
+  engine.getKeys("platforms", allPlatforms);
+  engine.getKeys("configurations", allConfigurations);
+  engine.getKeys("targets", allTargets);
+  engine.leaveUnnamedKey();
 
-  List<String> inputPlatforms, inputConfigurations, inputTargets;
-  engine.getKeys("platforms", inputPlatforms);
-  engine.getKeys("configurations", inputConfigurations);
-  engine.getKeys("targets", inputTargets);
-
-  engine.enterKey("platforms");
-
-  for(const List<String>::Node* i = inputPlatforms.getFirst(); i; i = i->getNext())
+  // do something for each target in each configuration
+  for(const List<String>::Node* i = allPlatforms.getFirst(); i; i = i->getNext())
   {
     const String& platform = i->data;
-    engine.enterKey(platform);
-    engine.addDefaultKey("platform", platform);
-    engine.addDefaultKey(platform, platform);
-
-    // enter configurations space
-    engine.enterKey("configurations");
-
-    // get configuration project list
-    for(const List<String>::Node* i = inputConfigurations.getFirst(); i; i = i->getNext())
+    for(const List<String>::Node* i = allConfigurations.getFirst(); i; i = i->getNext())
     {
       const String& configName = i->data;
       const String configKey = configName + "|" + platform;
       const Config& config = configs.append(configKey, Config(configName, platform));
 
-      if(!engine.enterKey(configName))
+      for(const List<String>::Node* i = allTargets.getFirst(); i; i = i->getNext())
       {
-        engine.error(String().format(256, "cannot find configuration \"%s\"", configName.getData()));
-        return false;
-      }
-      engine.addDefaultKey("configuration", configName);
-      engine.addDefaultKey(configName, configName);
+        engine.enterUnnamedKey();
+        engine.addDefaultKey("platform", platform);
+        engine.addDefaultKey(platform, platform);
+        engine.addDefaultKey("configuration", configName);
+        engine.addDefaultKey(configName, configName);
+        engine.addDefaultKey("target", i->data);
+        //engine.addDefaultKey(i->data, i->data);
+        engine.enterRootKey();
+        VERIFY(engine.enterKey("targets"));
+        if(!engine.enterKey(i->data))
+        {
+          engine.error(String().format(256, "cannot find target \"%s\"", i->data.getData()));
+          return false;
+        }
 
-      VERIFY(engine.enterKey("targets"));
-
-      for(const List<String>::Node* i = inputTargets.getFirst(); i; i = i->getNext())
-      {
         bool isNewProject = false;
         Map<String, Project>::Node* node = projects.find(i->data);
         Project* project;
@@ -223,13 +219,6 @@ bool Vcxproj::readFile()
           isNewProject = true;
         }
         Project::Config& projectConfig = project->configs.append(configKey, Project::Config(config.name, config.platform));
-
-        if(!engine.enterKey(i->data))
-        {
-          engine.error(String().format(256, "cannot find target \"%s\"", i->data.getData()));
-          return false;
-        }
-        engine.addDefaultKey("target", i->data);
 
         if(isNewProject)
         {
@@ -294,39 +283,40 @@ bool Vcxproj::readFile()
             Map<String, Project::File>::Node* node = project->files.find(i->data);
             Project::File& file = node ? node->data : project->files.append(i->data);
             Project::File::Config& fileConfig = file.configs.append(configKey);
-            if(engine.enterKey(i->data))
+
+            engine.enterUnnamedKey();
+            engine.addDefaultKey("file", i->data);
+            VERIFY(engine.enterKey(i->data));
+            engine.getKeys("command", fileConfig.command, false);
+            file.filter = engine.getFirstKey("folder", false);
+            String firstCommand = fileConfig.command.isEmpty() ? String() : fileConfig.command.getFirst()->data;
+            String type;
+            if(firstCommand == "__clCompile")
+              type = "ClCompile";
+            else if(firstCommand == "__rcCompile")
+              type = "ResourceCompile";
+            else if(!firstCommand.isEmpty())
             {
-              engine.addDefaultKey("file", i->data);
-              engine.getKeys("command", fileConfig.command, false);
-              file.filter = engine.getFirstKey("folder", false);
-              String firstCommand = fileConfig.command.isEmpty() ? String() : fileConfig.command.getFirst()->data;
-              String type;
-              if(firstCommand == "__clCompile")
-                type = "ClCompile";
-              else if(firstCommand == "__rcCompile")
-                type = "ResourceCompile";
-              else if(!firstCommand.isEmpty())
-              {
-                type = "CustomBuild";
-                engine.getKeys("message", fileConfig.message, false);
-                engine.getKeys("outputs", fileConfig.outputs, false);
-                engine.getKeys("inputs", fileConfig.inputs, false);
-              }
-              if(!type.isEmpty())
-              {
-                if(!file.type.isEmpty() && file.type != type)
-                {
-                  // TODO: warning or error?
-                }
-                else
-                  file.type = type;
-              }
-              engine.getKeys("dependencies", fileConfig.dependencies, false);
-              for(const List<String>::Node* i = fileConfig.dependencies.getFirst(); i; i = i->getNext())
-                if(!project->dependencies.find(i->data))
-                  project->dependencies.append(i->data);
-              engine.leaveKey();
+              type = "CustomBuild";
+              engine.getKeys("message", fileConfig.message, false);
+              engine.getKeys("outputs", fileConfig.outputs, false);
+              engine.getKeys("inputs", fileConfig.inputs, false);
             }
+            if(!type.isEmpty())
+            {
+              if(!file.type.isEmpty() && file.type != type)
+              {
+                // TODO: warning or error?
+              }
+              else
+                file.type = type;
+            }
+            engine.getKeys("dependencies", fileConfig.dependencies, false);
+            for(const List<String>::Node* i = fileConfig.dependencies.getFirst(); i; i = i->getNext())
+              if(!project->dependencies.find(i->data))
+                project->dependencies.append(i->data);
+            engine.leaveKey(); // VERIFY(engine.enterKey(i->data));
+            engine.leaveUnnamedKey();
           }
           for(Map<String, Project::File>::Node* i = project->files.getFirst(); i; i = i->getNext())
             if(i->data.type.isEmpty())
@@ -340,14 +330,14 @@ bool Vcxproj::readFile()
 
           engine.leaveKey();
         }
-        engine.leaveKey();
-      }
-      engine.leaveKey();
-      engine.leaveKey();
-    }
 
-    engine.leaveKey();
-    engine.leaveKey();
+
+        engine.leaveKey();
+        engine.leaveKey();
+        engine.leaveUnnamedKey();
+        engine.leaveUnnamedKey();
+      }
+    }
   }
 
   return true;
@@ -469,6 +459,13 @@ bool Vcxproj::generateSln()
         goto next;
     projects.remove(i);
   next:;
+  }
+
+  // avoid creating an empty and possibly nameless solution file
+  if(projects.isEmpty())
+  {
+    engine.error("cannot find any targets");
+    return false;
   }
 
   // create solution file name

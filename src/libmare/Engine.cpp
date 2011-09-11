@@ -9,16 +9,24 @@ bool Engine::load(const String& file)
   if(currentSpace)
     return false;
   Parser parser(*this);
-  Statement* root = parser.parse(file, errorHandler, errorUserData);
-  if(!root)
+  ASSERT(!rootStatement);
+  rootStatement = parser.parse(file, errorHandler, errorUserData);
+  if(!rootStatement)
     return false;
-  currentSpace = new Namespace(*this, 0, this, root, 0, false);
+  currentSpace = new Namespace(*this, 0, this, 0, 0, false);
   return true;
 }
 
 void Engine::error(const String& message)
 {
   errorHandler(errorUserData, -1, message);
+}
+
+bool Engine::hasKey(const String& key, bool allowInheritance)
+{
+  if(!currentSpace->enterKey(key, allowInheritance))
+    return false;
+  return true;
 }
 
 bool Engine::enterKey(const String& key, bool allowInheritance)
@@ -42,6 +50,13 @@ void Engine::enterUnnamedKey()
 void Engine::enterNewKey(const String& key)
 {
   Namespace* subSpace = currentSpace->enterNewKey(key);
+  ASSERT(subSpace);
+  currentSpace = subSpace;
+}
+
+void Engine::enterRootKey()
+{
+  Namespace* subSpace = currentSpace->enterUnnamedKey(rootStatement);
   ASSERT(subSpace);
   currentSpace = subSpace;
 }
