@@ -29,7 +29,7 @@ bool CodeLite::generate(const Map<String, String>& userArgs)
   engine.addDefaultKey("host", platform); // the platform on which the compiler is run
   engine.addDefaultKey("platforms", platform); // the target platform of the compiler
   engine.addDefaultKey("configurations", "Debug Release");
-  engine.addDefaultKey("targets");
+  engine.addDefaultKey("targets"); // an empty target list exists per default
   engine.addDefaultKey("buildDir", "$(configuration)");
 
   {
@@ -76,56 +76,45 @@ bool CodeLite::generate(const Map<String, String>& userArgs)
 bool CodeLite::readFile()
 {
   // get some global keys
+  engine.enterRootKey();
   workspaceName = engine.getFirstKey("name");
+  List<String> allPlatforms, allConfigurations, allTargets;
+  engine.getKeys("platforms", allPlatforms);
+  engine.getKeys("configurations", allConfigurations);
+  engine.getKeys("targets", allTargets);
+  engine.leaveUnnamedKey();
 
-  List<String> inputPlatforms, inputConfigurations, inputTargets;
-  engine.getKeys("platforms", inputPlatforms);
-  engine.getKeys("configurations", inputConfigurations);
-  engine.getKeys("targets", inputTargets);
-
-  engine.enterKey("platforms");
-
-  for(const List<String>::Node* i = inputPlatforms.getFirst(); i; i = 0) // just use the first platform since CodeLite does not really support multiple target platforms
+  // do something for each target in each configuration
+  for(const List<String>::Node* i = allPlatforms.getFirst(); i; i = 0) // just use the first platform since CodeLite does not really support multiple target platforms
   {
     const String& platform = i->data;
-    engine.enterKey(platform);
-    engine.addDefaultKey("platform", platform);
-    engine.addDefaultKey(platform, platform);
-
-    // enter configurations space
-    engine.enterKey("configurations");
-
-    // get configuration project list
-    for(const List<String>::Node* i = inputConfigurations.getFirst(); i; i = i->getNext())
+    for(const List<String>::Node* i = allConfigurations.getFirst(); i; i = i->getNext())
     {
       const String& configName = i->data;
       configs.append(configName);
 
-      if(!engine.enterKey(configName))
+      for(const List<String>::Node* i = allTargets.getFirst(); i; i = i->getNext())
       {
-        engine.error(String().format(256, "cannot find configuration \"%s\"", configName.getData()));
-        return false;
-      }
-      engine.addDefaultKey("configuration", configName);
-      engine.addDefaultKey(configName, configName);
-
-      VERIFY(engine.enterKey("targets"));
-
-      for(const List<String>::Node* i = inputTargets.getFirst(); i; i = i->getNext())
-      {
+        engine.enterUnnamedKey();
+        engine.addDefaultKey("platform", platform);
+        engine.addDefaultKey(platform, platform);
+        engine.addDefaultKey("configuration", configName);
+        engine.addDefaultKey(configName, configName);
+        engine.addDefaultKey("target", i->data);
+        //engine.addDefaultKey(i->data, i->data);
+        engine.enterRootKey();
+        VERIFY(engine.enterKey("targets"));
+        if(!engine.enterKey(i->data))
+        {
+          engine.error(String().format(256, "cannot find target \"%s\"", i->data.getData()));
+          return false;
+        }
 
         Map<String, Project>::Node* node = projects.find(i->data);
         Project& project = node ? node->data : projects.append(i->data, Project(i->data));
         //bool isNewProject = node && true;
 
         Project::Config& projectConfig = project.configs.append(configName, Project::Config(configName));
-
-        if(!engine.enterKey(i->data))
-        {
-          engine.error(String().format(256, "cannot find target \"%s\"", i->data.getData()));
-          return false;
-        }
-        engine.addDefaultKey("target", i->data);
 
         /*
         if(isNewProject)
@@ -200,22 +189,23 @@ bool CodeLite::readFile()
           {
             Map<String, Project::File>::Node* node = project.files.find(i->data);
             Project::File& file = node ? node->data : project.files.append(i->data, Project::File(i->data));
-            VERIFY(engine.enterKey(i->data));
+            engine.enterUnnamedKey();
             engine.addDefaultKey("file", i->data);
+            VERIFY(engine.enterKey(i->data));
             file.folder = engine.getFirstKey("folder", false);
-            engine.leaveKey();
+            engine.leaveKey(); // VERIFY(engine.enterKey(i->data));
+            engine.leaveUnnamedKey();
           }
 
           engine.leaveKey();
         }
-        engine.leaveKey();
-      }
-      engine.leaveKey();
-      engine.leaveKey();
-    }
 
-    engine.leaveKey();
-    engine.leaveKey();
+        engine.leaveKey();
+        engine.leaveKey();
+        engine.leaveUnnamedKey();
+        engine.leaveUnnamedKey();
+      }
+    }
   }
 
   return true;
