@@ -254,8 +254,8 @@ bool CodeBlocks::generateProject(Project& project)
 
   fileWrite("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\" ?>\n");
   fileWrite("<CodeBlocks_project_file>\n");
-  fileWrite("\t<FileVersion major=}\"1\" minor=\"6\" />\n");
-  
+  fileWrite("\t<FileVersion major=\"1\" minor=\"6\" />\n");
+
   fileWrite("\t<Project>\n");
   fileWrite(String("\t\t<Option title=\"") + project.name + "\" />\n");
   fileWrite(String("\t\t<Option makefile=\"") + project.name + ".make\" />\n");
@@ -265,7 +265,7 @@ bool CodeBlocks::generateProject(Project& project)
   fileWrite("\t\t<Option compiler=\"gcc\" />\n");
 
   fileWrite("\t\t<Build>\n");
-  
+
   for(const Map<String, Project::Config>::Node* i = project.configs.getFirst(); i; i = i->getNext())
   {
     const Project::Config& config = i->data;
@@ -355,7 +355,7 @@ bool CodeBlocks::generateProject(Project& project)
 
   */
 
-  
+
 
   fileWrite("</CodeBlocks_project_file>\n");
 
