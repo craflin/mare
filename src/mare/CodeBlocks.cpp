@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cctype>
+#include <cstring>
 
 #include "Engine.h"
 
@@ -264,6 +265,68 @@ bool CodeBlocks::generateProject(Project& project)
   fileWrite("\t\t<Option pch_mode=\"2\" />\n");
   fileWrite("\t\t<Option compiler=\"gcc\" />\n");
 
+
+  Map<String, void*> virtualFolders;
+  for(Map<String, Project::File>::Node* i = project.files.getFirst(); i; i = i->getNext())
+  {
+    Project::File& file = i->data;
+
+    if(!file.folder.isEmpty()) // a user defined filter
+    {
+      if(!virtualFolders.find(file.folder))
+        virtualFolders.append(file.folder);
+      continue;
+    }
+
+    // create a filter based on the file system hierarchy
+    List<String> filtersToAdd;
+    String root;
+    String filterName = File::getDirname(i->key);
+    for(;;)
+    {
+      if(filterName == "." || File::getBasename(filterName) == "..")
+        break;
+      const Map<String, void*>::Node* node = project.roots.find(filterName);
+      if(node)
+      {
+        root = node->key;
+        break;
+      }
+      filtersToAdd.prepend(filterName);
+      filterName = File::getDirname(filterName);
+    }
+    for(const List<String>::Node* i = filtersToAdd.getFirst(); i; i = i->getNext())
+    {
+      String filterName = root.isEmpty() ? i->data : i->data.substr(root.getLength() + 1);
+      if(root.isEmpty())
+      { // remove leading ../ and ./
+        for(;;)
+        {
+          if(strncmp(filterName.getData(), "../", 3) == 0)
+            filterName = filterName.substr(3);
+          else if(strncmp(filterName.getData(), "./", 2) == 0)
+            filterName = filterName.substr(2);
+          else
+            break;
+        }
+      }
+      if(!virtualFolders.find(filterName))
+        virtualFolders.append(filterName);
+      if(i == filtersToAdd.getLast())
+        file.folder = filterName;
+    }
+  }
+
+
+  String virtualFolderStr;
+  for(const Map<String, void*>::Node* i = virtualFolders.getFirst(); i; i = i->getNext())
+  {
+    virtualFolderStr.append(i->key);
+    virtualFolderStr.append("/;");
+  }
+  fileWrite(String("\t\t<Option virtualFolders=\"") + virtualFolderStr + "\" />\n");
+
+
   fileWrite("\t\t<Build>\n");
 
   for(const Map<String, Project::Config>::Node* i = project.configs.getFirst(); i; i = i->getNext())
@@ -289,73 +352,24 @@ bool CodeBlocks::generateProject(Project& project)
   }
   fileWrite("\t\t</Build>\n");
 
-  //fileWrite("<?lua for _, file in pairs(files) do ?>\n");
-  //fileWrite("\t\t<Unit filename=\"<?lua=file?>\"/>\n");
-  //fileWrite("<?lua end ?>\n");
+  for(const Map<String, Project::File>::Node* i = project.files.getFirst(); i; i = i->getNext())
+  {
+    const Project::File& file = i->data;
+    if(file.folder.isEmpty())
+      fileWrite(String("\t\t<Unit filename=\"") + file.name + "\" />\n");
+    else
+    {
+      fileWrite(String("\t\t<Unit filename=\"") + file.name + "\">\n");
+      fileWrite(String("\t\t\t<Option virtualFolder=\"") + file.folder + "/\" />\n");
+      fileWrite("\t\t</Unit>\n");
+    }
+  }
 
   fileWrite("\t\t<Extensions>\n");
   fileWrite("\t\t\t<code_completion />\n");
   fileWrite("\t\t\t<debugger />\n");
   fileWrite("\t\t</Extensions>\n");
   fileWrite("\t</Project>\n");
-
-  /*
-  class FileTree
-  {
-  public:
-    Map<String, void*> folders;
-    List<String> files;
-
-    FileTree()
-    {
-      for(Map<String, void*>::Node* i = folders.getFirst(); i; i = i->getNext())
-        delete (FileTree*)i->data;
-    }
-
-    void addFile(Project& project, const String& file, const String& folder)
-    {
-      List<String> foldersToEnter;
-      String dirName = folder.isEmpty() ? File::getDirname(file) : folder;
-      for(;;)
-      {
-        if(dirName == ".")
-          break;
-        String dirBaseName = File::getBasename(dirName);
-        if(folder.isEmpty() && (dirBaseName == ".." || project.roots.find(dirName)))
-          break;
-        foldersToEnter.prepend(dirBaseName);
-        dirName = File::getDirname(dirName);
-      }
-      FileTree* f = this;
-      for(const List<String>::Node* i = foldersToEnter.getFirst(); i; i = i->getNext())
-      {
-        Map<String, void*>::Node* node = f->folders.find(i->data);
-        f = (FileTree*)(node ? node->data : f->folders.append(i->data, new FileTree()));
-      }
-      f->files.append(file);
-    }
-
-    void write(CodeBlocks& CodeBlocks, const String& space) const
-    {
-      for(const Map<String, void*>::Node* i = folders.getFirst(); i; i = i->getNext())
-      {
-        CodeBlocks.fileWrite(space + "  <VirtualDirectory Name=\"" + i->key + "\">\n");
-        ((FileTree*)i->data)->write(CodeBlocks, space + "  ");
-        CodeBlocks.fileWrite(space + "  </VirtualDirectory>\n");
-      }
-      for(const List<String>::Node* i = files.getFirst(); i; i = i->getNext())
-        CodeBlocks.fileWrite(space + "  <File Name=\"" + i->data + "\"/>\n");
-    }
-  } fileTree;
-
-  for(Map<String, Project::File>::Node* i = project.files.getFirst(); i; i = i->getNext())
-    fileTree.addFile(project, i->key, i->data.folder);
-
-  fileTree.write(*this, String());
-
-  */
-
-
 
   fileWrite("</CodeBlocks_project_file>\n");
 
