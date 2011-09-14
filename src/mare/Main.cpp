@@ -17,6 +17,7 @@
 #include "Mare.h"
 #include "Vcxproj.h"
 #include "CodeLite.h"
+#include "CodeBlocks.h"
 
 static const char* VERSION   = "0.3";
 static const char* COPYRIGHT = "Copyright (C) 2011 Colin Graf";
@@ -332,6 +333,15 @@ int main(int argc, char* argv[])
     {
       CodeLite codeLite(engine);
       if(!codeLite.generate(userArgs))
+        return EXIT_FAILURE;
+      return EXIT_SUCCESS;
+    }
+
+    // generate codeblocks mode?
+    if(generateCodeBlocks)
+    {
+      CodeBlocks codeBlocks(engine);
+      if(!codeBlocks.generate(userArgs))
         return EXIT_FAILURE;
       return EXIT_SUCCESS;
     }
