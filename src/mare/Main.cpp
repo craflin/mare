@@ -135,6 +135,7 @@ int main(int argc, char* argv[])
   int jobs = 0;
   int generateVcxproj = 0;
   bool generateCodeLite = false;
+  bool generateCodeBlocks = false;
 
   // parse args
   {
@@ -149,6 +150,7 @@ int main(int argc, char* argv[])
       {"ignore-dependencies", no_argument , 0, 0},
       {"vcxproj", optional_argument , 0, 0},
       {"codelite", no_argument , 0, 0},
+      {"codeblocks", no_argument , 0, 0},
       {0, 0, 0, 0}
     };
 
@@ -217,6 +219,8 @@ int main(int argc, char* argv[])
           }
           else if(opt == "codelite")
             generateCodeLite = true;
+          else if(opt == "codeblocks")
+            generateCodeBlocks = true;
           else if(opt == "clean")
             clean = true;
           else if(opt == "rebuild")
