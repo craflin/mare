@@ -214,6 +214,26 @@ bool CodeBlocks::readFile()
 
 bool CodeBlocks::generateWorkspace()
 {
+  // remove projects not creating any output files
+  for(Map<String, Project>::Node* i = projects.getFirst(), * nexti; i; i = nexti)
+  {
+    nexti = i->getNext();
+    if(!i->data.files.isEmpty())
+      continue;
+    for(const Map<String, Project::Config>::Node* j = i->data.configs.getFirst(); j; j = j->getNext())
+      if(!j->data.command.isEmpty() || !j->data.firstOutput.isEmpty() || !j->data.type.isEmpty())
+        goto next;
+    projects.remove(i);
+  next:;
+  }
+
+  // avoid creating an empty and possibly nameless solution file
+  if(projects.isEmpty())
+  {
+    engine.error("cannot find any targets");
+    return false;
+  }
+
   // create solution file name
   if(workspaceName.isEmpty() && !projects.isEmpty())
     workspaceName = projects.getFirst()->data.name;
@@ -265,7 +285,6 @@ bool CodeBlocks::generateProject(Project& project)
   fileWrite("\t\t<Option pch_mode=\"2\" />\n");
   fileWrite("\t\t<Option compiler=\"gcc\" />\n");
 
-
   Map<String, void*> virtualFolders;
   for(Map<String, Project::File>::Node* i = project.files.getFirst(); i; i = i->getNext())
   {
@@ -289,7 +308,8 @@ bool CodeBlocks::generateProject(Project& project)
       const Map<String, void*>::Node* node = project.roots.find(filterName);
       if(node)
       {
-        root = node->key;
+        filtersToAdd.prepend(filterName);
+        root = File::getDirname(node->key);
         break;
       }
       filtersToAdd.prepend(filterName);
@@ -340,12 +360,13 @@ bool CodeBlocks::generateProject(Project& project)
     if(config.customBuild)
     {
       fileWrite("\t\t\t\t<MakeCommands>\n");
-      fileWrite(String("\t\t\t\t\t<Build command=\"") + joinCommands(config.buildCommand) + "\" />\n");
+      String buildCommand = joinCommands(config.buildCommand);
+      fileWrite(String("\t\t\t\t\t<Build command=\"") + buildCommand + "\" />\n");
       fileWrite("\t\t\t\t\t<CompileFile command=\"\" />\n");
       fileWrite(String("\t\t\t\t\t<Clean command=\"") + joinCommands(config.cleanCommand) + "\" />\n");
       fileWrite("\t\t\t\t\t<DistClean command=\"\" />\n");
-      fileWrite("\t\t\t\t\t<AskRebuildNeeded command=\"\" />\n");
-      fileWrite("\t\t\t\t\t<SilentBuild command=\"\" />\n");
+      fileWrite("\t\t\t\t\t<AskRebuildNeeded command=\"exit 1\" />\n");
+      fileWrite(String("\t\t\t\t\t<SilentBuild command=\"") + buildCommand + "\" />\n");
       fileWrite("\t\t\t\t</MakeCommands>\n");
     }
     fileWrite("\t\t\t</Target>\n");
