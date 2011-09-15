@@ -213,6 +213,26 @@ bool CodeLite::readFile()
 
 bool CodeLite::generateWorkspace()
 {
+  // remove projects not creating any output files
+  for(Map<String, Project>::Node* i = projects.getFirst(), * nexti; i; i = nexti)
+  {
+    nexti = i->getNext();
+    if(!i->data.files.isEmpty())
+      continue;
+    for(const Map<String, Project::Config>::Node* j = i->data.configs.getFirst(); j; j = j->getNext())
+      if(!j->data.command.isEmpty() || !j->data.firstOutput.isEmpty() || !j->data.type.isEmpty())
+        goto next;
+    projects.remove(i);
+  next:;
+  }
+
+  // avoid creating an empty and possibly nameless solution file
+  if(projects.isEmpty())
+  {
+    engine.error("cannot find any targets");
+    return false;
+  }
+
   // create solution file name
   if(workspaceName.isEmpty() && !projects.isEmpty())
     workspaceName = projects.getFirst()->data.name;
