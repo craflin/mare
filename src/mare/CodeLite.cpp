@@ -35,21 +35,21 @@ bool CodeLite::generate(const Map<String, String>& userArgs)
   {
     Map<String, String> cApplication;
     cApplication.append("command", "__Application");
-    cApplication.append("outputs", "$(buildDir)/$(target).exe");
+    cApplication.append("outputs", "$(buildDir)/$(target)$(target)$(if $(Win32),.exe)");
     engine.addDefaultKey("cppApplication", cApplication);
     engine.addDefaultKey("cApplication", cApplication);
   }
   {
     Map<String, String> cDynamicLibrary;
     cDynamicLibrary.append("command", "__DynamicLibrary");
-    cDynamicLibrary.append("outputs", "$(buildDir)/$(patsubst lib%,%,$(target)).dll");
+    cDynamicLibrary.append("outputs", "$(buildDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.dll,.so)");
     engine.addDefaultKey("cppDynamicLibrary", cDynamicLibrary);
     engine.addDefaultKey("cDynamicLibrary", cDynamicLibrary);
   }
   {
     Map<String, String> cStaticLibrary;
     cStaticLibrary.append("command", "__StaticLibrary");
-    cStaticLibrary.append("outputs", "$(buildDir)/$(patsubst lib%,%,$(target)).lib");
+    cStaticLibrary.append("outputs", "$(buildDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.lib,.a)");
     engine.addDefaultKey("cppStaticLibrary", cStaticLibrary);
     engine.addDefaultKey("cStaticLibrary", cStaticLibrary);
   }
