@@ -248,12 +248,22 @@ bool Vcxproj::readFile()
         if(!projectConfig.command.isEmpty())
         {
           const String& firstCommand = projectConfig.command.getFirst()->data;
-          if(firstCommand == "__Application" || firstCommand == "__StaticLibrary" ||
-            firstCommand == "__DynamicLibrary" || firstCommand == "__Makefile")
+          if(firstCommand == "__Custom")
+          {
+            projectConfig.type = "Makefile";
+            projectConfig.command.clear();
+          }
+          else if(firstCommand == "__Application" || firstCommand == "__StaticLibrary" ||
+            firstCommand == "__DynamicLibrary")
           {
             projectConfig.type = firstCommand.substr(2);
             projectConfig.command.clear();
           }
+        }
+        if(!projectConfig.buildCommand.isEmpty())
+        {
+          projectConfig.type = "Makefile";
+          projectConfig.command.clear();
         }
 
         engine.getKeys("cppFlags", projectConfig.cppFlags, true);
