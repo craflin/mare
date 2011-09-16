@@ -12,6 +12,7 @@
     <ClCompile Include="..\src\mare\Mare.cpp" />
     <ClCompile Include="..\src\mare\CodeLite.cpp" />
     <ClCompile Include="..\src\mare\CodeBlocks.cpp" />
+    <ClCompile Include="..\src\mare\CMake.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\mare\Vcxproj.h" />
@@ -24,6 +25,7 @@
     <ClInclude Include="..\src\mare\Mare.h" />
     <ClInclude Include="..\src\mare\CodeLite.h" />
     <ClInclude Include="..\src\mare\CodeBlocks.h" />
+    <ClInclude Include="..\src\mare\CMake.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Tools">

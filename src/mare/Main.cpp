@@ -18,6 +18,7 @@
 #include "Vcxproj.h"
 #include "CodeLite.h"
 #include "CodeBlocks.h"
+#include "CMake.h"
 
 static const char* VERSION   = "0.3";
 static const char* COPYRIGHT = "Copyright (C) 2011 Colin Graf";
@@ -137,6 +138,7 @@ int main(int argc, char* argv[])
   int generateVcxproj = 0;
   bool generateCodeLite = false;
   bool generateCodeBlocks = false;
+  bool generateCMake = false;
 
   // parse args
   {
@@ -152,6 +154,7 @@ int main(int argc, char* argv[])
       {"vcxproj", optional_argument , 0, 0},
       {"codelite", no_argument , 0, 0},
       {"codeblocks", no_argument , 0, 0},
+      {"cmake", no_argument , 0, 0},
       {0, 0, 0, 0}
     };
 
@@ -222,6 +225,8 @@ int main(int argc, char* argv[])
             generateCodeLite = true;
           else if(opt == "codeblocks")
             generateCodeBlocks = true;
+          else if(opt == "cmake")
+            generateCMake = true;
           else if(opt == "clean")
             clean = true;
           else if(opt == "rebuild")
@@ -342,6 +347,15 @@ int main(int argc, char* argv[])
     {
       CodeBlocks codeBlocks(engine);
       if(!codeBlocks.generate(userArgs))
+        return EXIT_FAILURE;
+      return EXIT_SUCCESS;
+    }
+
+    // generate codeblocks mode?
+    if(generateCMake)
+    {
+      CMake cMake(engine);
+      if(!cMake.generate(userArgs))
         return EXIT_FAILURE;
       return EXIT_SUCCESS;
     }
