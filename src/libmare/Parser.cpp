@@ -236,7 +236,7 @@ void Parser::nextToken()
         String& value = currentToken.value;
         value.clear();
         value.append(c);
-        while(isalnum(currentChar))
+        while(isalnum(currentChar) || currentChar == '_')
         {
           value.append(currentChar);
           nextChar();
