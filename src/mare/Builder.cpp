@@ -1,5 +1,6 @@
 
 #include <cstdio>
+#include <ctype.h>
 
 #include "Builder.h"
 
@@ -340,12 +341,12 @@ clean:
       return true;
     }
 
-    String message = Word::join(this->message.isEmpty() ? this->command : this->message);
+    String message = Builder::join(this->message.isEmpty() ? this->command : this->message);
     puts(message.getData());
 
     if(showDebug)
     {
-      String command = Word::join(this->command);
+      String command = Builder::join(this->command);
       printf("debug: %s\n", command.getData());
     }
 
@@ -618,4 +619,37 @@ bool Builder::buildTargets(const String& platform, const String& configuration)
 
   ruleSet.resolveDependencies();
   return ruleSet.build(engine, jobs <= 0 ? (Process::getProcessorCount() - jobs) : jobs, clean, rebuild, showDebug);
+}
+
+String Builder::join(const List<String>& words)
+{
+  if(words.isEmpty())
+    return String();
+
+  int totalLen = words.getSize() * 3;
+  for(const List<String>::Node* i = words.getFirst(); i; i = i->getNext())
+    totalLen += i->data.getLength();
+
+  String result(totalLen);
+  for(const List<String>::Node* i = words.getFirst(); i; i = i->getNext())
+  {
+    if(!result.isEmpty())
+      result.append(' ');
+    int len = result.getLength();
+    char* dest = result.getData(len) + len; 
+    for(const char* str = i->data.getData(); *str; ++str)
+      if(isspace(*str))
+      {
+        result.setLength(len); // fall back
+        result.append('"');
+        result.append(i->data);
+        result.append('"');
+        goto next;
+      }
+      else
+        *(dest++) = *str;
+    result.setLength(len + i->data.getLength());
+  next:;
+  }
+  return result;
 }

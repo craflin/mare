@@ -16,6 +16,8 @@ public:
 
   bool build(const Map<String, String>& userArgs);
 
+  static String join(const List<String>& words);
+
 private:
   Engine& engine;
   bool showDebug;

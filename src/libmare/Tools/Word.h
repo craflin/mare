@@ -20,5 +20,4 @@ public:
 
   static void split(const String& text, List<Word>& words);
   static void append(const List<Word>& words, String& text);
-  static String join(const List<String>& words);
 };

@@ -89,36 +89,3 @@ void Word::appendTo(String& text) const
   else // TODO: escape spaces using blackslashes
     text.append(*this);
 }
-
-String Word::join(const List<String>& words)
-{
-  if(words.isEmpty())
-    return String();
-
-  int totalLen = words.getSize() * 3;
-  for(const List<String>::Node* i = words.getFirst(); i; i = i->getNext())
-    totalLen += i->data.getLength();
-
-  String result(totalLen);
-  for(const List<String>::Node* i = words.getFirst(); i; i = i->getNext())
-  {
-    if(!result.isEmpty())
-      result.append(' ');
-    int len = result.getLength();
-    char* dest = result.getData(len) + len; 
-    for(const char* str = i->data.getData(); *str; ++str)
-      if(isspace(*str))
-      {
-        result.setLength(len); // fall back
-        result.append('"');
-        result.append(i->data);
-        result.append('"');
-        goto next;
-      }
-      else
-        *(dest++) = *str;
-    result.setLength(len + i->data.getLength());
-  next:;
-  }
-  return result;
-}
