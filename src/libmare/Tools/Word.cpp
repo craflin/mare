@@ -38,11 +38,14 @@ void Word::split(const String& text, List<Word>& words)
           ++end;
         else if(*end == '"')
           break;
+      Word* word = 0;
       if(end > str) // TODO: read escaped spaces as ordinary spaces?
-        words.append(Word(text.substr(str - text.getData(), end - str), true));
+        word = &words.append(Word(text.substr(str - text.getData(), end - str), true));
       str = end;
       if(*str)
-        ++str;
+        ++str; // skip closing '"'
+      if(word && (*str == '\n' || * str == '\0'))
+        word->terminated = true;
     }
     else
     {
@@ -51,10 +54,10 @@ void Word::split(const String& text, List<Word>& words)
         if(isspace(*end))
           break;
       // TODO: read escaped spaces as ordinary spaces
-      words.append(Word(text.substr(str - text.getData(), end - str), false));
+      Word& word = words.append(Word(text.substr(str - text.getData(), end - str), false));
       str = end;
-      if(*str)
-        ++str;
+      if(*str == '\n' || * str == '\0')
+        word.terminated = true;
     }
   }
 }
@@ -73,7 +76,8 @@ void Word::append(const List<Word>& words, String& text)
   i->data.appendTo(text);
   for(i = i->getNext(); i; i = i->getNext())
   {
-    text.append(' ');
+    if(!text.isEmpty() && text.getData()[text.getLength() - 1] != '\n')
+      text.append(' ');
     i->data.appendTo(text);
   }
 }
@@ -88,4 +92,6 @@ void Word::appendTo(String& text) const
   }
   else // TODO: escape spaces using blackslashes
     text.append(*this);
+  if(terminated)
+    text.append('\n');
 }

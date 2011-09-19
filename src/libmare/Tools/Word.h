@@ -8,8 +8,9 @@ class Word : public String
 {
 public:
   bool quoted;
+  bool terminated;
 
-  Word(const String& word, bool quoted) : String(word), quoted(quoted) {}
+  Word(const String& word, bool quoted) : String(word), quoted(quoted), terminated(false) {}
 
   Word& operator=(const String& other);
 
