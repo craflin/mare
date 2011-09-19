@@ -590,6 +590,14 @@ void Namespace::getKeys(List<String>& keys)
       keys.append(node->key);
 }
 
+void Namespace::getKeys(List<Word>& keys)
+{
+  compile();
+  for(Map<Word, Namespace*>::Node* node = variables.getFirst(); node; node = node->getNext())
+    if(!node->data || !node->data->inherited)
+      keys.append(node->key);
+}
+
 void Namespace::appendKeys(String& output)
 {
   compile();

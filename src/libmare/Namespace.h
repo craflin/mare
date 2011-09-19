@@ -19,6 +19,7 @@ public:
   Namespace* enterUnnamedKey(Statement* statement);
   Namespace* enterNewKey(const String& name);
   void getKeys(List<String>& keys);
+  void getKeys(List<Word>& keys);
   void appendKeys(String& output);
   String getFirstKey();
   inline Engine& getEngine() {return *engine;}

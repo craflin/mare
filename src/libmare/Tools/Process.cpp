@@ -56,6 +56,15 @@ Process::~Process()
 #endif
 }
 
+bool Process::isRunning() const
+{
+#ifdef _WIN32
+  return hProcess != INVALID_HANDLE_VALUE;
+#else
+  return pid != 0;
+#endif
+}
+
 unsigned int Process::start(const List<String>& command)
 {
 #ifdef _WIN32

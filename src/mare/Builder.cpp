@@ -213,34 +213,36 @@ class Target;
 class Rule
 {
 public:
+  const Builder* builder;
   Target* target;
 
   String name; /**< The main input file or the name of the target */
   List<String> dependencies;
   List<String> inputs;
   List<String> outputs;
-  List<String> command;
-  List<String> message;
-
+  List<Word> command;
+  List<Word> message;
+  
   unsigned int finishedRuleDependencies;
   Map<Rule*, String> ruleDependencies;
   Map<Rule*, String> rulePropagations;
 
   bool rebuild;
 
+  const List<Word>::Node* nextCommand;
   Process process;
 
   Rule() : finishedRuleDependencies(0), rebuild(false) {}
 
-  bool startExecution(Engine& engine, unsigned int& pid, bool clean, bool rebuild, bool showDebug)
+  bool startExecution(unsigned int& pid)
   {
     ASSERT(finishedRuleDependencies == ruleDependencies.getSize());
 
-    if(clean)
+    if(builder->clean)
       goto clean;
     if(rebuild)
     {
-      if(showDebug)
+      if(builder->showDebug)
         printf("debug: Applying rule for \"%s\" since the rebuild flag is set\n", name.getData());
       goto build;
     }
@@ -249,7 +251,7 @@ public:
     for(Map<Rule*, String>::Node* i = ruleDependencies.getFirst(); i; i = i->getNext())
       if(i->key->rebuild)
       {
-        if(showDebug)
+        if(builder->showDebug)
           printf("debug: Applying rule for \"%s\" since the rule for the input file \"%s\" was applied as well\n", name.getData(), i->data.getData());
         goto build;
       }
@@ -262,7 +264,7 @@ public:
         long long writeTime;
         if(!File::getWriteTime(file, writeTime))
         {
-          if(showDebug)
+          if(builder->showDebug)
           {
             if(!File::exists(file))
               printf("debug: Applying rule for \"%s\" since the output file \"%s\" does not exist\n", name.getData(), file.getData());
@@ -283,7 +285,7 @@ public:
         long long writeTime;
         if(!File::getWriteTime(file, writeTime))
         {
-          if(showDebug)
+          if(builder->showDebug)
           {
             if(!File::exists(file))
               printf("debug: Applying rule for \"%s\" since the input file \"%s\" does not exist\n", name.getData(), file.getData());
@@ -294,7 +296,7 @@ public:
         }
         if(writeTime >= minWriteTime)
         {
-          if(showDebug)
+          if(builder->showDebug)
             printf("debug: Applying rule for \"%s\" since the input file \"%s\" is newer than output file \"%s\"\n", name.getData(), file.getData(), minOutputFile.getData());
           goto build;
         }
@@ -313,7 +315,7 @@ clean:
       if(File::exists(i->data))
       {
         if(!File::unlink(i->data))
-          engine.error(Error::getString());
+          builder->engine.error(Error::getString());
       }
       if(!rebuild)
       {
@@ -338,43 +340,71 @@ clean:
     if(outputs.isEmpty() && command.isEmpty())
     {
       pid = 0;
-      return true;
+      return true; // that was easy
     }
 
-    String message = Builder::join(this->message.isEmpty() ? this->command : this->message);
-    puts(message.getData());
-
-    if(showDebug)
+    if(!message.isEmpty())
     {
-      String command = Builder::join(this->command);
-      printf("debug: %s\n", command.getData());
-    }
-
-    fflush(stdout);
-
-    if(command.isEmpty())
-    {
-      pid = 0;
-      return true;
+      puts(Builder::join(message).getData());
+      fflush(stdout);
     }
 
     // create output directories
     for(const List<String>::Node* i = outputs.getFirst(); i; i = i->getNext())
       Directory::create(File::getDirname(i->data));
 
-    pid = process.start(command);
+    nextCommand = command.getFirst();
+    return continueExecution(pid);
+  }
+
+  bool continueExecution(unsigned int& pid)
+  {
+    if(process.isRunning())
+    {
+      unsigned int exitCode = process.join();
+      if(exitCode != 0)
+      {
+        pid = 0;
+        return false;
+      }
+    }
+
+    List<String> singleCommand;
+    for(; nextCommand; nextCommand = nextCommand->getNext())
+    {
+      singleCommand.append(nextCommand->data);
+      if(nextCommand->data.terminated)
+      {
+        nextCommand = nextCommand->getNext();
+        break;
+      }
+    }
+
+    if(singleCommand.isEmpty())
+    {
+      pid = 0;
+      return true;
+    }
+
+    if(message.isEmpty())
+    {
+      puts(Builder::join(singleCommand).getData());
+      fflush(stdout);
+    }
+
+    if(builder->showDebug)
+    {
+      printf("debug: %s\n", Builder::join(singleCommand).getData());
+      fflush(stdout);
+    }
+
+    pid = process.start(singleCommand);
     if(!pid)
     {
-      engine.error(Error::getString());
+      builder->engine.error(Error::getString());
       return false;
     }
     return true;
-  }
-
-  bool finishExecution()
-  {
-    unsigned int exitCode = process.join();
-    return exitCode == 0;
   }
 };
 
@@ -487,7 +517,7 @@ public:
           rule = pendingJobs.getFirst()->data;
           pendingJobs.removeFirst();
           unsigned int pid;
-          if(!rule->startExecution(engine, pid, clean, rebuild, showDebug))
+          if(!rule->startExecution(pid))
           {
             failure = true;
             goto finishedRuleExecution;
@@ -506,9 +536,15 @@ public:
           continue;
         rule = job->data;
         runningJobs.remove(job);
-        if(!rule->finishExecution())
+        if(!rule->continueExecution(pid))
+        {
           failure = true;
-        goto finishedRuleExecution;
+          goto finishedRuleExecution;
+        }
+        if(pid)
+          runningJobs.append(pid, rule);
+        else
+          goto finishedRuleExecution;
       }
       continue;
 
@@ -584,6 +620,7 @@ bool Builder::buildTargets(const String& platform, const String& configuration)
       for(List<String>::Node* i = files.getFirst(); i; i = i->getNext())
       {
         Rule& rule = target.rules.append();
+        rule.builder = this;
         rule.target = &target;
         rule.name = i->data;
         engine.enterUnnamedKey();
@@ -602,6 +639,7 @@ bool Builder::buildTargets(const String& platform, const String& configuration)
 
     // add rule for target file
     Rule& rule = target.rules.append();
+    rule.builder = this;
     rule.target = &target;
     rule.name = i->data;
     target.rule = &rule;
@@ -623,9 +661,6 @@ bool Builder::buildTargets(const String& platform, const String& configuration)
 
 String Builder::join(const List<String>& words)
 {
-  if(words.isEmpty())
-    return String();
-
   int totalLen = words.getSize() * 3;
   for(const List<String>::Node* i = words.getFirst(); i; i = i->getNext())
     totalLen += i->data.getLength();
@@ -649,6 +684,49 @@ String Builder::join(const List<String>& words)
       else
         *(dest++) = *str;
     result.setLength(len + i->data.getLength());
+  next:;
+  }
+  return result;
+}
+
+
+String Builder::join(const List<Word>& words)
+{
+  int totalLen = words.getSize() * 3;
+  for(const List<Word>::Node* i = words.getFirst(); i; i = i->getNext())
+    totalLen += i->data.getLength();
+
+  String result(totalLen);
+  const Word* previousWord = 0;
+  for(const List<Word>::Node* i = words.getFirst(); i; i = i->getNext())
+  {
+    if(previousWord)
+      result.append(previousWord->terminated ? '\n' : ' ');
+    previousWord = &i->data;
+
+    if(i->data.quoted)
+    {
+      result.append('"');
+      result.append(i->data);
+      result.append('"');
+    }
+    else
+    {
+      int len = result.getLength();
+      char* dest = result.getData(len) + len; 
+      for(const char* str = i->data.getData(); *str; ++str)
+        if(isspace(*str))
+        {
+          result.setLength(len); // fall back
+          result.append('"');
+          result.append(i->data);
+          result.append('"');
+          goto next;
+        }
+        else
+          *(dest++) = *str;
+      result.setLength(len + i->data.getLength());
+    }
   next:;
   }
   return result;

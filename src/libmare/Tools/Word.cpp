@@ -73,12 +73,13 @@ void Word::append(const List<Word>& words, String& text)
   text.setCapacity(totalLen + 16);
 
   const List<Word>::Node* i = words.getFirst();
+  const List<Word>::Node* previousWord = i;
   i->data.appendTo(text);
   for(i = i->getNext(); i; i = i->getNext())
   {
-    if(!text.isEmpty() && text.getData()[text.getLength() - 1] != '\n')
-      text.append(' ');
+    text.append(/*previousWord->data.terminated ? '\n' : */' ');
     i->data.appendTo(text);
+    previousWord = i;
   }
 }
 
@@ -92,6 +93,4 @@ void Word::appendTo(String& text) const
   }
   else // TODO: escape spaces using blackslashes
     text.append(*this);
-  if(terminated)
-    text.append('\n');
 }

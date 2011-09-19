@@ -3,9 +3,10 @@
 
 #include "Tools/List.h"
 #include "Tools/Map.h"
-#include "Tools/String.h"
 
 class Engine;
+class Word;
+class String;
 
 class Builder
 {
@@ -17,6 +18,7 @@ public:
   bool build(const Map<String, String>& userArgs);
 
   static String join(const List<String>& words);
+  static String join(const List<Word>& words);
 
 private:
   Engine& engine;
@@ -32,4 +34,6 @@ private:
 
   bool buildFile();
   bool buildTargets(const String& platform, const String& configuration);
+
+  friend class Rule;
 };
