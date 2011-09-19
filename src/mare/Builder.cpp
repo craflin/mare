@@ -216,25 +216,25 @@ public:
   Target* target;
 
   String name; /**< The main input file or the name of the target */
-  List<String> targetdeps;
+  List<String> dependencies;
   List<String> inputs;
   List<String> outputs;
   List<String> command;
   List<String> message;
 
-  unsigned int finishedDependencies;
-  Map<Rule*, String> dependencies;
-  Map<Rule*, String> propagations;
+  unsigned int finishedRuleDependencies;
+  Map<Rule*, String> ruleDependencies;
+  Map<Rule*, String> rulePropagations;
 
   bool rebuild;
 
   Process process;
 
-  Rule() : finishedDependencies(0), rebuild(false) {}
+  Rule() : finishedRuleDependencies(0), rebuild(false) {}
 
   bool startExecution(Engine& engine, unsigned int& pid, bool clean, bool rebuild, bool showDebug)
   {
-    ASSERT(finishedDependencies == dependencies.getSize());
+    ASSERT(finishedRuleDependencies == ruleDependencies.getSize());
 
     if(clean)
       goto clean;
@@ -246,7 +246,7 @@ public:
     }
 
     // determine whether to build this rule
-    for(Map<Rule*, String>::Node* i = dependencies.getFirst(); i; i = i->getNext())
+    for(Map<Rule*, String>::Node* i = ruleDependencies.getFirst(); i; i = i->getNext())
       if(i->key->rebuild)
       {
         if(showDebug)
@@ -420,7 +420,7 @@ public:
           }
           outputToRule.append(i->data, &rule);
         }
-        for(List<String>::Node* i = rule.targetdeps.getFirst(); i; i = i->getNext())
+        for(List<String>::Node* i = rule.dependencies.getFirst(); i; i = i->getNext())
         {
           Map<String, Target>::Node* node = targets.find(i->data);
           if(!node)
@@ -458,10 +458,10 @@ public:
             }
 
             //
-            if(!rule.dependencies.find(dependency))
-              rule.dependencies.append(dependency, i->data);
-            if(!dependency->propagations.find(&rule))
-              dependency->propagations.append(&rule, i->data);
+            if(!rule.ruleDependencies.find(dependency))
+              rule.ruleDependencies.append(dependency, i->data);
+            if(!dependency->rulePropagations.find(&rule))
+              dependency->rulePropagations.append(&rule, i->data);
           }
         }
       }
@@ -472,7 +472,7 @@ public:
     List<Rule*> pendingJobs;
     for(List<Target*>::Node* i = activeTargets.getFirst(); i; i = i->getNext())
       for(List<Rule>::Node* j = i->data->rules.getFirst(); j; j = j->getNext())
-        if(j->data.dependencies.isEmpty())
+        if(j->data.ruleDependencies.isEmpty())
           pendingJobs.append(&j->data);
     
     Map<unsigned int, Rule*> runningJobs;
@@ -514,14 +514,14 @@ public:
 
     finishedRuleExecution:
       ++finishedRules;
-      for(Map<Rule*, String>::Node* i = rule->propagations.getFirst(); i; i = i->getNext())
+      for(Map<Rule*, String>::Node* i = rule->rulePropagations.getFirst(); i; i = i->getNext())
       {
         Rule& rule = *i->key;
-        ASSERT(!rule.dependencies.isEmpty());
-        ++rule.finishedDependencies;
-        if(rule.finishedDependencies == rule.dependencies.getSize())
+        ASSERT(!rule.ruleDependencies.isEmpty());
+        ++rule.finishedRuleDependencies;
+        if(rule.finishedRuleDependencies == rule.ruleDependencies.getSize())
         {
-          if(rule.propagations.isEmpty())
+          if(rule.rulePropagations.isEmpty())
             pendingJobs.append(&rule);
           else
             pendingJobs.prepend(&rule);
@@ -589,7 +589,7 @@ bool Builder::buildTargets(const String& platform, const String& configuration)
         engine.enterUnnamedKey();
         engine.addDefaultKey("file", i->data);
         VERIFY(engine.enterKey(i->data));
-        engine.getKeys("dependencies", rule.targetdeps, false);
+        engine.getKeys("dependencies", rule.dependencies, false);
         engine.getKeys("inputs", rule.inputs, false);
         engine.getKeys("outputs", rule.outputs, false);
         engine.getKeys("command", rule.command, false);
@@ -605,7 +605,7 @@ bool Builder::buildTargets(const String& platform, const String& configuration)
     rule.target = &target;
     rule.name = i->data;
     target.rule = &rule;
-    engine.getKeys("dependencies", rule.targetdeps, false);
+    engine.getKeys("dependencies", rule.dependencies, false);
     engine.getKeys("inputs", rule.inputs, false);
     engine.getKeys("outputs", rule.outputs, false);
     engine.getKeys("command", rule.command, false);
