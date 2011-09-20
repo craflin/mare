@@ -464,7 +464,10 @@ void Namespace::removeKeyRaw(const String& key)
   Word wkey(key, false);
   Map<Word, Namespace*>::Node* node = variables.find(wkey);
   if(node)
+  {
+    delete node->data;
     variables.remove(node);
+  }
 }
 
 void Namespace::setKeyRaw(const Word& key)
@@ -482,7 +485,10 @@ void Namespace::removeKeysRaw(Namespace& space)
       break;
     Map<Word, Namespace*>::Node* node = variables.find(i->key);
     if(node)
+    {
+      delete node->data;
       variables.remove(node);
+    }
   }
 }
 
