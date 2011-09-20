@@ -636,17 +636,6 @@ void Namespace::getKeys(List<String>& keys)
   }
 }
 
-void Namespace::getKeys(List<Word>& keys)
-{
-  compile();
-  for(Map<Word, Namespace*>::Node* node = variables.getFirst(); node; node = node->getNext())
-  {
-    if(node->data && (node->data->flags & inheritedFlag))
-      break;
-    keys.append(node->key);
-  }
-}
-
 void Namespace::getText(List<String>& text)
 {
   // recompile in textMode

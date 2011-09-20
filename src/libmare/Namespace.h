@@ -19,7 +19,6 @@ public:
   Namespace* enterUnnamedKey(Statement* statement);
   Namespace* enterNewKey(const String& name);
   void getKeys(List<String>& keys);
-  void getKeys(List<Word>& keys);
   void getText(List<String>& text);
   void appendKeys(String& output);
   String getFirstKey();

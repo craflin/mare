@@ -99,15 +99,6 @@ void Engine::getKeys(const String& key, List<String>& keys, bool allowInheritanc
   }
 }
 
-void Engine::getKeys(const String& key, List<Word>& keys, bool allowInheritance)
-{
-  if(enterKey(key, allowInheritance))
-  {
-    currentSpace->getKeys(keys);
-    leaveKey();
-  }
-}
-
 String Engine::getFirstKey()
 {
   return currentSpace->getFirstKey();
