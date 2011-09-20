@@ -109,10 +109,12 @@ void Word::splitLines(const String& text, List<Word>& words)
     str = end;
     if(*str)
     {
-      if(*str == '\r' && *str == '\n')
+      if(*str == '\r' && str[1] == '\n')
         str += 2;
       else
         ++str;
     }
+    else
+      break;
   }
 }
