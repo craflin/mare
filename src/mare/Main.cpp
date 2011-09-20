@@ -283,7 +283,7 @@ int main(int argc, char* argv[])
       if(engine.enterKey("help"))
       {
         List<String> help;
-        engine.getKeys(help);
+        engine.getText(help);
         for(List<String>::Node* node = help.getFirst(); node; node = node->getNext())
           puts(node->data.getData());
         return EXIT_SUCCESS;
