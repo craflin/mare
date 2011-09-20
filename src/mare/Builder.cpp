@@ -198,9 +198,8 @@ bool Builder::buildFile()
     for(const List<String>::Node* i = inputConfigs.getFirst(); i; i = i->getNext())
     {
       const String& configuration = i->data;
-      for(const List<String>::Node* i = allTargets.getFirst(); i; i = i->getNext())
-        if(!buildTargets(platform, configuration))
-          return false;
+      if(!buildTargets(platform, configuration))
+        return false;
     }
   }
 
@@ -239,7 +238,7 @@ public:
 
     if(builder->clean)
       goto clean;
-    if(rebuild)
+    if(builder->rebuild)
     {
       if(builder->showDebug)
         printf("debug: Applying rule for \"%s\" since the rebuild flag is set\n", name.getData());
@@ -316,7 +315,7 @@ clean:
         if(!File::unlink(i->data))
           builder->engine.error(Error::getString());
       }
-      if(!rebuild)
+      if(!builder->rebuild)
       {
         /*
         String dir = File::getDirname(i->data);
@@ -327,7 +326,7 @@ clean:
       }
     }
 
-    if(rebuild)
+    if(builder->rebuild)
       goto build;
     pid = 0;
     return true;
