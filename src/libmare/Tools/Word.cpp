@@ -38,14 +38,11 @@ void Word::split(const String& text, List<Word>& words)
           ++end;
         else if(*end == '"')
           break;
-      Word* word = 0;
       if(end > str) // TODO: read escaped spaces as ordinary spaces?
-        word = &words.append(Word(text.substr(str - text.getData(), end - str), true));
+        words.append(Word(text.substr(str - text.getData(), end - str), true));
       str = end;
       if(*str)
         ++str; // skip closing '"'
-      if(word && (*str == '\n' || * str == '\0'))
-        word->terminated = true;
     }
     else
     {
@@ -54,10 +51,8 @@ void Word::split(const String& text, List<Word>& words)
         if(isspace(*end))
           break;
       // TODO: read escaped spaces as ordinary spaces
-      Word& word = words.append(Word(text.substr(str - text.getData(), end - str), false));
+      words.append(Word(text.substr(str - text.getData(), end - str), false));
       str = end;
-      if(*str == '\n' || * str == '\0')
-        word.terminated = true;
     }
   }
 }
