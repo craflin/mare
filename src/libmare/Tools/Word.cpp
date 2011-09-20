@@ -100,7 +100,7 @@ void Word::splitLines(const String& text, List<Word>& words)
       if(*end == '\n' || *end == '\r')
         break;
     // TODO: read escaped spaces as ordinary spaces
-    Word& word = words.append(Word(text.substr(str - text.getData(), end - str), false));
+    words.append(Word(text.substr(str - text.getData(), end - str), false));
     str = end;
     if(*str)
     {
