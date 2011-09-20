@@ -239,24 +239,23 @@ bool Vcxproj::readFile()
         engine.getKeys("postBuildCommand", projectConfig.postBuildCommand, false);
         projectConfig.buildDir = engine.getFirstKey("buildDir", true);
 
-        engine.getKeys("message", projectConfig.message, false);
-        engine.getKeys("command", projectConfig.command, false);
+        engine.getText("message", projectConfig.message, false);
+        engine.getText("command", projectConfig.command, false);
         engine.getKeys("outputs", projectConfig.outputs, false);
         engine.getKeys("inputs", projectConfig.inputs, false);
 
         projectConfig.type = "Utility";
         if(!projectConfig.command.isEmpty())
         {
-          const String& firstCommand = projectConfig.command.getFirst()->data;
-          if(firstCommand == "__Custom")
+          const String& firstCommandWord = Word::first(projectConfig.command.getFirst()->data);
+          if(firstCommandWord == "__Custom")
           {
             projectConfig.type = "Makefile";
             projectConfig.command.clear();
           }
-          else if(firstCommand == "__Application" || firstCommand == "__StaticLibrary" ||
-            firstCommand == "__DynamicLibrary")
+          else if(firstCommandWord == "__Application" || firstCommandWord == "__StaticLibrary" || firstCommandWord == "__DynamicLibrary")
           {
-            projectConfig.type = firstCommand.substr(2);
+            projectConfig.type = firstCommandWord.substr(2);
             projectConfig.command.clear();
           }
         }
@@ -308,7 +307,7 @@ bool Vcxproj::readFile()
             else if(!firstCommand.isEmpty())
             {
               type = "CustomBuild";
-              engine.getKeys("message", fileConfig.message, false);
+              engine.getText("message", fileConfig.message, false);
               engine.getKeys("outputs", fileConfig.outputs, false);
               engine.getKeys("inputs", fileConfig.inputs, false);
             }
@@ -1118,34 +1117,44 @@ String Vcxproj::join(const List<String>& items, char sep, const String& suffix)
 String Vcxproj::joinCommands(const List<String>& commands)
 {
   String result;
-  const List<String>::Node* i = commands.getFirst();
-  if(i)
+  for(const List<String>::Node* j = commands.getFirst(); j; j = j->getNext())
   {
-    String program(i->data);
-    program.subst("/", "\\");
-    for(const char* str = program.getData(); *str; ++str)
-        if(isspace(*str))
-        {
-          result.append('"');
-          result.append(xmlEscape(program));
-          result.append('"');
-          goto next;
-        }
-      result.append(xmlEscape(program));
-    next: ;
-    for(i = i->getNext(); i; i = i->getNext())
+    if(j->data.isEmpty())
+      continue;
+    if(!result.isEmpty())
+      result.append("&#x0D;&#x0A;");
+
+    List<Word> command;
+    Word::split(j->data, command);
+    const List<String>::Node* i = commands.getFirst();
+    if(i)
     {
-      result.append(' ');
-      for(const char* str = i->data.getData(); *str; ++str)
-        if(isspace(*str))
-        {
-          result.append('"');
-          result.append(xmlEscape(i->data));
-          result.append('"');
-          goto next2;
-        }
-      result.append(xmlEscape(i->data));
-    next2: ;
+      String program(i->data);
+      program.subst("/", "\\");
+      for(const char* str = program.getData(); *str; ++str)
+          if(isspace(*str))
+          {
+            result.append('"');
+            result.append(xmlEscape(program));
+            result.append('"');
+            goto next;
+          }
+        result.append(xmlEscape(program));
+      next: ;
+      for(i = i->getNext(); i; i = i->getNext())
+      {
+        result.append(' ');
+        for(const char* str = i->data.getData(); *str; ++str)
+          if(isspace(*str))
+          {
+            result.append('"');
+            result.append(xmlEscape(i->data));
+            result.append('"');
+            goto next2;
+          }
+        result.append(xmlEscape(i->data));
+      next2: ;
+      }
     }
   }
   return result;

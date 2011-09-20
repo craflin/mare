@@ -20,6 +20,13 @@ bool Word::operator!=(const Word& other) const
   return *(String*)this != other;
 }
 
+String Word::first(const String& text)
+{
+  List<Word> words;
+  split(text, words);
+  return words.isEmpty() ? String() : words.getFirst()->data;
+}
+
 void Word::split(const String& text, List<Word>& words)
 {
   const char* str = text.getData();
