@@ -11,7 +11,7 @@ class Statement;
 class Namespace : public Scope, public Scope::Object
 {
 public:
-  Namespace(Scope& scope, Namespace* parent, Engine* engine, Statement* statement, Namespace* next, bool inherited) : Scope::Object(scope), parent(parent), defaultStatement(0), statement(statement), next(next), engine(engine), inherited(inherited), compiled(false), compiling(false) {}
+  Namespace(Scope& scope, Namespace* parent, Engine* engine, Statement* statement, Namespace* next, unsigned int flags) : Scope::Object(scope), parent(parent), defaultStatement(0), statement(statement), next(next), engine(engine), flags(flags) {}
   
   inline Namespace* getParent() {return parent;}
   bool resolveScript2(const String& name, Word*& word, Namespace*& space);
@@ -39,14 +39,21 @@ public:
   void addDefaultKey(const String& key, const Map<String, String>& value);
 
 private:
+  enum Flags
+  {
+    inheritedFlag = (1 << 1),
+    compiledFlag = (1 << 2),
+    compilingFlag = (1 << 3),
+    unnamedFlag = (1 << 4),
+    textModeFlag = (1 << 5),
+  };
+
   Namespace* parent;
   Statement* defaultStatement;
   Statement* statement;
   Namespace* next;
   Engine* engine;
-  bool inherited;
-  bool compiled;
-  bool compiling;
+  unsigned int flags; 
   Map<Word, Namespace*> variables;
 
   void compile();

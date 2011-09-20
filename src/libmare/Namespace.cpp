@@ -324,8 +324,8 @@ Namespace* Namespace::enterKey(const String& name, bool allowInheritance)
   if(j)
   {
     if(!j->data)
-      return (j->data = new Namespace(*this, this, engine, 0, 0, false));
-    if(allowInheritance || !j->data->inherited)
+      return (j->data = new Namespace(*this, this, engine, 0, 0, 0));
+    if(allowInheritance || !(j->data->flags & inheritedFlag))
       return j->data;
   }
 
@@ -335,7 +335,7 @@ Namespace* Namespace::enterKey(const String& name, bool allowInheritance)
     Namespace* space;
     if(engine->resolveScript(name, word, space))
     {
-      Namespace* newSpace = space ? new Namespace(*this, this, engine, space->statement, space->next, true) : new Namespace(*this, this, engine, 0, 0, true);
+      Namespace* newSpace = space ? new Namespace(*this, this, engine, space->statement, space->next, inheritedFlag) : new Namespace(*this, this, engine, 0, 0, inheritedFlag);
       variables.append(*word, newSpace);
       return newSpace;
     }
@@ -345,31 +345,31 @@ Namespace* Namespace::enterKey(const String& name, bool allowInheritance)
 
 Namespace* Namespace::enterUnnamedKey(Statement* statement)
 {
-  return new Namespace(*this, this, engine, statement, 0, false);
+  return new Namespace(*this, this, engine, statement, 0, 0);
 }
 
 Namespace* Namespace::enterNewKey(const String& name)
 {
-  ASSERT(!compiled);
+  ASSERT(!(flags & compiledFlag));
 
   Word key(name, false);
   Map<Word, Namespace*>::Node* j = variables.find(key);
   if(j)
   {
     if(!j->data)
-      return (j->data = new Namespace(*this, this, engine, 0, 0, false));
-    if(!j->data->inherited)
+      return (j->data = new Namespace(*this, this, engine, 0, 0, 0));
+    if(!(j->data->flags & inheritedFlag))
       return j->data;
   }
 
-  Namespace* space = new Namespace(*this, this, engine, 0, 0, false);
+  Namespace* space = new Namespace(*this, this, engine, 0, 0, 0);
   variables.append(key, space);
   return space;
 }
 
 bool Namespace::resolveScript2(const String& name, Word*& word, Namespace*& result)
 {
-  ASSERT(!compiling);
+  ASSERT(!(flags & compilingFlag));
   compile();
 
   // try a local lookup
@@ -383,7 +383,7 @@ bool Namespace::resolveScript2(const String& name, Word*& word, Namespace*& resu
       return true;
     do
     {
-      if(!result->compiling)
+      if(!(result->flags & compilingFlag))
         return true;
       result = result->next;
     } while(result);
@@ -448,18 +448,18 @@ void Namespace::removeKey(const String& key)
 
 void Namespace::addKeyRaw(const Word& key, Statement* value)
 {
-  ASSERT(!compiled);
+  ASSERT(!(flags & compiledFlag));
   ASSERT(!key.isEmpty());
   Map<Word, Namespace*>::Node* node = variables.find(key);
   if(node)
-    node->data = value ? new Namespace(*this, this, engine, value, node->data, false) : 0;
+    node->data = value ? new Namespace(*this, this, engine, value, node->data, 0) : 0;
   else
-    variables.append(key, value ? new Namespace(*this, this, engine, value, 0, false) : 0);
+    variables.append(key, value ? new Namespace(*this, this, engine, value, 0, 0) : 0);
 }
 
 void Namespace::removeKeyRaw(const String& key)
 {
-  ASSERT(!compiled);
+  ASSERT(!(flags & compiledFlag));
   ASSERT(!key.isEmpty());
   Word wkey(key, false);
   Map<Word, Namespace*>::Node* node = variables.find(wkey);
@@ -477,12 +477,13 @@ void Namespace::removeKeysRaw(Namespace& space)
 {
   space.compile();
   for(const Map<Word, Namespace*>::Node* i = space.variables.getFirst(); i; i = i->getNext())
-    if(!i->data || !i->data->inherited)
-    {
-      Map<Word, Namespace*>::Node* node = variables.find(i->key);
-      if(node)
-        variables.remove(node);
-    }
+  {
+    if(i->data && (i->data->flags & inheritedFlag))
+      break;
+    Map<Word, Namespace*>::Node* node = variables.find(i->key);
+    if(node)
+      variables.remove(node);
+  }
 }
 
 bool Namespace::compareKeys(Namespace& space, bool& result)
@@ -494,10 +495,10 @@ bool Namespace::compareKeys(Namespace& space, bool& result)
   const Map<Word, Namespace*>::Node* i2 = space.variables.getFirst();
   for(;;)
   {
-    while(i1 && i1->data && i1->data->inherited)
-      i1 = i1->getNext();
-    while(i2 && i2->data && i2->data->inherited)
-      i2 = i2->getNext();
+    while(i1 && i1->data && (i1->data->flags & inheritedFlag))
+      i1 = 0;
+    while(i2 && i2->data && (i2->data->flags & inheritedFlag))
+      i2 = 0;
     if(!i1 && !i2)
     {
       result = true;
@@ -529,7 +530,7 @@ bool Namespace::versionCompareKeys(Namespace& space, int& result)
 
 void Namespace::addDefaultStatement(Statement* statement)
 {
-  ASSERT(!compiled);
+  ASSERT(!(flags & compiledFlag));
   if(!defaultStatement)
     defaultStatement = statement;
   else
@@ -586,61 +587,63 @@ void Namespace::getKeys(List<String>& keys)
 {
   compile();
   for(Map<Word, Namespace*>::Node* node = variables.getFirst(); node; node = node->getNext())
-    if(!node->data || !node->data->inherited)
-      keys.append(node->key);
+  {
+    if(node->data && (node->data->flags & inheritedFlag))
+      break;
+    keys.append(node->key);
+  }
 }
 
 void Namespace::getKeys(List<Word>& keys)
 {
   compile();
   for(Map<Word, Namespace*>::Node* node = variables.getFirst(); node; node = node->getNext())
-    if(!node->data || !node->data->inherited)
-      keys.append(node->key);
+  {
+    if(node->data && (node->data->flags & inheritedFlag))
+      break;
+    keys.append(node->key);
+  }
 }
 
 void Namespace::appendKeys(String& output)
 {
   compile();
   for(Map<Word, Namespace*>::Node* i = variables.getFirst(); i; i = i->getNext())
-    if(!i->data || !i->data->inherited)
-    {
-      if(i != variables.getFirst())
-        output.append(' ');
-      const Word& word = i->key;
-      if(word.quoted)
-      {
-        output.append('"');
-        output.append(word);
-        output.append('"');
-      }
-      else
-        output.append(word);
-    }
+  {
+    if(i->data && (i->data->flags & inheritedFlag))
+      break;
+    if(i != variables.getFirst())
+      output.append(' ');
+    i->key.appendTo(output);
+  }
 }
 
 String Namespace::getFirstKey()
 {
   compile();
   for(Map<Word, Namespace*>::Node* node = variables.getFirst(); node; node = node->getNext())
-    if(!node->data || !node->data->inherited)
-      return node->key;
+  {
+    if(node->data && (node->data->flags & inheritedFlag))
+      break;
+    return node->key;
+  }
   return String();
 }
 
 void Namespace::compile()
 {
-  if(compiled)
+  if(flags & compiledFlag)
     return;
-  if(compiling)
+  if(flags & compilingFlag)
   {
     ASSERT(false);
     return;
   }
-  compiling = true;
+  flags |= compilingFlag;
   if(defaultStatement)
     defaultStatement->execute(*this);
   if(statement)
     statement->execute(*this);
-  compiling = false;
-  compiled = true;
+  flags &= ~compilingFlag;
+  flags |= compiledFlag;
 }

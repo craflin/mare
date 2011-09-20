@@ -13,7 +13,7 @@ bool Engine::load(const String& file)
   rootStatement = parser.parse(file, errorHandler, errorUserData);
   if(!rootStatement)
     return false;
-  currentSpace = new Namespace(*this, 0, this, 0, 0, false);
+  currentSpace = new Namespace(*this, 0, this, 0, 0, 0);
   return true;
 }
 

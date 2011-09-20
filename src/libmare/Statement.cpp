@@ -34,7 +34,7 @@ void BinaryStatement::execute(Namespace& space)
   case Token::minusAssignment:
     {
       leftOperand->execute(space);
-      Namespace* rightSpace = new Namespace(space.getEngine(), &space, &space.getEngine(), rightOperand, 0, false);
+      Namespace* rightSpace = new Namespace(space.getEngine(), &space, &space.getEngine(), rightOperand, 0, 0);
       space.removeKeysRaw(*rightSpace);
       delete rightSpace;
     }
@@ -48,8 +48,8 @@ void BinaryStatement::execute(Namespace& space)
   case Token::greaterEqualThan:
   case Token::lowerEqualThan:
     {
-      Namespace* leftSpace = new Namespace(space.getEngine(), &space, &space.getEngine(), leftOperand, 0, false);
-      Namespace* rightSpace = new Namespace(space.getEngine(), &space, &space.getEngine(), rightOperand, 0, false);
+      Namespace* leftSpace = new Namespace(space.getEngine(), &space, &space.getEngine(), leftOperand, 0, 0);
+      Namespace* rightSpace = new Namespace(space.getEngine(), &space, &space.getEngine(), rightOperand, 0, 0);
       bool result = false;
       switch(operation)
       {
@@ -123,16 +123,16 @@ void ReferenceStatement::execute(Namespace& space)
   if(space.getEngine().resolveScript(variable, word, ref))
     if(ref && ref->statement)
     {
-      ASSERT(!ref->compiling);
-      ref->compiling = true;
+      ASSERT(!(ref->flags & Namespace::compilingFlag));
+      ref->flags |= Namespace::compilingFlag;
       ref->statement->execute(space);
-      ref->compiling = false;
+      ref->flags &= ~Namespace::compilingFlag;
     }
 }
 
 void IfStatement::execute(Namespace& space)
 {
-  Namespace* condSpace = new Namespace(space.getEngine(), &space, &space.getEngine(), condition, 0, false);
+  Namespace* condSpace = new Namespace(space.getEngine(), &space, &space.getEngine(), condition, 0, 0);
   bool cond = !condSpace->getFirstKey().isEmpty();
   delete condSpace;
   if(cond)
@@ -147,7 +147,7 @@ void UnaryStatement::execute(Namespace& space)
   {
   case Token::not_:
     {
-      Namespace* opSpace = new Namespace(space.getEngine(), &space, &space.getEngine(), operand, 0, false);
+      Namespace* opSpace = new Namespace(space.getEngine(), &space, &space.getEngine(), operand, 0, 0);
       bool result = opSpace->getFirstKey().isEmpty();
       delete opSpace;
       if(result)
