@@ -42,7 +42,7 @@ public:
   void addDefaultKey(const String& key, const String& value);
   void addDefaultKey(const String& key, const Map<String, String>& value);
   
-  void pushKey(); // TODO: hide these functions
+  void pushAndLeaveKey(); // TODO: hide these functions
   bool popKey();
 
 private:

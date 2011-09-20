@@ -236,15 +236,13 @@ String Namespace::evaluateString(const String& string)
         List<Word> words;
         Word::split(list, words);
         const char* inputStart = input;
-        engine.pushKey();
-        engine.leaveKey();
+        engine.pushAndLeaveKey();
         engine.enterUnnamedKey();
         engine.enterNewKey(var);
         for(List<Word>::Node* i = words.getFirst(); i; i = i->getNext())
         {
-          engine.pushKey();
           engine.setKey(i->data);
-          engine.leaveKey();
+          engine.pushAndLeaveKey();
           engine.enterUnnamedKey();
           input = inputStart;
           i->data.clear();
@@ -298,8 +296,7 @@ String Namespace::evaluateString(const String& string)
     }
     static void handleVariable(Engine& engine, const String& variable, String& output)
     {
-      engine.pushKey();
-      engine.leaveKey();
+      engine.pushAndLeaveKey();
       if(engine.enterKey(variable, true))
       {
         engine.appendKeys(output);

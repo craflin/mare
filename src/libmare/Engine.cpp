@@ -158,9 +158,10 @@ void Engine::setKey(const Word& key)
   currentSpace->setKeyRaw(key);
 }
 
-void Engine::pushKey()
+void Engine::pushAndLeaveKey()
 {
   stashedKeys.append(currentSpace);
+  currentSpace = currentSpace->getParent();
 }
 
 bool Engine::popKey()
