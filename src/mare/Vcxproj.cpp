@@ -231,12 +231,12 @@ bool Vcxproj::readFile()
           }
         }
 
-        engine.getKeys("buildCommand", projectConfig.buildCommand, false);
-        engine.getKeys("reBuildCommand", projectConfig.reBuildCommand, false);
-        engine.getKeys("cleanCommand", projectConfig.cleanCommand, false);
-        engine.getKeys("preBuildCommand", projectConfig.preBuildCommand, false);
-        engine.getKeys("preLinkCommand", projectConfig.preLinkCommand, false);
-        engine.getKeys("postBuildCommand", projectConfig.postBuildCommand, false);
+        engine.getText("buildCommand", projectConfig.buildCommand, false);
+        engine.getText("reBuildCommand", projectConfig.reBuildCommand, false);
+        engine.getText("cleanCommand", projectConfig.cleanCommand, false);
+        engine.getText("preBuildCommand", projectConfig.preBuildCommand, false);
+        engine.getText("preLinkCommand", projectConfig.preLinkCommand, false);
+        engine.getText("postBuildCommand", projectConfig.postBuildCommand, false);
         projectConfig.buildDir = engine.getFirstKey("buildDir", true);
 
         engine.getText("message", projectConfig.message, false);
@@ -296,15 +296,15 @@ bool Vcxproj::readFile()
             engine.enterUnnamedKey();
             engine.addDefaultKey("file", i->data);
             VERIFY(engine.enterKey(i->data));
-            engine.getKeys("command", fileConfig.command, false);
+            engine.getText("command", fileConfig.command, false);
             file.filter = engine.getFirstKey("folder", false);
-            String firstCommand = fileConfig.command.isEmpty() ? String() : fileConfig.command.getFirst()->data;
+            String firstCommandWord = fileConfig.command.isEmpty() ? String() : Word::first(fileConfig.command.getFirst()->data);
             String type;
-            if(firstCommand == "__clCompile")
+            if(firstCommandWord == "__clCompile")
               type = "ClCompile";
-            else if(firstCommand == "__rcCompile")
+            else if(firstCommandWord == "__rcCompile")
               type = "ResourceCompile";
-            else if(!firstCommand.isEmpty())
+            else if(!firstCommandWord.isEmpty())
             {
               type = "CustomBuild";
               engine.getText("message", fileConfig.message, false);
@@ -1124,9 +1124,9 @@ String Vcxproj::joinCommands(const List<String>& commands)
     if(!result.isEmpty())
       result.append("&#x0D;&#x0A;");
 
-    List<Word> command;
-    Word::split(j->data, command);
-    const List<String>::Node* i = commands.getFirst();
+    List<Word> commands;
+    Word::split(j->data, commands);
+    const List<Word>::Node* i = commands.getFirst();
     if(i)
     {
       String program(i->data);
