@@ -397,6 +397,16 @@ void Namespace::addKey(const String& key, Statement* value)
   // evaluate variables
   String evaluatedKey = evaluateString(key);
 
+  // textMode?
+  if(flags & textModeFlag)
+  {
+    List<Word> words;
+    Word::splitLines(evaluatedKey, words);
+    for(const List<Word>::Node* i = words.getFirst(); i; i = i->getNext())
+      addKeyRaw(i->data, 0);
+    return;
+  }
+
   // split words
   List<Word> words;
   Word::split(evaluatedKey, words);
@@ -424,6 +434,16 @@ void Namespace::removeKey(const String& key)
   // evaluate variables
   String evaluatedKey = evaluateString(key);
 
+  // textMode?
+  if(flags & textModeFlag)
+  {
+    List<Word> words;
+    Word::splitLines(evaluatedKey, words);
+    for(const List<Word>::Node* i = words.getFirst(); i; i = i->getNext())
+      removeKeyRaw(i->data);
+    return;
+  }
+
   // split words
   List<Word> words;
   Word::split(evaluatedKey, words);
@@ -449,6 +469,15 @@ void Namespace::removeKey(const String& key)
 void Namespace::addKeyRaw(const Word& key, Statement* value)
 {
   ASSERT(!(flags & compiledFlag));
+
+  // textMode?
+  if(flags & textModeFlag)
+  {
+    variables.append(key, 0);
+    return;
+  }
+
+  //
   ASSERT(!key.isEmpty());
   Map<Word, Namespace*>::Node* node = variables.find(key);
   if(node)
@@ -460,19 +489,28 @@ void Namespace::addKeyRaw(const Word& key, Statement* value)
 void Namespace::removeKeyRaw(const String& key)
 {
   ASSERT(!(flags & compiledFlag));
-  ASSERT(!key.isEmpty());
+  //ASSERT(!key.isEmpty());
   Word wkey(key, false);
   Map<Word, Namespace*>::Node* node = variables.find(wkey);
   if(node)
   {
-    delete node->data;
+    if(node->data)
+      delete node->data;
     variables.remove(node);
   }
 }
 
+void Namespace::removeAllKeys()
+{
+  for(Map<Word, Namespace*>::Node* i = variables.getFirst(); i; i = i->getNext())
+    if(i->data)
+      delete i->data;
+  variables.clear();
+}
+
 void Namespace::setKeyRaw(const Word& key)
 {
-  variables.clear();
+  removeAllKeys();
   variables.append(key, 0);
 }
 
@@ -486,7 +524,8 @@ void Namespace::removeKeysRaw(Namespace& space)
     Map<Word, Namespace*>::Node* node = variables.find(i->key);
     if(node)
     {
-      delete node->data;
+      if(node->data)
+        delete node->data;
       variables.remove(node);
     }
   }
@@ -609,6 +648,21 @@ void Namespace::getKeys(List<Word>& keys)
       break;
     keys.append(node->key);
   }
+}
+
+void Namespace::getText(List<String>& text)
+{
+  // recompile in textMode
+  ASSERT(!(flags & compilingFlag));
+  removeAllKeys();
+  flags &= ~compiledFlag;
+  flags |= textModeFlag;
+  compile();
+  flags &= ~(compiledFlag | textModeFlag);
+
+  // copy each text line
+  for(Map<Word, Namespace*>::Node* i = variables.getFirst(); i; i = i->getNext())
+    text.append(i->key);
 }
 
 void Namespace::appendKeys(String& output)

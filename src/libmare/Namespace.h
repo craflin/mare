@@ -20,6 +20,7 @@ public:
   Namespace* enterNewKey(const String& name);
   void getKeys(List<String>& keys);
   void getKeys(List<Word>& keys);
+  void getText(List<String>& text);
   void appendKeys(String& output);
   String getFirstKey();
   inline Engine& getEngine() {return *engine;}
@@ -27,6 +28,7 @@ public:
   void addKey(const String& key, Statement* value);
   void addKeyRaw(const Word& key, Statement* value);
   void setKeyRaw(const Word& key);
+  void removeAllKeys();
   void removeKey(const String& key);
   void removeKeyRaw(const String& key);
   void removeKeysRaw(Namespace& space);

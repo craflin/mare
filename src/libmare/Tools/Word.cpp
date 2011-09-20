@@ -94,3 +94,25 @@ void Word::appendTo(String& text) const
   else // TODO: escape spaces using blackslashes
     text.append(*this);
 }
+
+void Word::splitLines(const String& text, List<Word>& words)
+{
+  const char* str = text.getData();
+  for(;;)
+  {
+    const char* end = str;
+    for(; *end; ++end)
+      if(*end == '\n' || *end == '\r')
+        break;
+    // TODO: read escaped spaces as ordinary spaces
+    Word& word = words.append(Word(text.substr(str - text.getData(), end - str), false));
+    str = end;
+    if(*str)
+    {
+      if(*str == '\r' && *str == '\n')
+        str += 2;
+      else
+        ++str;
+    }
+  }
+}

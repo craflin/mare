@@ -21,4 +21,5 @@ public:
 
   static void split(const String& text, List<Word>& words);
   static void append(const List<Word>& words, String& text);
+  static void splitLines(const String& text, List<Word>& words);
 };

@@ -124,6 +124,20 @@ String Engine::getFirstKey(const String& key, bool allowInheritance)
   return String();
 }
 
+void Engine::getText(List<String>& text)
+{
+  currentSpace->getText(text);
+}
+
+void Engine::getText(const String& key, List<String>& text, bool allowInheritance)
+{
+  if(enterKey(key, allowInheritance))
+  {
+    currentSpace->getText(text);
+    leaveKey();
+  }
+}
+
 void Engine::addDefaultKey(const String& key)
 {
   currentSpace->addDefaultKey(key);
