@@ -18,7 +18,6 @@ public:
   bool build(const Map<String, String>& userArgs);
 
   static String join(const List<String>& words);
-  static String join(const List<Word>& words);
 
 private:
   Engine& engine;

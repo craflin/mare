@@ -16,6 +16,7 @@
 #include "Process.h"
 #include "Map.h"
 #include "File.h"
+#include "Word.h"
 #ifdef _WIN32
 #include "Array.h"
 #else
@@ -65,8 +66,11 @@ bool Process::isRunning() const
 #endif
 }
 
-unsigned int Process::start(const List<String>& command)
+unsigned int Process::start(const String& rawCommandLine)
 {
+  List<Word> command;
+  Word::split(rawCommandLine, command);
+
 #ifdef _WIN32
   struct Executable
   {
@@ -214,19 +218,12 @@ unsigned int Process::start(const List<String>& command)
       programPath = Executable::find(program);
   }
 
-  const List<String>::Node* i = command.getFirst();
   String commandLine;
-  if(i)
+  if(!command.isEmpty())
   {
-    if(strncmp(i->data.getData(), "../", 3) == 0 || strncmp(i->data.getData(), "..\\", 3) == 0)
-      commandLine.append(programPath);
-    else
-      commandLine.append(i->data);
-    for(i = i->getNext(); i; i = i->getNext())
-    {
-      commandLine.append(' ');
-      commandLine.append(i->data);
-    }
+    if(strncmp(command.getFirst()->data.getData(), "../", 3) == 0 || strncmp(command.getFirst()->data.getData(), "..\\", 3) == 0)
+      command.getFirst()->data = programPath;
+    Word::append(command, commandLine);
   }
   commandLine.setCapacity(commandLine.getLength()); // enforce detach
 
@@ -399,7 +396,7 @@ success:
 
   const char** argv = (const char**)alloca(sizeof(const char*) * (command.getSize() + 1));
   int i = 0;
-  for(const List<String>::Node* j = command.getFirst(); j; j = j->getNext())
+  for(const List<Word>::Node* j = command.getFirst(); j; j = j->getNext())
     argv[i++] = j->data.getData();
   argv[i] = 0;
 

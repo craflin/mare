@@ -8,7 +8,6 @@
 #include "Tools/Process.h"
 #include "Tools/File.h"
 #include "Tools/Directory.h"
-#include "Tools/Word.h"
 #include "Tools/Error.h"
 #include "Engine.h"
 
@@ -220,8 +219,8 @@ public:
   List<String> dependencies;
   List<String> inputs;
   List<String> outputs;
-  List<Word> command;
-  List<Word> message;
+  List<String> command;
+  List<String> message;
   
   unsigned int finishedRuleDependencies;
   Map<Rule*, String> ruleDependencies;
@@ -229,7 +228,7 @@ public:
 
   bool rebuild;
 
-  const List<Word>::Node* nextCommand;
+  const List<String>::Node* nextCommand;
   Process process;
 
   Rule() : finishedRuleDependencies(0), rebuild(false) {}
@@ -345,7 +344,8 @@ clean:
 
     if(!message.isEmpty())
     {
-      puts(Builder::join(message).getData());
+      for(const List<String>::Node* i = message.getFirst(); i; i = i->getNext())
+        puts(i->data.getData());
       fflush(stdout);
     }
 
@@ -369,15 +369,13 @@ clean:
       }
     }
 
-    List<String> singleCommand;
-    for(; nextCommand; nextCommand = nextCommand->getNext())
+    String singleCommand;
+    while(nextCommand)
     {
-      singleCommand.append(nextCommand->data);
-      if(nextCommand->data.terminated)
-      {
-        nextCommand = nextCommand->getNext();
+      singleCommand = nextCommand->data;
+      nextCommand = nextCommand->getNext();
+      if(!singleCommand.isEmpty())
         break;
-      }
     }
 
     if(singleCommand.isEmpty())
@@ -388,13 +386,13 @@ clean:
 
     if(message.isEmpty())
     {
-      puts(Builder::join(singleCommand).getData());
+      puts(singleCommand.getData());
       fflush(stdout);
     }
 
     if(builder->showDebug)
     {
-      printf("debug: %s\n", Builder::join(singleCommand).getData());
+      printf("debug: %s\n", singleCommand.getData());
       fflush(stdout);
     }
 
@@ -629,8 +627,8 @@ bool Builder::buildTargets(const String& platform, const String& configuration)
         engine.getKeys("dependencies", rule.dependencies, false);
         engine.getKeys("inputs", rule.inputs, false);
         engine.getKeys("outputs", rule.outputs, false);
-        engine.getKeys("command", rule.command, false);
-        engine.getKeys("message", rule.message, false);
+        engine.getText("command", rule.command, false);
+        engine.getText("message", rule.message, false);
         engine.leaveKey(); // VERIFY(engine.enterKey(i->data));
         engine.leaveKey();
       }
@@ -646,8 +644,8 @@ bool Builder::buildTargets(const String& platform, const String& configuration)
     engine.getKeys("dependencies", rule.dependencies, false);
     engine.getKeys("inputs", rule.inputs, false);
     engine.getKeys("outputs", rule.outputs, false);
-    engine.getKeys("command", rule.command, false);
-    engine.getKeys("message", rule.message, false);
+    engine.getText("command", rule.command, false);
+    engine.getText("message", rule.message, false);
 
     engine.leaveKey();
     engine.leaveKey();
@@ -684,49 +682,6 @@ String Builder::join(const List<String>& words)
       else
         *(dest++) = *str;
     result.setLength(len + i->data.getLength());
-  next:;
-  }
-  return result;
-}
-
-
-String Builder::join(const List<Word>& words)
-{
-  int totalLen = words.getSize() * 3;
-  for(const List<Word>::Node* i = words.getFirst(); i; i = i->getNext())
-    totalLen += i->data.getLength();
-
-  String result(totalLen);
-  const Word* previousWord = 0;
-  for(const List<Word>::Node* i = words.getFirst(); i; i = i->getNext())
-  {
-    if(previousWord)
-      result.append(previousWord->terminated ? '\n' : ' ');
-    previousWord = &i->data;
-
-    if(i->data.quoted)
-    {
-      result.append('"');
-      result.append(i->data);
-      result.append('"');
-    }
-    else
-    {
-      int len = result.getLength();
-      char* dest = result.getData(len) + len; 
-      for(const char* str = i->data.getData(); *str; ++str)
-        if(isspace(*str))
-        {
-          result.setLength(len); // fall back
-          result.append('"');
-          result.append(i->data);
-          result.append('"');
-          goto next;
-        }
-        else
-          *(dest++) = *str;
-      result.setLength(len + i->data.getLength());
-    }
   next:;
   }
   return result;

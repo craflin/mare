@@ -14,10 +14,10 @@ public:
 
   /**
   * Starts the execution of a process
-  * @param command The command used to start the process. The first element in the list should be a path to the executable. All other elements in the list are used as arguments or launching the process.
+  * @param command The command used to start the process. The first word in \c command should be a path to the executable. All other words in \c command are used as arguments for launching the process.
   * @return The process id of the newly started process or \c 0 if an errors occured
   */
-  unsigned int start(const List<String>& command);
+  unsigned int start(const String& command);
 
   /**
   * Returns the running state of the process
