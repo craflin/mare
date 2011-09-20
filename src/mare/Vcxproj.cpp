@@ -375,6 +375,15 @@ bool Vcxproj::resolveDependencies()
           file = &node->data;
           if(file->type == "None" || file->type == "ClInclude")
             goto foundFile;
+          if(file->type == "CustomBuild")
+          {
+            const Map<String, Project::File::Config>::Node* node = file->configs.find(configKey);
+            if(!node)
+              goto foundFile;
+            const Project::File::Config& fileConfig = node->data;
+            if(fileConfig.command.isEmpty() && fileConfig.outputs.isEmpty())
+              goto foundFile;
+          }
         }
       }
       for(const List<String>::Node* i = config.inputs.getFirst(); i; i = i->getNext())
