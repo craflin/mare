@@ -249,11 +249,11 @@ String Namespace::evaluateString(const String& string)
           input = inputStart;
           i->data.clear();
           handle(engine, input, i->data, ",)");
-          engine.leaveUnnamedKey();
+          engine.leaveKey(); // unnamed
           engine.popKey();
         }
         engine.leaveKey();
-        engine.leaveUnnamedKey();
+        engine.leaveKey(); // unnamed
         engine.popKey();
         if(*input == ',') ++input;
         Word::append(words, output);
@@ -345,7 +345,7 @@ Namespace* Namespace::enterKey(const String& name, bool allowInheritance)
 
 Namespace* Namespace::enterUnnamedKey(Statement* statement)
 {
-  return new Namespace(*this, this, engine, statement, 0, 0);
+  return new Namespace(*this, this, engine, statement, 0, unnamedFlag);
 }
 
 Namespace* Namespace::enterNewKey(const String& name)

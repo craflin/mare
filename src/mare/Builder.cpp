@@ -190,7 +190,7 @@ bool Builder::buildFile()
   engine.leaveKey();
 
   // leave root key
-  engine.leaveUnnamedKey(); 
+  engine.leaveKey(); 
 
   // build input targets (with dependencies) foreach input configuration
   for(const List<String>::Node* i = inputPlatforms.getFirst(); i; i = i->getNext())
@@ -632,7 +632,7 @@ bool Builder::buildTargets(const String& platform, const String& configuration)
         engine.getKeys("command", rule.command, false);
         engine.getKeys("message", rule.message, false);
         engine.leaveKey(); // VERIFY(engine.enterKey(i->data));
-        engine.leaveUnnamedKey();
+        engine.leaveKey();
       }
       engine.leaveKey();
     }
@@ -651,8 +651,8 @@ bool Builder::buildTargets(const String& platform, const String& configuration)
 
     engine.leaveKey();
     engine.leaveKey();
-    engine.leaveUnnamedKey();
-    engine.leaveUnnamedKey();
+    engine.leaveKey();
+    engine.leaveKey();
   }
 
   ruleSet.resolveDependencies();

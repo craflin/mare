@@ -73,17 +73,10 @@ bool Engine::leaveKey()
 {
   if(!currentSpace->getParent())
     return false;
-  currentSpace = currentSpace->getParent();
-  return true;
-}
-
-bool Engine::leaveUnnamedKey()
-{
-  if(!currentSpace->getParent())
-    return false;
-  Namespace* toDelete = currentSpace;
-  currentSpace = currentSpace->getParent();
-  delete toDelete;
+  Namespace* parent = currentSpace->getParent();
+  if(currentSpace->flags & Namespace::unnamedFlag)
+    delete currentSpace;
+  currentSpace = parent;
   return true;
 }
 

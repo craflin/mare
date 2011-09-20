@@ -179,7 +179,7 @@ bool Vcxproj::readFile()
   engine.getKeys("platforms", allPlatforms);
   engine.getKeys("configurations", allConfigurations);
   engine.getKeys("targets", allTargets);
-  engine.leaveUnnamedKey();
+  engine.leaveKey();
 
   // do something for each target in each configuration
   for(const List<String>::Node* i = allPlatforms.getFirst(); i; i = i->getNext())
@@ -326,7 +326,7 @@ bool Vcxproj::readFile()
               if(!project->dependencies.find(i->data))
                 project->dependencies.append(i->data);
             engine.leaveKey(); // VERIFY(engine.enterKey(i->data));
-            engine.leaveUnnamedKey();
+            engine.leaveKey();
           }
           for(Map<String, Project::File>::Node* i = project->files.getFirst(); i; i = i->getNext())
             if(i->data.type.isEmpty())
@@ -344,8 +344,8 @@ bool Vcxproj::readFile()
 
         engine.leaveKey();
         engine.leaveKey();
-        engine.leaveUnnamedKey();
-        engine.leaveUnnamedKey();
+        engine.leaveKey();
+        engine.leaveKey();
       }
     }
   }
