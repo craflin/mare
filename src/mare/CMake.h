@@ -26,9 +26,9 @@ private:
     public:
       String name; /**< The name of the configuration without the platform extension */
 
-      List<String> buildCommand; /**< For CustomBuild projects */
-      List<String> reBuildCommand; /**< For CustomBuild projects */
-      List<String> cleanCommand; /**< For CustomBuild projects */
+      //List<String> buildCommand; /**< For CustomBuild projects */
+      //List<String> reBuildCommand; /**< For CustomBuild projects */
+      //List<String> cleanCommand; /**< For CustomBuild projects */
       /*
       List<String> preBuildCommand;
       List<String> preLinkCommand;
@@ -39,7 +39,7 @@ private:
       List<String> command;
       //List<String> message;
       String firstOutput;
-      bool customBuild;
+      //bool customBuild;
       /*
       List<String> outputs;
       List<String> inputs;
@@ -53,7 +53,7 @@ private:
       /*
       List<String> libs;
       */
-      Config(const String& name) : name(name), customBuild(false) {}
+      Config(const String& name) : name(name)/*, customBuild(false)*/ {}
     };
 
     class File

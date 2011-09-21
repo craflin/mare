@@ -80,7 +80,7 @@ bool CMake::readFile()
   engine.getKeys("platforms", allPlatforms);
   engine.getKeys("configurations", allConfigurations);
   engine.getKeys("targets", allTargets);
-  engine.leaveUnnamedKey();
+  engine.leaveKey();
 
   // do something for each target in each configuration
   for(const List<String>::Node* i = allPlatforms.getFirst(); i; i = 0) // just use the first platform since CMake does not really support multiple target platforms
@@ -127,9 +127,9 @@ bool CMake::readFile()
         }
         */
 
-        engine.getKeys("buildCommand", projectConfig.buildCommand, false);
-        engine.getKeys("reBuildCommand", projectConfig.reBuildCommand, false);
-        engine.getKeys("cleanCommand", projectConfig.cleanCommand, false);
+        //engine.getKeys("buildCommand", projectConfig.buildCommand, false);
+        //engine.getKeys("reBuildCommand", projectConfig.reBuildCommand, false);
+        //engine.getKeys("cleanCommand", projectConfig.cleanCommand, false);
         projectConfig.buildDir = engine.getFirstKey("buildDir", true);
 
         engine.getKeys("command", projectConfig.command, false);
@@ -138,13 +138,14 @@ bool CMake::readFile()
         if(!projectConfig.command.isEmpty())
         {
           String firstCommand = projectConfig.command.getFirst()->data;
-          if(firstCommand == "__Custom" || firstCommand == "__Application" || firstCommand == "__StaticLibrary" || firstCommand == "__DynamicLibrary")
-          {
+          if(/*firstCommand == "__Custom" ||*/ firstCommand == "__Application" || firstCommand == "__StaticLibrary" || firstCommand == "__DynamicLibrary")
+          {/*
             if(firstCommand == "__Custom")
             {
               projectConfig.customBuild = true;
               firstCommand = (projectConfig.command.getSize() > 1) ? projectConfig.command.getFirst()->getNext()->data : String();
             }
+            */
 
             if(firstCommand == "__Application")
               projectConfig.type = "Executable";
@@ -155,8 +156,8 @@ bool CMake::readFile()
             projectConfig.command.clear();
           }
         }
-        if(!projectConfig.buildCommand.isEmpty())
-          projectConfig.customBuild = true;
+        //if(!projectConfig.buildCommand.isEmpty())
+          //projectConfig.customBuild = true;
 
         /*
         engine.getKeys("cppFlags", projectConfig.cppFlags, true);
@@ -194,7 +195,7 @@ bool CMake::readFile()
             VERIFY(engine.enterKey(i->data));
             file.folder = engine.getFirstKey("folder", false);
             engine.leaveKey(); // VERIFY(engine.enterKey(i->data));
-            engine.leaveUnnamedKey();
+            engine.leaveKey();
           }
 
           engine.leaveKey();
@@ -202,8 +203,8 @@ bool CMake::readFile()
 
         engine.leaveKey();
         engine.leaveKey();
-        engine.leaveUnnamedKey();
-        engine.leaveUnnamedKey();
+        engine.leaveKey();
+        engine.leaveKey();
       }
     }
   }
