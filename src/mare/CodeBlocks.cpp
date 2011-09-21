@@ -83,7 +83,7 @@ bool CodeBlocks::readFile()
   engine.getKeys("platforms", allPlatforms);
   engine.getKeys("configurations", allConfigurations);
   engine.getKeys("targets", allTargets);
-  engine.leaveUnnamedKey();
+  engine.leaveKey();
 
   // do something for each target in each configuration
   for(const List<String>::Node* i = allPlatforms.getFirst(); i; i = 0) // just use the first platform since CodeBlocks does not really support multiple target platforms
@@ -135,7 +135,7 @@ bool CodeBlocks::readFile()
         engine.getKeys("cleanCommand", projectConfig.cleanCommand, false);
         projectConfig.buildDir = engine.getFirstKey("buildDir", true);
 
-        engine.getKeys("command", projectConfig.command, false);
+        engine.getText("command", projectConfig.command, false);
         projectConfig.firstOutput = engine.getFirstKey("outputs", false);
 
         if(!projectConfig.command.isEmpty())
@@ -195,7 +195,7 @@ bool CodeBlocks::readFile()
             VERIFY(engine.enterKey(i->data));
             file.folder = engine.getFirstKey("folder", false);
             engine.leaveKey(); // VERIFY(engine.enterKey(i->data));
-            engine.leaveUnnamedKey();
+            engine.leaveKey();
           }
 
           engine.leaveKey();
@@ -203,8 +203,8 @@ bool CodeBlocks::readFile()
 
         engine.leaveKey();
         engine.leaveKey();
-        engine.leaveUnnamedKey();
-        engine.leaveUnnamedKey();
+        engine.leaveKey();
+        engine.leaveKey();
       }
     }
   }
@@ -448,8 +448,16 @@ String CodeBlocks::join(const List<String>& items, char sep, const String& suffi
 
 String CodeBlocks::joinCommands(const List<String>& commands)
 {
-  return Word::join(commands);
-  // TODO: something for more than a single command?
+  String result;
+  for(const List<String>::Node* i = commands.getFirst(); i; i = i->getNext())
+  {
+    if(i->data.isEmpty())
+      continue;
+    if(!result.isEmpty())
+      result.append(" &amp;&amp; ");
+    result.append(xmlEscape(i->data));
+  }
+  return result;
 }
 
 String CodeBlocks::xmlEscape(const String& text)
