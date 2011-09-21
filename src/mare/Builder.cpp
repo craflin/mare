@@ -253,6 +253,7 @@ public:
           printf("debug: Applying rule for \"%s\" since the rule for the input file \"%s\" was applied as well\n", name.getData(), i->data.getData());
         goto build;
       }
+    if(!outputs.isEmpty())
     {
       long long minWriteTime = 0;
       String minOutputFile;
@@ -335,7 +336,7 @@ clean:
   build:
     this->rebuild = true;
 
-    if(outputs.isEmpty() && command.isEmpty())
+    if(outputs.isEmpty())
     {
       pid = 0;
       return true; // that was easy
