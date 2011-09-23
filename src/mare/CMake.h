@@ -26,41 +26,35 @@ private:
     public:
       String name; /**< The name of the configuration without the platform extension */
 
-      //List<String> buildCommand; /**< For CustomBuild projects */
-      //List<String> reBuildCommand; /**< For CustomBuild projects */
-      //List<String> cleanCommand; /**< For CustomBuild projects */
-      /*
-      List<String> preBuildCommand;
-      List<String> preLinkCommand;
-      List<String> postBuildCommand;
-      */
       String buildDir;
-      String type;
       List<String> command;
-      //List<String> message;
       String firstOutput;
-      //bool customBuild;
-      /*
-      List<String> outputs;
-      List<String> inputs;
-      List<String> dependencies;
-      List<String> cppFlags;
-      Map<String, void*> linkFlags;
       List<String> defines;
-      */
       List<String> includePaths;
       List<String> libPaths;
-      /*
       List<String> libs;
-      */
-      Config(const String& name) : name(name)/*, customBuild(false)*/ {}
+      List<String> cppFlags;
+      List<String> cFlags;
+      List<String> linkFlags;
+      List<String> dependencies;
+      
+      Config(const String& name) : name(name) {}
     };
 
     class File
     {
     public:
+      class Config
+      {
+      public:
+        List<String> command;
+      };
+
       String name;
-      String folder;
+      Map<String, Config> configs;
+
+      //
+      String type; /*< combined type */
 
       File(const String& name) : name(name) {}
     };
@@ -68,21 +62,17 @@ private:
     String name;
     Map<String, Config> configs;
     Map<String, File> files;
-    Map<String, void*> dependencies;
-    Map<String, void*> roots;
+
+    String type; /*< combined type */
+    List<String> sourceFiles;
+    List<String> includePaths;
+    List<String> linkPaths;
+    List<String> libs;
+    List<String> dependencies;
 
     Project(const String& name) : name(name) {}
   };
-/*
-  class ProjectFilter
-  {
-  public:
-    String guid;
-    List<Project*> projects;
 
-    ProjectFilter(const String& guid) : guid(guid) {}
-  };
-*/
   Engine& engine;
 
   File file;
@@ -90,17 +80,21 @@ private:
   String workspaceName;
   Map<String, void*> configs;
   Map<String, Project> projects;
-  //Map<String, ProjectFilter> projectFilters;
-
+  
   String openedFile; /**< The file that is currently written */
 
   bool readFile();
 
+  bool processData();
+
   bool generateWorkspace();
+  bool generateProjects();
   bool generateProject(Project& project);
 
   void fileOpen(const String& name);
   void fileWrite(const String& data);
   void fileClose();
+
+  static String join(const List<String>& items);
 };
 

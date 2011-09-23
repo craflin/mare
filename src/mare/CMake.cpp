@@ -1,11 +1,8 @@
 
 #include <cstdlib>
 #include <cstdio>
-#include <cctype>
-#include <cstring>
 
 #include "Engine.h"
-
 #include "Tools/Assert.h"
 #include "Tools/Error.h"
 #include "Tools/Word.h"
@@ -15,6 +12,7 @@
 
 bool CMake::generate(const Map<String, String>& userArgs)
 {
+  // add default keys
   engine.addDefaultKey("tool", "CMake");
   engine.addDefaultKey("CMake", "CMake");
 #if defined(_WIN32) || defined(__CYGWIN__)
@@ -33,7 +31,13 @@ bool CMake::generate(const Map<String, String>& userArgs)
   engine.addDefaultKey("configurations", "Debug Release");
   engine.addDefaultKey("targets"); // an empty target list exists per default
   engine.addDefaultKey("buildDir", "$(configuration)");
-
+  {
+    Map<String, String> cSource;
+    cSource.append("command", "__Source");
+    engine.addDefaultKey("cppSource", cSource);
+    engine.addDefaultKey("cSource", cSource);
+    engine.addDefaultKey("rcSource", cSource);
+  }
   {
     Map<String, String> cApplication;
     cApplication.append("command", "__Application");
@@ -60,12 +64,18 @@ bool CMake::generate(const Map<String, String>& userArgs)
   for(const Map<String, String>::Node* i = userArgs.getFirst(); i; i = i->getNext())
     engine.addDefaultKey(i->key, i->data);
 
-  //
+  // step #1: read input file
   if(!readFile())
     return false;
 
-  // generate solution file
+  // step #2 ...
+  if(!processData())
+    return false;
+
+  // step #3: generate output files
   if(!generateWorkspace())
+    return false;
+  if(!generateProjects())
     return false;
 
   return true;
@@ -99,7 +109,7 @@ bool CMake::readFile()
         engine.addDefaultKey("configuration", configName);
         engine.addDefaultKey(configName, configName);
         engine.addDefaultKey("target", i->data);
-        //engine.addDefaultKey(i->data, i->data);
+
         engine.enterRootKey();
         VERIFY(engine.enterKey("targets"));
         if(!engine.enterKey(i->data))
@@ -110,78 +120,22 @@ bool CMake::readFile()
 
         Map<String, Project>::Node* node = projects.find(i->data);
         Project& project = node ? node->data : projects.append(i->data, Project(i->data));
-        //bool isNewProject = node && true;
-
         Project::Config& projectConfig = project.configs.append(configName, Project::Config(configName));
 
-        /*
-        if(isNewProject)
-        {
-          String filterName = engine.getFirstKey("folder", false);
-          if(!filterName.isEmpty())
-          {
-            Map<String, ProjectFilter>::Node* node = projectFilters.find(filterName);
-            ProjectFilter& filter = node ? node->data : projectFilters.append(filterName, ProjectFilter(createSomethingLikeGUID(filterName)));
-            filter.projects.append(project);
-          }
-        }
-        */
-
-        //engine.getKeys("buildCommand", projectConfig.buildCommand, false);
-        //engine.getKeys("reBuildCommand", projectConfig.reBuildCommand, false);
-        //engine.getKeys("cleanCommand", projectConfig.cleanCommand, false);
-        projectConfig.buildDir = engine.getFirstKey("buildDir", true);
-
-        engine.getKeys("command", projectConfig.command, false);
+        engine.getText("command", projectConfig.command, false);
+        engine.getKeys("dependencies", projectConfig.dependencies, false);
         projectConfig.firstOutput = engine.getFirstKey("outputs", false);
 
-        if(!projectConfig.command.isEmpty())
-        {
-          String firstCommand = projectConfig.command.getFirst()->data;
-          if(/*firstCommand == "__Custom" ||*/ firstCommand == "__Application" || firstCommand == "__StaticLibrary" || firstCommand == "__DynamicLibrary")
-          {/*
-            if(firstCommand == "__Custom")
-            {
-              projectConfig.customBuild = true;
-              firstCommand = (projectConfig.command.getSize() > 1) ? projectConfig.command.getFirst()->getNext()->data : String();
-            }
-            */
-
-            if(firstCommand == "__Application")
-              projectConfig.type = "Executable";
-            else if(firstCommand == "__StaticLibrary")
-              projectConfig.type = "Static Library";
-            else if(firstCommand == "__DynamicLibrary")
-              projectConfig.type = "Dynamic Library";
-            projectConfig.command.clear();
-          }
-        }
-        //if(!projectConfig.buildCommand.isEmpty())
-          //projectConfig.customBuild = true;
-
-        /*
+        projectConfig.buildDir = engine.getFirstKey("buildDir", true);
         engine.getKeys("cppFlags", projectConfig.cppFlags, true);
-        List<String> linkFlags;
-        engine.getKeys("linkFlags", linkFlags, true);
-        for(const List<String>::Node* i = linkFlags.getFirst(); i; i = i->getNext())
-          projectConfig.linkFlags.append(i->data, 0);
+        engine.getKeys("cFlags", projectConfig.cFlags, true);
+        engine.getKeys("linkFlags", projectConfig.linkFlags, true);
         projectConfig.firstOutput = engine.getFirstKey("outputs", false);
         engine.getKeys("defines", projectConfig.defines, true);
-        */
         engine.getKeys("includePaths", projectConfig.includePaths, true);
         engine.getKeys("libPaths", projectConfig.libPaths, true);
-        /*
         engine.getKeys("libs", projectConfig.libs, true);
-        */
-        List<String> dependencies;
-        engine.getKeys("dependencies", dependencies, false);
-        for(const List<String>::Node* i = dependencies.getFirst(); i; i = i->getNext())
-          if(!project.dependencies.find(i->data))
-            project.dependencies.append(i->data);
-        List<String> root;
-        engine.getKeys("root", root, true);
-        for(const List<String>::Node* i = root.getFirst(); i; i = i->getNext())
-          project.roots.append(i->data);
+
         if(engine.enterKey("files"))
         {
           List<String> files;
@@ -190,11 +144,15 @@ bool CMake::readFile()
           {
             Map<String, Project::File>::Node* node = project.files.find(i->data);
             Project::File& file = node ? node->data : project.files.append(i->data, Project::File(i->data));
+            Project::File::Config& fileConfig = file.configs.append(configName);
+
             engine.enterUnnamedKey();
             engine.addDefaultKey("file", i->data);
             VERIFY(engine.enterKey(i->data));
-            file.folder = engine.getFirstKey("folder", false);
-            engine.leaveKey(); // VERIFY(engine.enterKey(i->data));
+
+            engine.getText("command", fileConfig.command, false);
+
+            engine.leaveKey();
             engine.leaveKey();
           }
 
@@ -212,7 +170,7 @@ bool CMake::readFile()
   return true;
 }
 
-bool CMake::generateWorkspace()
+bool CMake::processData()
 {
   // remove projects not creating any output files
   for(Map<String, Project>::Node* i = projects.getFirst(), * nexti; i; i = nexti)
@@ -221,7 +179,7 @@ bool CMake::generateWorkspace()
     if(!i->data.files.isEmpty())
       continue;
     for(const Map<String, Project::Config>::Node* j = i->data.configs.getFirst(); j; j = j->getNext())
-      if(!j->data.command.isEmpty() || !j->data.firstOutput.isEmpty() || !j->data.type.isEmpty())
+      if(!j->data.command.isEmpty() || !j->data.firstOutput.isEmpty() || !i->data.type.isEmpty())
         goto next;
     projects.remove(i);
   next:;
@@ -238,80 +196,208 @@ bool CMake::generateWorkspace()
   if(workspaceName.isEmpty() && !projects.isEmpty())
     workspaceName = projects.getFirst()->data.name;
 
+  // prepare some data for each project and each file
+  for(Map<String, Project>::Node* i = projects.getFirst(); i; i = i->getNext())
+  {
+    Project& project = i->data;
+
+    // determine project type
+    for(const Map<String, Project::Config>::Node* i = project.configs.getFirst(); i; i = i->getNext())
+    {
+      const Project::Config& config = i->data;
+      String type = config.command.isEmpty() ? String() : Word::first(config.command.getFirst()->data);
+      if(type != "__Application" && type != "__DynamicLibrary" && type == "__StaticLibrary")
+        type = "__Command";
+      if(!project.type.isEmpty() && project.type != type)
+      {
+        // TODO: error message
+        return false;
+      }
+      project.type = type;
+    }
+
+    // determine dependencies
+    Map<String, void*> dependencySet;
+    for(const Map<String, Project::Config>::Node* i = project.configs.getFirst(); i; i = i->getNext())
+    {
+      const Project::Config& config = i->data;
+      for(const List<String>::Node* i = config.dependencies.getFirst(); i; i = i->getNext())
+        if(!dependencySet.find(i->data))
+        {
+          dependencySet.append(i->data);
+          project.dependencies.append(i->data);
+        }
+    }
+    // TODO: add error message when dependencies are inconsistent among configurations?
+    // TODO: add dependencies from source files?
+
+    // determine file types
+    for(Map<String, Project::File>::Node* i = project.files.getFirst(); i; i = i->getNext())
+    {
+      Project::File& file = i->data;
+
+      for(const Map<String, Project::File::Config>::Node* i = file.configs.getFirst(); i; i = i->getNext())
+      {
+        const Project::File::Config& fileConfig = i->data;
+        String type = fileConfig.command.isEmpty() ? String() : Word::first(fileConfig.command.getFirst()->data);
+        if(type != "__Source")
+          type = "__Command";
+        if(!file.type.isEmpty() && file.type != type)
+        {
+          // TODO: error message
+          return false;
+        }
+        file.type = type;
+      }
+
+      if(file.type == "__Source")
+        project.sourceFiles.append(String("../") + file.name);
+    }
+
+    // create combined include path list
+    Map<String, void*> includePathSet;
+    for(const Map<String, Project::Config>::Node* i = project.configs.getFirst(); i; i = i->getNext())
+    {
+      const Project::Config& config = i->data;
+      for(const List<String>::Node* i = config.includePaths.getFirst(); i; i = i->getNext())
+        if(!includePathSet.find(i->data))
+        {
+          includePathSet.append(i->data);
+          project.includePaths.append(i->data);
+        }
+    }
+    // TODO: add error message when include paths are inconsistent among configurations
+
+    // create combined link path list
+    Map<String, void*> linkPathSet;
+    for(const Map<String, Project::Config>::Node* i = project.configs.getFirst(); i; i = i->getNext())
+    {
+      const Project::Config& config = i->data;
+      for(const List<String>::Node* i = config.libPaths.getFirst(); i; i = i->getNext())
+        if(!linkPathSet.find(i->data))
+        {
+          linkPathSet.append(i->data);
+          project.linkPaths.append(i->data);
+        }
+    }
+    // TODO: remove output directories of other targets?
+    // TODO: add error message when link paths are inconsistent among configurations
+  
+    // create combined lib list
+    Map<String, void*> libSet;
+    for(const Map<String, Project::Config>::Node* i = project.configs.getFirst(); i; i = i->getNext())
+    {
+      const Project::Config& config = i->data;
+      for(const List<String>::Node* i = config.libs.getFirst(); i; i = i->getNext())
+        if(!libSet.find(i->data))
+        {
+          libSet.append(i->data);
+          project.libs.append(i->data);
+        }
+    }
+    // TODO: add error message when libs are inconsistent among configurations
+  }
+
+  
+  return true;
+}
+
+bool CMake::generateWorkspace()
+{
   // open output file
   fileOpen("CMakeLists.txt");
 
-  fileWrite("cmake_minimum_required(VERSION 2.6)\n\n");
+  fileWrite("cmake_minimum_required(VERSION 2.8)\n\n");
   fileWrite(String("project(") + workspaceName + ")\n\n");
   
-  // write project list
-  for(Map<String, Project>::Node* i = projects.getFirst(); i; i = i->getNext())
-    if(!generateProject(i->data))
-      return false;
+  // set configurations
+  fileWrite("if(CMAKE_CONFIGURATION_TYPES)\n");
+  List<String> configurations;
+  for(const Map<String, void*>::Node* i = configs.getFirst(); i; i = i->getNext())
+    configurations.append(i->key);
+  fileWrite(String("  set(CMAKE_CONFIGURATION_TYPES ") + join(configurations) + ")\n");
+  fileWrite("  set(CMAKE_CONFIGURATION_TYPES \"${CMAKE_CONFIGURATION_TYPES}\" CACHE STRING\n");
+  fileWrite("    \"Supported configuration types\"\n");
+  fileWrite("     FORCE)\n");
+  fileWrite("endif()\n\n");
 
-  //
+  // write project list
+  for(const Map<String, Project>::Node* i = projects.getFirst(); i; i = i->getNext())
+    fileWrite(String("add_subdirectory(") + i->key + ")\n");
+
   fileClose();
   return true;
 }
 
+bool CMake::generateProjects()
+{
+  for(Map<String, Project>::Node* i = projects.getFirst(); i; i = i->getNext())
+    if(!generateProject(i->data))
+      return false;
+  return true;
+}
 
 bool CMake::generateProject(Project& project)
 {
-  /*
+  Directory::create(project.name);
+  fileOpen(project.name + "/CMakeLists.txt");
+  
+  if(project.type == "__Application")
+    fileWrite(String("add_executable(") + project.name + " " + join(project.sourceFiles) + ")\n");
+  else if(project.type == "__DynamicLibrary")
+    fileWrite(String("add_library(") + project.name + " SHARED " + join(project.sourceFiles) + ")\n");
+  else if(project.type == "__StaticLibrary")
+    fileWrite(String("add_library(") + project.name + " STATIC " + join(project.sourceFiles) + ")\n");
+  else
+  {
+    // TODO: custom
+    // add_custom_target(
+  }
+  
+  if(!project.includePaths.isEmpty())
+    fileWrite(String("include_directories(") + join(project.includePaths) + ")\n");
 
-  // try generating a unified include paths list
-  Map<String, void*> includeDirsSet;
-  List<String> includeDirs;
+  if(!project.linkPaths.isEmpty())
+    fileWrite(String("link_directories(") + join(project.linkPaths) + ")\n");
+
+  if(!project.libs.isEmpty())
+    fileWrite(String("target_link_libraries(") + project.name + " " + join(project.libs) + ")\n");
+  
   for(const Map<String, Project::Config>::Node* i = project.configs.getFirst(); i; i = i->getNext())
   {
     const Project::Config& config = i->data;
-    for(const List<String>::Node* i = config.includePaths.getFirst(); i; i = i->getNext())
+    String configUpName = i->key;
+    configUpName.uppercase();
+
+    String outputDirectory = File::getDirname(config.firstOutput);
+    fileWrite(String("set_property(TARGET ") + project.name + " ARCHIVE_OUTPUT_DIRECTORY_" + configUpName + " PROPERTY " + outputDirectory + ")\n");
+    fileWrite(String("set_property(TARGET ") + project.name + " LIBRARY_OUTPUT_DIRECTORY_" + configUpName + " PROPERTY " + outputDirectory + ")\n");
+    fileWrite(String("set_property(TARGET ") + project.name + " RUNTIME_OUTPUT_DIRECTORY_" + configUpName + " PROPERTY " + outputDirectory + ")\n");
+
+    String outputFile = File::getBasename(config.firstOutput);
+    fileWrite(String("set_property(TARGET ") + project.name + " OUTPUT_NAME_" + configUpName + " PROPERTY " + outputFile + ")\n");
+
+    if(!config.linkFlags.isEmpty())
     {
-      String path = i->data;
-      if(strncmp(path.getData(), config.buildDir.getData(), config.buildDir.getLength()) == 0 && strchr("/\\", path.getData()[config.buildDir.getLength()]))
-        path = String("${CMAKE_BINARY_DIR}") + path.substr(config.buildDir.getLength());
-      if(!includeDirsSet.find(path))
-      {
-        includeDirsSet.append(path);
-        includeDirs.append(path);
-      }
+      if(project.type == "__StaticLibrary")
+        fileWrite(String("set_property(TARGET ") + project.name + " STATIC_LIBRARY_FLAGS_" + configUpName + " PROPERTY " + join(config.linkFlags) + ")\n");
+      else
+        fileWrite(String("set_property(TARGET ") + project.name + " LINK_FLAGS_" + configUpName + " PROPERTY " + join(config.linkFlags) + ")\n");
     }
+
+    if(!config.defines.isEmpty())
+      fileWrite(String("set_property(TARGET ") + project.name + " COMPILE_DEFINITIONS_" + configUpName + " PROPERTY " + join(config.defines) + ")\n");
+
+    if(!config.cppFlags.isEmpty())
+      fileWrite(String("set(CMAKE_CXX_FLAGS_") + configUpName + " \"" + join(config.cppFlags) + "\")\n");
+    if(!config.cppFlags.isEmpty())
+      fileWrite(String("set(CMAKE_C_FLAGS_") + configUpName + " \"" + join(config.cFlags) + "\")\n");
   }
-  fileWrite(String("include_directories(") + Word::join(includeDirs) + ")\n");
 
-  // try generating a unified lib paths list
-  Map<String, void*> linkDirsSet;
-  List<String> linkDirs;
-  for(const Map<String, Project::Config>::Node* i = project.configs.getFirst(); i; i = i->getNext())
-  {
-    const Project::Config& config = i->data;
-    for(const List<String>::Node* i = config.libPaths.getFirst(); i; i = i->getNext())
-    {
-      String path = i->data;
-      if(strncmp(path.getData(), config.buildDir.getData(), config.buildDir.getLength()) == 0 && strchr("/\\", path.getData()[config.buildDir.getLength()]))
-        path = String("${CMAKE_BINARY_DIR}") + path.substr(config.buildDir.getLength());
-      if(!linkDirsSet.find(path))
-      {
-        linkDirsSet.append(path);
-        linkDirs.append(path);
-      }
-    }
-  }
-  fileWrite(String("link_directories(") + Word::join(linkDirs) + ")\n");
+  if(!project.dependencies.isEmpty())
+    fileWrite(String("add_dependencies(") + project.name + " " + join(project.dependencies) + ")\n");
 
-  // add_definitions(-DFOO -DBAR ...)
-  */
-  
-  /*
-  add_executable (helloDemo demo.cxx demo_b.cxx)
-  add_library (Hello [STATIC | SHARED ] hello.cxx) 
-
-  target_link_libraries (helloDemo Hello) 
-
-  set(CMAKE_CXX_FLAGS "-g -Wall") ? 
-  
-  */
-
+  fileClose();
   return true;
 }
 
@@ -343,4 +429,20 @@ void CMake::fileClose()
     fflush(stdout);
   }
   openedFile.clear();
+}
+
+String CMake::join(const List<String>& items)
+{
+  String result;
+  const List<String>::Node* i = items.getFirst();
+  if(i)
+  {
+    result = i->data;
+    for(i = i->getNext(); i; i = i->getNext())
+    {
+      result.append(' ');
+      result.append(i->data);
+    }
+  }
+  return result;
 }
