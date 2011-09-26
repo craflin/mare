@@ -86,17 +86,40 @@ bool CMake::readFile()
   // get some global keys
   engine.enterRootKey();
   workspaceName = engine.getFirstKey("name");
-  List<String> allPlatforms, allConfigurations, allTargets;
+  List<String> allPlatforms/*, allConfigurations*/, allTargets;
   engine.getKeys("platforms", allPlatforms);
-  engine.getKeys("configurations", allConfigurations);
+  //engine.getKeys("configurations", allConfigurations);
   engine.getKeys("targets", allTargets);
+
+// read default or check input configuration names
+  VERIFY(engine.enterKey("configurations"));
+  if(inputConfigs.isEmpty())
+  {
+    String firstConfiguration = engine.getFirstKey();
+    if(!firstConfiguration.isEmpty())
+      inputConfigs.append(firstConfiguration);
+    else
+    {
+      engine.error("cannot find any configurations");
+      return false;
+    }
+  }
+  else
+    for(const List<String>::Node* i = inputConfigs.getFirst(); i; i = 0 /*i->getNext()*/)
+      if(!engine.hasKey(i->data))
+      {
+        engine.error(String().format(256, "cannot find configuration \"%s\"", i->data.getData()));
+        return false;
+      }
+  engine.leaveKey();
+
   engine.leaveKey();
 
   // do something for each target in each configuration
   for(const List<String>::Node* i = allPlatforms.getFirst(); i; i = 0) // just use the first platform since CMake does not really support multiple target platforms
   {
     const String& platform = i->data;
-    for(const List<String>::Node* i = allConfigurations.getFirst(); i; i = i->getNext())
+    for(const List<String>::Node* i = inputConfigs.getFirst(); i; i = 0/*i->getNext()*/)
     {
       const String& configName = i->data;
       configs.append(configName);
@@ -309,7 +332,7 @@ bool CMake::generateWorkspace()
 
   fileWrite("cmake_minimum_required(VERSION 2.8)\n\n");
   fileWrite(String("project(") + workspaceName + ")\n\n");
-  
+  /*
   // set configurations
   fileWrite("if(CMAKE_CONFIGURATION_TYPES)\n");
   List<String> configurations;
@@ -320,7 +343,7 @@ bool CMake::generateWorkspace()
   fileWrite("    \"Supported configuration types\"\n");
   fileWrite("     FORCE)\n");
   fileWrite("endif()\n\n");
-
+  */
   // write project list
   for(const Map<String, Project>::Node* i = projects.getFirst(); i; i = i->getNext())
     fileWrite(String("add_subdirectory(") + i->key + ")\n");
@@ -363,35 +386,35 @@ bool CMake::generateProject(Project& project)
   if(!project.libs.isEmpty())
     fileWrite(String("target_link_libraries(") + project.name + " " + join(project.libs) + ")\n");
   
-  for(const Map<String, Project::Config>::Node* i = project.configs.getFirst(); i; i = i->getNext())
+  for(const Map<String, Project::Config>::Node* i = project.configs.getFirst(); i; i = 0/*i->getNext()*/)
   {
     const Project::Config& config = i->data;
-    String configUpName = i->key;
-    configUpName.uppercase();
+    //String configUpName = i->key;
+    //configUpName.uppercase();
 
     String outputDirectory = File::getDirname(config.firstOutput);
-    fileWrite(String("set_property(TARGET ") + project.name + " ARCHIVE_OUTPUT_DIRECTORY_" + configUpName + " PROPERTY " + outputDirectory + ")\n");
-    fileWrite(String("set_property(TARGET ") + project.name + " LIBRARY_OUTPUT_DIRECTORY_" + configUpName + " PROPERTY " + outputDirectory + ")\n");
-    fileWrite(String("set_property(TARGET ") + project.name + " RUNTIME_OUTPUT_DIRECTORY_" + configUpName + " PROPERTY " + outputDirectory + ")\n");
+    fileWrite(String("set_property(TARGET ") + project.name + " ARCHIVE_OUTPUT_DIRECTORY PROPERTY " + outputDirectory + ")\n");
+    fileWrite(String("set_property(TARGET ") + project.name + " LIBRARY_OUTPUT_DIRECTORY PROPERTY " + outputDirectory + ")\n");
+    fileWrite(String("set_property(TARGET ") + project.name + " RUNTIME_OUTPUT_DIRECTORY PROPERTY " + outputDirectory + ")\n");
 
     String outputFile = File::getBasename(config.firstOutput);
-    fileWrite(String("set_property(TARGET ") + project.name + " OUTPUT_NAME_" + configUpName + " PROPERTY " + outputFile + ")\n");
+    fileWrite(String("set_property(TARGET ") + project.name + " OUTPUT_NAME PROPERTY " + outputFile + ")\n");
 
     if(!config.linkFlags.isEmpty())
     {
       if(project.type == "__StaticLibrary")
-        fileWrite(String("set_property(TARGET ") + project.name + " STATIC_LIBRARY_FLAGS_" + configUpName + " PROPERTY " + join(config.linkFlags) + ")\n");
+        fileWrite(String("set_property(TARGET ") + project.name + " STATIC_LIBRARY_FLAGS PROPERTY " + join(config.linkFlags) + ")\n");
       else
-        fileWrite(String("set_property(TARGET ") + project.name + " LINK_FLAGS_" + configUpName + " PROPERTY " + join(config.linkFlags) + ")\n");
+        fileWrite(String("set_property(TARGET ") + project.name + " LINK_FLAGS PROPERTY " + join(config.linkFlags) + ")\n");
     }
 
     if(!config.defines.isEmpty())
-      fileWrite(String("set_property(TARGET ") + project.name + " COMPILE_DEFINITIONS_" + configUpName + " PROPERTY " + join(config.defines) + ")\n");
+      fileWrite(String("set_property(TARGET ") + project.name + " COMPILE_DEFINITIONS PROPERTY " + join(config.defines) + ")\n");
 
     if(!config.cppFlags.isEmpty())
-      fileWrite(String("set(CMAKE_CXX_FLAGS_") + configUpName + " \"" + join(config.cppFlags) + "\")\n");
+      fileWrite(String("set(CMAKE_CXX_FLAGS \"") + join(config.cppFlags) + "\")\n");
     if(!config.cppFlags.isEmpty())
-      fileWrite(String("set(CMAKE_C_FLAGS_") + configUpName + " \"" + join(config.cFlags) + "\")\n");
+      fileWrite(String("set(CMAKE_C_FLAGS \"") + join(config.cFlags) + "\")\n");
   }
 
   if(!project.dependencies.isEmpty())

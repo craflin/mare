@@ -12,7 +12,7 @@ class CMake
 {
 public:
 
-  CMake(Engine& engine) : engine(engine) {}
+  CMake(Engine& engine, List<String>& inputConfigs) : engine(engine), inputConfigs(inputConfigs) {}
 
   bool generate(const Map<String, String>& userArgs);
 
@@ -74,6 +74,7 @@ private:
   };
 
   Engine& engine;
+  List<String>& inputConfigs;
 
   File file;
 
