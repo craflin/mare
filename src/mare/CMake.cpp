@@ -206,7 +206,7 @@ bool CMake::processData()
     {
       const Project::Config& config = i->data;
       String type = config.command.isEmpty() ? String() : Word::first(config.command.getFirst()->data);
-      if(type != "__Application" && type != "__DynamicLibrary" && type == "__StaticLibrary")
+      if(type != "__Application" && type != "__DynamicLibrary" && type != "__StaticLibrary")
         type = "__Command";
       if(!project.type.isEmpty() && project.type != type)
       {
