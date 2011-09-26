@@ -48,6 +48,9 @@ private:
       {
       public:
         List<String> command;
+        List<String> input;
+        List<String> output;
+        List<String> message;
       };
 
       String name;
