@@ -299,7 +299,7 @@ public:
           }
           goto build;
         }
-        if(writeTime >= minWriteTime)
+        if(writeTime >/*=*/ minWriteTime)
         {
           if(builder->showDebug)
             printf("debug: Applying rule for \"%s\" since the input file \"%s\" is newer than output file \"%s\"\n", name.getData(), file.getData(), minOutputFile.getData());
