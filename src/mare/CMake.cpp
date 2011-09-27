@@ -233,10 +233,6 @@ bool CMake::processData()
     for(Map<String, Project::Config>::Node* i = project.configs.getFirst(); i; i = i->getNext())
     {
       Project::Config& config = i->data;
-      for(List<String>::Node* i = config.output.getFirst(); i; i = i->getNext())
-        i->data = relative2absolute(i->data);
-      for(List<String>::Node* i = config.input.getFirst(); i; i = i->getNext())
-        i->data = relative2absolute(i->data);
 
       String type = config.command.isEmpty() ? String() : Word::first(config.command.getFirst()->data);
       if(type != "__Application" && type != "__DynamicLibrary" && type != "__StaticLibrary")
@@ -247,6 +243,19 @@ bool CMake::processData()
         return false;
       }
       project.type = type;
+
+      for(List<String>::Node* i = config.output.getFirst(); i; i = i->getNext())
+      {
+        if(type == "__Command")
+          if(!sourceFilesSet.find(i->data))
+          {
+            sourceFilesSet.append(i->data);
+            project.sourceFiles.append(relative2absolute(i->data));
+          }
+        i->data = relative2absolute(i->data);
+      }
+      for(List<String>::Node* i = config.input.getFirst(); i; i = i->getNext())
+        i->data = relative2absolute(i->data);
     }
 
     // determine dependencies
@@ -287,13 +296,11 @@ bool CMake::processData()
         for(List<String>::Node* i = fileConfig.output.getFirst(); i; i = i->getNext())
         {
           if(type == "__Command")
-          {
             if(!sourceFilesSet.find(i->data))
             {
               sourceFilesSet.append(i->data);
               project.sourceFiles.append(relative2absolute(i->data));
             }
-          }
           i->data = relative2absolute(i->data);
         }
       }
