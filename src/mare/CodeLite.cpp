@@ -35,7 +35,7 @@ bool CodeLite::generate(const Map<String, String>& userArgs)
   {
     Map<String, String> cApplication;
     cApplication.append("command", "__Application");
-    cApplication.append("outputs", "$(buildDir)/$(target)$(target)$(if $(Win32),.exe)");
+    cApplication.append("outputs", "$(buildDir)/$(target)$(if $(Win32),.exe)");
     engine.addDefaultKey("cppApplication", cApplication);
     engine.addDefaultKey("cApplication", cApplication);
   }
