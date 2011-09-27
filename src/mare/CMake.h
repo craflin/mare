@@ -28,7 +28,9 @@ private:
 
       String buildDir;
       List<String> command;
-      String firstOutput;
+      List<String> message;
+      List<String> input;
+      List<String> output;
       List<String> defines;
       List<String> includePaths;
       List<String> libPaths;
@@ -100,5 +102,6 @@ private:
   void fileClose();
 
   static String join(const List<String>& items);
+  static String relative2absolute(const String& path);
 };
 

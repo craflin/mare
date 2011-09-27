@@ -41,7 +41,7 @@ bool CMake::generate(const Map<String, String>& userArgs)
   {
     Map<String, String> cApplication;
     cApplication.append("command", "__Application");
-    cApplication.append("outputs", "$(buildDir)/$(target)$(target)$(if $(Win32),.exe)");
+    cApplication.append("outputs", "$(buildDir)/$(target)$(if $(Win32),.exe)");
     engine.addDefaultKey("cppApplication", cApplication);
     engine.addDefaultKey("cApplication", cApplication);
   }
@@ -146,14 +146,15 @@ bool CMake::readFile()
         Project::Config& projectConfig = project.configs.append(configName, Project::Config(configName));
 
         engine.getText("command", projectConfig.command, false);
+        engine.getText("message", projectConfig.message, false);
         engine.getKeys("dependencies", projectConfig.dependencies, false);
-        projectConfig.firstOutput = engine.getFirstKey("outputs", false);
+        engine.getKeys("outputs", projectConfig.output, false);
+        engine.getKeys("inputs", projectConfig.input, false);
 
         projectConfig.buildDir = engine.getFirstKey("buildDir", true);
         engine.getKeys("cppFlags", projectConfig.cppFlags, true);
         engine.getKeys("cFlags", projectConfig.cFlags, true);
         engine.getKeys("linkFlags", projectConfig.linkFlags, true);
-        projectConfig.firstOutput = engine.getFirstKey("outputs", false);
         engine.getKeys("defines", projectConfig.defines, true);
         engine.getKeys("includePaths", projectConfig.includePaths, true);
         engine.getKeys("libPaths", projectConfig.libPaths, true);
@@ -205,7 +206,7 @@ bool CMake::processData()
     if(!i->data.files.isEmpty())
       continue;
     for(const Map<String, Project::Config>::Node* j = i->data.configs.getFirst(); j; j = j->getNext())
-      if(!j->data.command.isEmpty() || !j->data.firstOutput.isEmpty() || !i->data.type.isEmpty())
+      if(!j->data.command.isEmpty() || !j->data.output.isEmpty() || !i->data.type.isEmpty())
         goto next;
     projects.remove(i);
   next:;
@@ -223,6 +224,7 @@ bool CMake::processData()
     workspaceName = projects.getFirst()->data.name;
 
   // prepare some data for each project and each file
+  Map<String, void*> sourceFilesSet;
   for(Map<String, Project>::Node* i = projects.getFirst(); i; i = i->getNext())
   {
     Project& project = i->data;
@@ -231,7 +233,10 @@ bool CMake::processData()
     for(Map<String, Project::Config>::Node* i = project.configs.getFirst(); i; i = i->getNext())
     {
       Project::Config& config = i->data;
-      config.firstOutput = String("${CMAKE_CURRENT_SOURCE_DIR}/../") + config.firstOutput;
+      for(List<String>::Node* i = config.output.getFirst(); i; i = i->getNext())
+        i->data = relative2absolute(i->data);
+      for(List<String>::Node* i = config.input.getFirst(); i; i = i->getNext())
+        i->data = relative2absolute(i->data);
 
       String type = config.command.isEmpty() ? String() : Word::first(config.command.getFirst()->data);
       if(type != "__Application" && type != "__DynamicLibrary" && type != "__StaticLibrary")
@@ -269,7 +274,8 @@ bool CMake::processData()
         Project::File::Config& fileConfig = i->data;
         String type = fileConfig.command.isEmpty() ? String() : Word::first(fileConfig.command.getFirst()->data);
         if(type != "__Source")
-          type = "__Command";
+          if(!fileConfig.command.isEmpty() && !fileConfig.output.isEmpty())
+            type = "__Command";
         if(!file.type.isEmpty() && file.type != type)
         {
           // TODO: error message
@@ -277,13 +283,29 @@ bool CMake::processData()
         }
         file.type = type;
         for(List<String>::Node* i = fileConfig.input.getFirst(); i; i = i->getNext())
-          i->data = String("${CMAKE_CURRENT_SOURCE_DIR}/../") + i->data;
+          i->data = relative2absolute(i->data);
         for(List<String>::Node* i = fileConfig.output.getFirst(); i; i = i->getNext())
-          i->data = String("${CMAKE_CURRENT_SOURCE_DIR}/../") + i->data;
+        {
+          if(type == "__Command")
+          {
+            if(!sourceFilesSet.find(i->data))
+            {
+              sourceFilesSet.append(i->data);
+              project.sourceFiles.append(relative2absolute(i->data));
+            }
+          }
+          i->data = relative2absolute(i->data);
+        }
       }
 
       if(file.type == "__Source")
-        project.sourceFiles.append(String("${CMAKE_CURRENT_SOURCE_DIR}/../") + file.name);
+      {
+        if(!sourceFilesSet.find(file.name))
+        {
+          sourceFilesSet.find(file.name);
+          project.sourceFiles.append(relative2absolute(file.name));
+        }
+      }
     }
 
     // create combined include path list
@@ -295,7 +317,7 @@ bool CMake::processData()
         if(!includePathSet.find(i->data))
         {
           includePathSet.append(i->data);
-          project.includePaths.append(String("${CMAKE_CURRENT_SOURCE_DIR}/../") + i->data);
+          project.includePaths.append(relative2absolute(i->data));
         }
     }
     // TODO: add error message when include paths are inconsistent among configurations
@@ -309,7 +331,7 @@ bool CMake::processData()
         if(!linkPathSet.find(i->data))
         {
           linkPathSet.append(i->data);
-          project.linkPaths.append(String("${CMAKE_CURRENT_SOURCE_DIR}/../") + i->data);
+          project.linkPaths.append(relative2absolute(i->data));
         }
     }
     // TODO: remove output directories of other targets?
@@ -355,7 +377,7 @@ bool CMake::generateWorkspace()
   */
   // write project list
   for(const Map<String, Project>::Node* i = projects.getFirst(); i; i = i->getNext())
-    fileWrite(String("#add_subdirectory(") + i->key + ")\n");
+    fileWrite(String("add_subdirectory(") + i->key + ")\n");
 
   fileClose();
   return true;
@@ -376,13 +398,19 @@ bool CMake::generateProject(Project& project)
 
   // fileWrite("cmake_policy(SET CMP0015 NEW)\n");
 
+  if(!project.includePaths.isEmpty())
+    fileWrite(String("include_directories(") + join(project.includePaths) + ")\n");
+
+  if(!project.linkPaths.isEmpty())
+    fileWrite(String("link_directories(") + join(project.linkPaths) + ")\n");
+
   for(const Map<String, Project::File>::Node* i = project.files.getFirst(); i; i = i->getNext())
   {
     const Project::File& file = i->data;
     for(const Map<String, Project::File::Config>::Node* i = file.configs.getFirst(); i; i = 0/*i->getNext()*/)
     {
       const Project::File::Config& fileConfig = i->data;
-      if(file.type != "__Command" || fileConfig.output.isEmpty() || fileConfig.command.isEmpty())
+      if(file.type != "__Command")
         continue;
       fileWrite("add_custom_command(\n");
       fileWrite(String("  OUTPUT ") + join(fileConfig.output) + "\n");
@@ -391,7 +419,7 @@ bool CMake::generateProject(Project& project)
       fileWrite(String("  DEPENDS ") + join(fileConfig.input) + "\n");
       fileWrite("  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/..\n");
       if(!fileConfig.message.isEmpty())
-        fileWrite(String("  COMMENT ") + fileConfig.message.getFirst()->data + "\n");
+        fileWrite(String("  COMMENT \"") + fileConfig.message.getFirst()->data + "\"\n");
       fileWrite("  )\n");
     }
   }
@@ -402,18 +430,29 @@ bool CMake::generateProject(Project& project)
     fileWrite(String("add_library(") + project.name + " SHARED " + join(project.sourceFiles) + ")\n");
   else if(project.type == "__StaticLibrary")
     fileWrite(String("add_library(") + project.name + " STATIC " + join(project.sourceFiles) + ")\n");
-  else
+  else if(project.type == "__Command")
   {
-    // TODO: custom
-    // add_custom_target(
+    for(const Map<String, Project::Config>::Node* i = project.configs.getFirst(); i; i = 0/*i->getNext()*/)
+    {
+      const Project::Config& config = i->data;
+      if(!config.output.isEmpty() && !config.command.isEmpty())
+      {
+        fileWrite("add_custom_command(\n");
+        fileWrite(String("  OUTPUT ") + join(config.output) + "\n");
+        for(const List<String>::Node* i = config.command.getFirst(); i; i = i->getNext())
+          fileWrite(String("  COMMAND ") + i->data + "\n");
+        fileWrite(String("  DEPENDS ") + join(config.input) + "\n");
+        fileWrite("  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/..\n");
+        if(!config.message.isEmpty())
+          fileWrite(String("  COMMENT \"") + config.message.getFirst()->data + "\"\n");
+        fileWrite("  )\n");
+      }
+      fileWrite(String("add_custom_target(") + project.name + " ALL\n");
+      fileWrite(String("  DEPENDS ") + join(project.sourceFiles) + "\n");
+      fileWrite("  )\n");
+    }
   }
   
-  if(!project.includePaths.isEmpty())
-    fileWrite(String("include_directories(") + join(project.includePaths) + ")\n");
-
-  if(!project.linkPaths.isEmpty())
-    fileWrite(String("link_directories(") + join(project.linkPaths) + ")\n");
-
   if(!project.libs.isEmpty())
     fileWrite(String("target_link_libraries(") + project.name + " " + join(project.libs) + ")\n");
   
@@ -423,18 +462,23 @@ bool CMake::generateProject(Project& project)
     //String configUpName = i->key;
     //configUpName.uppercase();
 
-    String outputDirectory = File::getDirname(config.firstOutput);
-    fileWrite(String("set_property(TARGET ") + project.name + " PROPERTY ARCHIVE_OUTPUT_DIRECTORY " + outputDirectory + ")\n");
-    fileWrite(String("set_property(TARGET ") + project.name + " PROPERTY LIBRARY_OUTPUT_DIRECTORY " + outputDirectory + ")\n");
-    fileWrite(String("set_property(TARGET ") + project.name + " PROPERTY RUNTIME_OUTPUT_DIRECTORY " + outputDirectory + ")\n");
+    if(!config.output.isEmpty())
+    {
+      String outputDirectory = File::getDirname(config.output.getFirst()->data);
+      fileWrite(String("set_property(TARGET ") + project.name + " PROPERTY ARCHIVE_OUTPUT_DIRECTORY " + outputDirectory + ")\n");
+      fileWrite(String("set_property(TARGET ") + project.name + " PROPERTY LIBRARY_OUTPUT_DIRECTORY " + outputDirectory + ")\n");
+      fileWrite(String("set_property(TARGET ") + project.name + " PROPERTY RUNTIME_OUTPUT_DIRECTORY " + outputDirectory + ")\n");
 
-    String outputFile = File::getBasename(config.firstOutput);
-    fileWrite(String("set_property(TARGET ") + project.name + " PROPERTY OUTPUT_NAME " + outputFile + ")\n");
+      String outputName = File::getWithoutExtension(File::getBasename(config.output.getFirst()->data));
+      outputName.patsubst("lib%", "%");
+      fileWrite(String("set_property(TARGET ") + project.name + " PROPERTY OUTPUT_NAME " + outputName + ")\n");
+    }
 
     if(!config.linkFlags.isEmpty())
     {
       if(project.type == "__StaticLibrary")
-        fileWrite(String("set_property(TARGET ") + project.name + " PROPERTY STATIC_LIBRARY_FLAGS " + join(config.linkFlags) + ")\n");
+        {}
+        // fileWrite(String("set_property(TARGET ") + project.name + " PROPERTY STATIC_LIBRARY_FLAGS " + join(config.linkFlags) + ")\n");
       else
         fileWrite(String("set_property(TARGET ") + project.name + " PROPERTY LINK_FLAGS " + join(config.linkFlags) + ")\n");
     }
@@ -500,3 +544,11 @@ String CMake::join(const List<String>& items)
   }
   return result;
 }
+
+String CMake::relative2absolute(const String& path)
+{
+  if(path.getData()[0] == '/')
+    return path;
+  return String("${CMAKE_CURRENT_SOURCE_DIR}/../") + path;  
+}
+
