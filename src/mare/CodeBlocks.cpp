@@ -130,9 +130,9 @@ bool CodeBlocks::readFile()
         }
         */
 
-        engine.getKeys("buildCommand", projectConfig.buildCommand, false);
-        engine.getKeys("reBuildCommand", projectConfig.reBuildCommand, false);
-        engine.getKeys("cleanCommand", projectConfig.cleanCommand, false);
+        engine.getText("buildCommand", projectConfig.buildCommand, false);
+        engine.getText("reBuildCommand", projectConfig.reBuildCommand, false);
+        engine.getText("cleanCommand", projectConfig.cleanCommand, false);
         projectConfig.buildDir = engine.getFirstKey("buildDir", true);
 
         engine.getText("command", projectConfig.command, false);
