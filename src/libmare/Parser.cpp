@@ -329,6 +329,17 @@ Statement* Parser::readStatement()
     }
     statement = ifStatement;
   }
+  else if(currentToken.id == Token::string && currentToken.value == "include")
+  {
+    nextToken();
+    String fileName;
+    readString(fileName);
+    Parser parser(engine);
+    Statement* statement = parser.parse(fileName, errorHandler, errorHandlerUserData);
+    if(!statement)
+      throw false;
+    return statement;
+  }
   else
     statement = readAssignment();
   while(currentToken.id == Token::comma)
