@@ -41,21 +41,21 @@ bool CMake::generate(const Map<String, String>& userArgs)
   {
     Map<String, String> cApplication;
     cApplication.append("command", "__Application");
-    cApplication.append("outputs", "$(buildDir)/$(target)$(if $(Win32),.exe)");
+    cApplication.append("output", "$(buildDir)/$(target)$(if $(Win32),.exe)");
     engine.addDefaultKey("cppApplication", cApplication);
     engine.addDefaultKey("cApplication", cApplication);
   }
   {
     Map<String, String> cDynamicLibrary;
     cDynamicLibrary.append("command", "__DynamicLibrary");
-    cDynamicLibrary.append("outputs", "$(buildDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.dll,.so)");
+    cDynamicLibrary.append("output", "$(buildDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.dll,.so)");
     engine.addDefaultKey("cppDynamicLibrary", cDynamicLibrary);
     engine.addDefaultKey("cDynamicLibrary", cDynamicLibrary);
   }
   {
     Map<String, String> cStaticLibrary;
     cStaticLibrary.append("command", "__StaticLibrary");
-    cStaticLibrary.append("outputs", "$(buildDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.lib,.a)");
+    cStaticLibrary.append("output", "$(buildDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.lib,.a)");
     engine.addDefaultKey("cppStaticLibrary", cStaticLibrary);
     engine.addDefaultKey("cStaticLibrary", cStaticLibrary);
   }
@@ -148,8 +148,8 @@ bool CMake::readFile()
         engine.getText("command", projectConfig.command, false);
         engine.getText("message", projectConfig.message, false);
         engine.getKeys("dependencies", projectConfig.dependencies, false);
-        engine.getKeys("outputs", projectConfig.output, false);
-        engine.getKeys("inputs", projectConfig.input, false);
+        engine.getKeys("output", projectConfig.output, false);
+        engine.getKeys("input", projectConfig.input, false);
 
         projectConfig.buildDir = engine.getFirstKey("buildDir", true);
         engine.getKeys("cppFlags", projectConfig.cppFlags, true);
@@ -176,8 +176,8 @@ bool CMake::readFile()
 
             engine.getText("command", fileConfig.command, false);
             engine.getText("message", fileConfig.message, false);
-            engine.getKeys("inputs", fileConfig.input, false);
-            engine.getKeys("outputs", fileConfig.output, false);
+            engine.getKeys("input", fileConfig.input, false);
+            engine.getKeys("output", fileConfig.output, false);
 
             engine.leaveKey();
             engine.leaveKey();
