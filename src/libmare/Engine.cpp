@@ -19,7 +19,7 @@ bool Engine::load(const String& file)
 
 void Engine::error(const String& message)
 {
-  errorHandler(errorUserData, -1, message);
+  errorHandler(errorUserData, String(), -1, message);
 }
 
 bool Engine::hasKey(const String& key, bool allowInheritance)

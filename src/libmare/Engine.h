@@ -14,7 +14,7 @@ class Engine : public Scope
 {
 public:
 
-  typedef void (*ErrorHandler)(void* userData, int line, const String& message);
+  typedef void (*ErrorHandler)(void* userData, const String& file, int line, const String& message);
 
   Engine(ErrorHandler errorHandler, void* userData) : errorHandler(errorHandler), errorUserData(userData), rootStatement(0), currentSpace(0) {}
 

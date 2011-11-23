@@ -19,7 +19,7 @@ Statement* Parser::parse(const String& file, Engine::ErrorHandler errorHandler, 
   {
     if(!this->file.open(file))
     {
-      errorHandler(errorHandlerUserData, 0, Error::getString());
+      errorHandler(errorHandlerUserData, file, 0, Error::getString());
       throw false;
     }
     nextChar(); // read first character
@@ -256,7 +256,7 @@ void Parser::unexpectedChar(char c)
 {
   String message;
   message.format(256, "unexpected character \"%c\"", c);
-  errorHandler(errorHandlerUserData, currentLine, message);
+  errorHandler(errorHandlerUserData, filePath, currentLine, message);
   throw false;
 }
 
@@ -266,7 +266,7 @@ void Parser::expectToken(Token::Id id)
   {
     String message;
     message.format(256, "expected \"%s\" instead of \"%s\"", currentToken.getName(id), currentToken.getName());
-    errorHandler(errorHandlerUserData, currentLine, message);
+    errorHandler(errorHandlerUserData, filePath, currentLine, message);
     throw false;
   }
   nextToken();
@@ -285,7 +285,7 @@ void Parser::readString(String& string)
     {
       String message;
       message.format(256, "expected string instead of \"%s\"", currentToken.getName());
-      errorHandler(errorHandlerUserData, currentLine, message);
+      errorHandler(errorHandlerUserData, filePath, currentLine, message);
       throw false;
     }
   }

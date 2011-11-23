@@ -20,16 +20,16 @@
 static const char* VERSION   = "0.3";
 static const char* COPYRIGHT = "Copyright (C) 2011 Colin Graf";
 
-static void errorHandler(void* userData, int line, const String& message)
+static void errorHandler(void* userData, const String& file, int line, const String& message)
 {
   if(line < 0)
     fprintf(stderr, "%s: %s\n", Error::program, message.getData());
   else
   {
     if(line > 0)
-      fprintf(stderr, "%s:%u: error: %s\n", (const char*)userData, line, message.getData());
+      fprintf(stderr, "%s:%u: error: %s\n", file.getData(), line, message.getData());
     else
-      fprintf(stderr, "%s: %s\n", (const char*)userData, message.getData());
+      fprintf(stderr, "%s: %s\n", file.getData(), message.getData());
   }
 }
 
@@ -267,7 +267,7 @@ int main(int argc, char* argv[])
 
   // start the engine
   {
-    Engine engine(errorHandler, (void*)inputFile.getData());
+    Engine engine(errorHandler, 0);
     if(!engine.load(inputFile))
     {
       if(showHelp)
