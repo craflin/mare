@@ -24,51 +24,51 @@ bool Builder::build(const Map<String, String>& userArgs)
   engine.addDefaultKey("linkFlags", "$(if $(Debug),,-s)");
   {
     Map<String, String> cppApplication;
-    cppApplication.append("inputs", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
-    cppApplication.append("outputs", "$(buildDir)/$(target)$(if $(Win32),.exe)");
-    cppApplication.append("command", "$(CXX) -o $(outputs) $(inputs) $(linkFlags) $(LDFLAGS) $(patsubst %,-L%,$(libPaths)) $(patsubst %,-l%,$(libs))");
+    cppApplication.append("input", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
+    cppApplication.append("output", "$(buildDir)/$(target)$(if $(Win32),.exe)");
+    cppApplication.append("command", "$(CXX) -o $(output) $(input) $(linkFlags) $(LDFLAGS) $(patsubst %,-L%,$(libPaths)) $(patsubst %,-l%,$(libs))");
     cppApplication.append("message", "Linking $(target)...");
     engine.addDefaultKey("cppApplication", cppApplication);
   }
   {
     Map<String, String> cppDynamicLibrary;
-    cppDynamicLibrary.append("inputs", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
-    cppDynamicLibrary.append("outputs", "$(buildDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.dll,.so)");
+    cppDynamicLibrary.append("input", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
+    cppDynamicLibrary.append("output", "$(buildDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.dll,.so)");
     cppDynamicLibrary.append("__soFlags", "$(if $(Win32),,-fpic)");
-    cppDynamicLibrary.append("command", "$(CXX) -shared $(__soFlags) -o $(outputs) $(inputs) $(linkFlags) $(LDFLAGS) $(patsubst %,-L%,$(libPaths)) $(patsubst %,-l%,$(libs))");
+    cppDynamicLibrary.append("command", "$(CXX) -shared $(__soFlags) -o $(output) $(input) $(linkFlags) $(LDFLAGS) $(patsubst %,-L%,$(libPaths)) $(patsubst %,-l%,$(libs))");
     cppDynamicLibrary.append("message", "Linking $(target)...");
     engine.addDefaultKey("cppDynamicLibrary", cppDynamicLibrary);
   }
   {
     Map<String, String> cppStaticLibrary;
-    cppStaticLibrary.append("inputs", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
-    cppStaticLibrary.append("outputs", "$(buildDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.lib,.a)");
-    cppStaticLibrary.append("command", "$(AR) rcs $(outputs) $(inputs)");
+    cppStaticLibrary.append("input", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
+    cppStaticLibrary.append("output", "$(buildDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.lib,.a)");
+    cppStaticLibrary.append("command", "$(AR) rcs $(output) $(input)");
     cppStaticLibrary.append("message", "Creating $(target)...");
     engine.addDefaultKey("cppStaticLibrary", cppStaticLibrary);
   }
   {
     Map<String, String> cApplication;
-    cApplication.append("inputs", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
-    cApplication.append("outputs", "$(buildDir)/$(target)$(if $(Win32),.exe)");
-    cApplication.append("command", "$(CC) -o $(outputs) $(inputs) $(linkFlags) $(LDFLAGS) $(patsubst %,-L%,$(libPaths)) $(patsubst %,-l%,$(libs))");
+    cApplication.append("input", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
+    cApplication.append("output", "$(buildDir)/$(target)$(if $(Win32),.exe)");
+    cApplication.append("command", "$(CC) -o $(output) $(input) $(linkFlags) $(LDFLAGS) $(patsubst %,-L%,$(libPaths)) $(patsubst %,-l%,$(libs))");
     cApplication.append("message", "Linking $(target)...");
     engine.addDefaultKey("cApplication", cApplication);
   }
   {
     Map<String, String> cDynamicLibrary;
-    cDynamicLibrary.append("inputs", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
-    cDynamicLibrary.append("outputs", "$(buildDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.dll,.so)");
+    cDynamicLibrary.append("input", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
+    cDynamicLibrary.append("output", "$(buildDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.dll,.so)");
     cDynamicLibrary.append("__soFlags", "$(if $(Win32),,-fpic)");
-    cDynamicLibrary.append("command", "$(CC) -shared $(__soFlags) -o $(outputs) $(inputs) $(linkFlags) $(LDFLAGS) $(patsubst %,-L%,$(libPaths)) $(patsubst %,-l%,$(libs))");
+    cDynamicLibrary.append("command", "$(CC) -shared $(__soFlags) -o $(output) $(input) $(linkFlags) $(LDFLAGS) $(patsubst %,-L%,$(libPaths)) $(patsubst %,-l%,$(libs))");
     cDynamicLibrary.append("message", "Linking $(target)...");
     engine.addDefaultKey("cDynamicLibrary", cDynamicLibrary);
   }
   {
     Map<String, String> cStaticLibrary;
-    cStaticLibrary.append("inputs", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
-    cStaticLibrary.append("outputs", "$(buildDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.lib,.a)");
-    cStaticLibrary.append("command", "$(AR) rcs $(outputs) $(inputs)");
+    cStaticLibrary.append("input", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
+    cStaticLibrary.append("output", "$(buildDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.lib,.a)");
+    cStaticLibrary.append("command", "$(AR) rcs $(output) $(input)");
     cStaticLibrary.append("message", "Creating $(target)...");
     engine.addDefaultKey("cStaticLibrary", cStaticLibrary);
   }
@@ -76,8 +76,8 @@ bool Builder::build(const Map<String, String>& userArgs)
     Map<String, String> cppSource;
     cppSource.append("__ofile", "$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file)))");
     cppSource.append("__dfile", "$(patsubst %.o,%.d,$(__ofile))");
-    cppSource.append("inputs", "$(file) $(filter-out %.o: \\,$(readfile $(__dfile)))");
-    cppSource.append("outputs", "$(__ofile) $(__dfile)");
+    cppSource.append("input", "$(file) $(filter-out %.o: \\,$(readfile $(__dfile)))");
+    cppSource.append("output", "$(__ofile) $(__dfile)");
     cppSource.append("command", "$(CXX) -MMD $(__soFlags) -o $(__ofile) -c $(file) $(cppFlags) $(CXXFLAGS) $(patsubst %,-D%,$(defines)) $(patsubst %,-I%,$(includePaths))");
     cppSource.append("message", "$(file)");
     engine.addDefaultKey("cppSource", cppSource);
@@ -86,8 +86,8 @@ bool Builder::build(const Map<String, String>& userArgs)
     Map<String, String> cSource;
     cSource.append("__ofile", "$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file)))");
     cSource.append("__dfile", "$(patsubst %.o,%.d,$(__ofile))");
-    cSource.append("inputs", "$(file) $(filter-out %.o: \\,$(readfile $(__dfile)))");
-    cSource.append("outputs", "$(__ofile) $(__dfile)");
+    cSource.append("input", "$(file) $(filter-out %.o: \\,$(readfile $(__dfile)))");
+    cSource.append("output", "$(__ofile) $(__dfile)");
     cSource.append("command", "$(CC) -MMD $(__soFlags) -o $(__ofile) -c $(file) $(cFlags) $(CFLAGS) $(patsubst %,-D%,$(defines)) $(patsubst %,-I%,$(includePaths))");
     cSource.append("message", "$(file)");
     engine.addDefaultKey("cSource", cSource);
@@ -625,8 +625,8 @@ bool Builder::buildTargets(const String& platform, const String& configuration)
         engine.addDefaultKey("file", i->data);
         VERIFY(engine.enterKey(i->data));
         engine.getKeys("dependencies", rule.dependencies, false);
-        engine.getKeys("inputs", rule.inputs, false);
-        engine.getKeys("outputs", rule.outputs, false);
+        engine.getKeys("input", rule.inputs, false);
+        engine.getKeys("output", rule.outputs, false);
         engine.getText("command", rule.command, false);
         engine.getText("message", rule.message, false);
         engine.leaveKey(); // VERIFY(engine.enterKey(i->data));
@@ -642,8 +642,8 @@ bool Builder::buildTargets(const String& platform, const String& configuration)
     rule.name = i->data;
     target.rule = &rule;
     engine.getKeys("dependencies", rule.dependencies, false);
-    engine.getKeys("inputs", rule.inputs, false);
-    engine.getKeys("outputs", rule.outputs, false);
+    engine.getKeys("input", rule.inputs, false);
+    engine.getKeys("output", rule.outputs, false);
     engine.getText("command", rule.command, false);
     engine.getText("message", rule.message, false);
 
