@@ -130,21 +130,21 @@ bool Vcxproj::generate(const Map<String, String>& userArgs)
   {
     Map<String, String> cApplication;
     cApplication.append("command", "__Application");
-    cApplication.append("outputs", "$(buildDir)/$(target).exe");
+    cApplication.append("output", "$(buildDir)/$(target).exe");
     engine.addDefaultKey("cppApplication", cApplication);
     engine.addDefaultKey("cApplication", cApplication);
   }
   {
     Map<String, String> cDynamicLibrary;
     cDynamicLibrary.append("command", "__DynamicLibrary");
-    cDynamicLibrary.append("outputs", "$(buildDir)/$(patsubst lib%,%,$(target)).dll");
+    cDynamicLibrary.append("output", "$(buildDir)/$(patsubst lib%,%,$(target)).dll");
     engine.addDefaultKey("cppDynamicLibrary", cDynamicLibrary);
     engine.addDefaultKey("cDynamicLibrary", cDynamicLibrary);
   }
   {
     Map<String, String> cStaticLibrary;
     cStaticLibrary.append("command", "__StaticLibrary");
-    cStaticLibrary.append("outputs", "$(buildDir)/$(patsubst lib%,%,$(target)).lib");
+    cStaticLibrary.append("output", "$(buildDir)/$(patsubst lib%,%,$(target)).lib");
     engine.addDefaultKey("cppStaticLibrary", cStaticLibrary);
     engine.addDefaultKey("cStaticLibrary", cStaticLibrary);
   }
@@ -241,8 +241,8 @@ bool Vcxproj::readFile()
 
         engine.getText("message", projectConfig.message, false);
         engine.getText("command", projectConfig.command, false);
-        engine.getKeys("outputs", projectConfig.outputs, false);
-        engine.getKeys("inputs", projectConfig.inputs, false);
+        engine.getKeys("output", projectConfig.outputs, false);
+        engine.getKeys("input", projectConfig.inputs, false);
 
         projectConfig.type = "Utility";
         if(!projectConfig.command.isEmpty())
@@ -270,7 +270,7 @@ bool Vcxproj::readFile()
         engine.getKeys("linkFlags", linkFlags, true);
         for(const List<String>::Node* i = linkFlags.getFirst(); i; i = i->getNext())
           projectConfig.linkFlags.append(i->data, 0);
-        projectConfig.firstOutput = engine.getFirstKey("outputs", false);
+        projectConfig.firstOutput = engine.getFirstKey("output", false);
         engine.getKeys("defines", projectConfig.defines, true);
         engine.getKeys("includePaths", projectConfig.includePaths, true);
         engine.getKeys("libPaths", projectConfig.libPaths, true);
@@ -308,8 +308,8 @@ bool Vcxproj::readFile()
             {
               type = "CustomBuild";
               engine.getText("message", fileConfig.message, false);
-              engine.getKeys("outputs", fileConfig.outputs, false);
-              engine.getKeys("inputs", fileConfig.inputs, false);
+              engine.getKeys("output", fileConfig.outputs, false);
+              engine.getKeys("input", fileConfig.inputs, false);
             }
             if(!type.isEmpty())
             {
