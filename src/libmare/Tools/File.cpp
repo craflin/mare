@@ -177,7 +177,7 @@ String File::simplifyPath(const String& path)
   const char* start = data;
   const char* end;
   String chunck;
-  bool isAbsolut = *data == '/' || *data == '\\';
+  bool startsWithSlash = *data == '/' || *data == '\\';
   for(;;)
   {
     while(*start && (*start == '/' || *start == '\\'))
@@ -211,7 +211,7 @@ String File::simplifyPath(const String& path)
     else if(chunck == ".")
       goto cont;
 
-    if(!result.isEmpty() || isAbsolut)
+    if(!result.isEmpty() || startsWithSlash)
       result.append('/');
     result.append(chunck);
 
@@ -221,6 +221,12 @@ String File::simplifyPath(const String& path)
     start = end + 1;
   }
   return result;
+}
+
+bool File::isPathAbsolute(const String& path)
+{
+  const char* data = path.getData();
+  return *data == '/' || *data == '\\' || (path.getLength() > 2 && data[1] == ':' && (data[2] == '/' || data[2] == '\\'));
 }
 
 bool File::getWriteTime(const String& file, long long& writeTime)

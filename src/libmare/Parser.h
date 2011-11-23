@@ -21,6 +21,7 @@ private:
   Engine& engine;
   Engine::ErrorHandler errorHandler;
   void* errorHandlerUserData;
+  String filePath;
   File file;
 
   char readBuffer[2024];

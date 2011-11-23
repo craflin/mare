@@ -13,6 +13,7 @@ Statement* Parser::parse(const String& file, Engine::ErrorHandler errorHandler, 
 {
   this->errorHandler = errorHandler;
   this->errorHandlerUserData = userData;
+  this->filePath = file;
 
   try
   {
@@ -332,8 +333,16 @@ Statement* Parser::readStatement()
   else if(currentToken.id == Token::string && currentToken.value == "include")
   {
     nextToken();
+
     String fileName;
     readString(fileName);
+    if(!File::isPathAbsolute(fileName))
+    {
+      String parentDir = File::getDirname(filePath);
+      if(parentDir != ".")
+        fileName = parentDir + "/" + fileName;
+    }
+
     Parser parser(engine);
     Statement* statement = parser.parse(fileName, errorHandler, errorHandlerUserData);
     if(!statement)
