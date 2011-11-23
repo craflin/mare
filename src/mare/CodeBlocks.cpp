@@ -36,21 +36,21 @@ bool CodeBlocks::generate(const Map<String, String>& userArgs)
   {
     Map<String, String> cApplication;
     cApplication.append("command", "__Application");
-    cApplication.append("outputs", "$(buildDir)/$(target)$(if $(Win32),.exe)");
+    cApplication.append("output", "$(buildDir)/$(target)$(if $(Win32),.exe)");
     engine.addDefaultKey("cppApplication", cApplication);
     engine.addDefaultKey("cApplication", cApplication);
   }
   {
     Map<String, String> cDynamicLibrary;
     cDynamicLibrary.append("command", "__DynamicLibrary");
-    cDynamicLibrary.append("outputs", "$(buildDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.dll,.so)");
+    cDynamicLibrary.append("output", "$(buildDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.dll,.so)");
     engine.addDefaultKey("cppDynamicLibrary", cDynamicLibrary);
     engine.addDefaultKey("cDynamicLibrary", cDynamicLibrary);
   }
   {
     Map<String, String> cStaticLibrary;
     cStaticLibrary.append("command", "__StaticLibrary");
-    cStaticLibrary.append("outputs", "$(buildDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.lib,.a)");
+    cStaticLibrary.append("output", "$(buildDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.lib,.a)");
     engine.addDefaultKey("cppStaticLibrary", cStaticLibrary);
     engine.addDefaultKey("cStaticLibrary", cStaticLibrary);
   }
@@ -136,7 +136,7 @@ bool CodeBlocks::readFile()
         projectConfig.buildDir = engine.getFirstKey("buildDir", true);
 
         engine.getText("command", projectConfig.command, false);
-        projectConfig.firstOutput = engine.getFirstKey("outputs", false);
+        projectConfig.firstOutput = engine.getFirstKey("output", false);
 
         if(!projectConfig.command.isEmpty())
         {
@@ -167,7 +167,7 @@ bool CodeBlocks::readFile()
         engine.getKeys("linkFlags", linkFlags, true);
         for(const List<String>::Node* i = linkFlags.getFirst(); i; i = i->getNext())
           projectConfig.linkFlags.append(i->data, 0);
-        projectConfig.firstOutput = engine.getFirstKey("outputs", false);
+        projectConfig.firstOutput = engine.getFirstKey("output", false);
         engine.getKeys("defines", projectConfig.defines, true);
         engine.getKeys("includePaths", projectConfig.includePaths, true);
         engine.getKeys("libPaths", projectConfig.libPaths, true);
