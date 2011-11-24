@@ -448,6 +448,16 @@ public:
           }
           outputToRule.append(i->data, &rule);
         }
+      }
+
+    // map input files to rules
+    for(List<Target*>::Node* i = activeTargets.getFirst(); i; i = i->getNext())
+      for(List<Rule>::Node* j = i->data->rules.getFirst(); j; j = j->getNext())
+      {
+        Rule& rule = j->data;
+        ++activeRules;
+
+        // convert "dependencies" to additional input files
         for(List<String>::Node* i = rule.dependencies.getFirst(); i; i = i->getNext())
         {
           Map<String, Target>::Node* node = targets.find(i->data);
@@ -458,15 +468,16 @@ public:
           }
           for(List<String>::Node* j = node->data.rule->outputs.getFirst(); j; j = j->getNext())
             rule.inputs.append(j->data);
-        }
-      }
 
-    // map input files to rules
-    for(List<Target*>::Node* i = activeTargets.getFirst(); i; i = i->getNext())
-      for(List<Rule>::Node* j = i->data->rules.getFirst(); j; j = j->getNext())
-      {
-        Rule& rule = j->data;
-        ++activeRules;
+          // activate dependency
+          if(!node->data.active)
+          {
+            node->data.active = true;
+            activeTargets.append(&node->data);
+          }
+        }
+
+        //
         for(List<String>::Node* i = rule.inputs.getFirst(); i; i = i->getNext())
         {
           Rule* dependency = outputToRule.lookup(i->data);
@@ -624,7 +635,8 @@ bool Builder::buildTargets(const String& platform, const String& configuration)
         engine.enterUnnamedKey();
         engine.addDefaultKey("file", i->data);
         VERIFY(engine.enterKey(i->data));
-        engine.getKeys("dependencies", rule.dependencies, false);
+        if(!ignoreDependencies)
+          engine.getKeys("dependencies", rule.dependencies, false);
         engine.getKeys("input", rule.inputs, false);
         engine.getKeys("output", rule.outputs, false);
         engine.getText("command", rule.command, false);
@@ -641,7 +653,8 @@ bool Builder::buildTargets(const String& platform, const String& configuration)
     rule.target = &target;
     rule.name = i->data;
     target.rule = &rule;
-    engine.getKeys("dependencies", rule.dependencies, false);
+    if(!ignoreDependencies)
+      engine.getKeys("dependencies", rule.dependencies, false);
     engine.getKeys("input", rule.inputs, false);
     engine.getKeys("output", rule.outputs, false);
     engine.getText("command", rule.command, false);

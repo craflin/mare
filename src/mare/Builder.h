@@ -12,8 +12,8 @@ class Builder
 {
 public:
 
-  Builder(Engine& engine, List<String>& inputPlatforms, List<String>& inputConfigs, List<String>& inputTargets, bool showDebug, bool clean, bool rebuild, int jobs) :
-    engine(engine), showDebug(showDebug), clean(clean), rebuild(rebuild), jobs(jobs), inputPlatforms(inputPlatforms), inputConfigs(inputConfigs), inputTargets(inputTargets) {}
+  Builder(Engine& engine, List<String>& inputPlatforms, List<String>& inputConfigs, List<String>& inputTargets, bool showDebug, bool clean, bool rebuild, int jobs, bool ignoreDependencies) :
+    engine(engine), showDebug(showDebug), clean(clean), rebuild(rebuild), jobs(jobs), ignoreDependencies(ignoreDependencies), inputPlatforms(inputPlatforms), inputConfigs(inputConfigs), inputTargets(inputTargets) {}
 
   bool build(const Map<String, String>& userArgs);
 
@@ -25,6 +25,7 @@ private:
   bool clean;
   bool rebuild;
   int jobs;
+  bool ignoreDependencies;
 
   List<String>& inputPlatforms;
   List<String>& inputConfigs;

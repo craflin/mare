@@ -98,8 +98,11 @@ static void showUsage(const char* executable)
   puts("        Use <jobs> processes in parallel for building alle targets. The default");
   puts("        value for <jobs> is the number of processors on the host system.");
   puts("");
+  puts("    --ignore-dependencies");
+  puts("        Do not respect dependencies between build targets.");
+  puts("");
   puts("    -h, --help");
-  puts("        Display this help message.");
+  puts("        Display this help message or a help message declared in the marefile.");
   puts("");
   puts("    -v, --version");
   puts("        Display version information.");
@@ -123,6 +126,7 @@ int main(int argc, char* argv[])
   bool showDebug = false;
   bool clean = false;
   bool rebuild = false;
+  bool ignoreDependencies = false;
   int jobs = 0;
   int generateVcxproj = 0;
 
@@ -136,6 +140,7 @@ int main(int argc, char* argv[])
       {"directory", required_argument , 0, 'C'},
       {"clean", no_argument , 0, 0},
       {"rebuild", no_argument , 0, 0},
+      {"ignore-dependencies", no_argument , 0, 0},
       {"vcxproj", optional_argument , 0, 0},
       {0, 0, 0, 0}
     };
@@ -201,6 +206,8 @@ int main(int argc, char* argv[])
             clean = true;
           else if(opt == "rebuild")
             rebuild = true;
+          else if(opt == "ignore-dependencies")
+            ignoreDependencies = true;
         }
         break;
       case 'C':
@@ -303,7 +310,7 @@ int main(int argc, char* argv[])
 
     // direct build
     {
-      Builder builder(engine, inputPlatforms, inputConfigs, inputTargets, showDebug, clean, rebuild, jobs);
+      Builder builder(engine, inputPlatforms, inputConfigs, inputTargets, showDebug, clean, rebuild, jobs, ignoreDependencies);
       if(!builder.build(userArgs))
         return EXIT_FAILURE;
       return EXIT_SUCCESS;
