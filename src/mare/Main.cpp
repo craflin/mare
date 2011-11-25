@@ -67,8 +67,8 @@ static void showUsage(const char* executable)
   puts("        <version> can be set to 2010 or 2012.");
   puts("");
   puts("    --codelite");
-  puts("        Generate a .workspace and .project files for CodeLite from the");
-  puts("        marefile.");
+  puts("        Try to translate the marefile into a .workspace and .project files for");
+  puts("        CodeLite. (experimental)");
   puts("");
   puts("    --codeblocks");
   puts("        Try to translate the marefile into a .workspace and .cbp files for");
