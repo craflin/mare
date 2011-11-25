@@ -70,6 +70,10 @@ static void showUsage(const char* executable)
   puts("        Generate a .workspace and .project files for CodeLite from the");
   puts("        marefile.");
   puts("");
+  puts("    --codeblocks");
+  puts("        Try to translate the marefile into a .workspace and .cbp files for");
+  puts("        Code::Blocks. (experimental)");
+  puts("");
   puts("    config=<config>, --config=<config>");
   puts("        Build using configuration <config> as declared in the marefile (Debug");
   puts("        and Release by default). Multiple configurations can be used by adding");
