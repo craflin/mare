@@ -16,6 +16,7 @@
     <ClCompile Include="..\src\mare\CodeLite.cpp" />
     <ClCompile Include="..\src\mare\Main.cpp" />
     <ClCompile Include="..\src\mare\Mare.cpp" />
+    <ClCompile Include="..\src\mare\Make.cpp" />
     <ClCompile Include="..\src\mare\Tools\md5.cpp" />
     <ClCompile Include="..\src\mare\Tools\Win32\getopt.cpp" />
     <ClCompile Include="..\src\mare\Vcxproj.cpp" />
@@ -30,6 +31,7 @@
     <ClInclude Include="..\src\mare\CMake.h" />
     <ClInclude Include="..\src\mare\CodeBlocks.h" />
     <ClInclude Include="..\src\mare\CodeLite.h" />
+    <ClInclude Include="..\src\mare\Make.h" />
     <ClInclude Include="..\src\mare\Tools\md5.h" />
     <ClInclude Include="..\src\mare\Tools\Win32\getopt.h" />
     <ClInclude Include="..\src\mare\Vcxproj.h" />

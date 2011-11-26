@@ -15,6 +15,7 @@
 #endif
 
 #include "Mare.h"
+#include "Make.h"
 #include "Vcxproj.h"
 #include "CodeLite.h"
 #include "CodeBlocks.h"
@@ -65,6 +66,9 @@ static void showUsage(const char* executable)
   puts("    --vcxproj[=<version>]");
   puts("        Convert the marefile into a .sln and .vcxproj files for Visual Studio.");
   puts("        <version> can be set to 2010 or 2012.");
+  puts("");
+  puts("    --make");
+  puts("        Try to translate the marefile into a Makefile. (experimental)");
   puts("");
   puts("    --codelite");
   puts("        Try to translate the marefile into a .workspace and .project files for");
@@ -143,6 +147,7 @@ int main(int argc, char* argv[])
   bool rebuild = false;
   bool ignoreDependencies = false;
   int jobs = 0;
+  bool generateMake = false;
   int generateVcxproj = 0;
   bool generateCodeLite = false;
   bool generateCodeBlocks = false;
@@ -159,6 +164,7 @@ int main(int argc, char* argv[])
       {"clean", no_argument , 0, 0},
       {"rebuild", no_argument , 0, 0},
       {"ignore-dependencies", no_argument , 0, 0},
+      {"make", no_argument , 0, 0},
       {"vcxproj", optional_argument , 0, 0},
       {"codelite", no_argument , 0, 0},
       {"codeblocks", no_argument , 0, 0},
@@ -216,7 +222,9 @@ int main(int argc, char* argv[])
       case 0:
         {
           String opt(long_options[option_index].name, -1);
-          if(opt == "vcxproj")
+          if(opt == "make")
+            generateMake = true;
+          else if(opt == "vcxproj")
           {
             generateVcxproj = 2010;
             if(optarg)
@@ -330,6 +338,15 @@ int main(int argc, char* argv[])
       }
       else
         showUsage(argv[0]);
+    }
+
+    // generate Makefile mode?
+    if(generateMake)
+    {
+      Make make(engine);
+      if(!make.generate(userArgs))
+        return EXIT_FAILURE;
+      return EXIT_SUCCESS;
     }
 
     // generate vcxproj mode?
