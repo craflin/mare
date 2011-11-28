@@ -1,6 +1,7 @@
 
 #include <cstdlib>
 #include <cstdio>
+#include <cstring>
 
 #include "Engine.h"
 #include "Tools/Assert.h"
@@ -32,72 +33,50 @@ bool Make::generate(const Map<String, String>& userArgs)
   engine.addDefaultKey("targets"); // an empty target list exists per default
   engine.addDefaultKey("buildDir", "$(configuration)");
   {
-    Map<String, String> cppApplication;
-    cppApplication.append("input", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
-    cppApplication.append("output", "$(buildDir)/$(target)$(if $(Win32),.exe)");
-    cppApplication.append("command", "$(CXX) -o $(output) $(input) $(linkFlags) $(LDFLAGS) $(patsubst %,-L%,$(libPaths)) $(patsubst %,-l%,$(libs))");
-    cppApplication.append("message", "Linking $(target)...");
-    engine.addDefaultKey("cppApplication", cppApplication);
-  }
-  {
-    Map<String, String> cppDynamicLibrary;
-    cppDynamicLibrary.append("input", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
-    cppDynamicLibrary.append("output", "$(buildDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.dll,.so)");
-    cppDynamicLibrary.append("__soFlags", "$(if $(Win32),,-fpic)");
-    cppDynamicLibrary.append("command", "$(CXX) -shared $(__soFlags) -o $(output) $(input) $(linkFlags) $(LDFLAGS) $(patsubst %,-L%,$(libPaths)) $(patsubst %,-l%,$(libs))");
-    cppDynamicLibrary.append("message", "Linking $(target)...");
-    engine.addDefaultKey("cppDynamicLibrary", cppDynamicLibrary);
-  }
-  {
-    Map<String, String> cppStaticLibrary;
-    cppStaticLibrary.append("input", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
-    cppStaticLibrary.append("output", "$(buildDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.lib,.a)");
-    cppStaticLibrary.append("command", "$(AR) rcs $(output) $(input)");
-    cppStaticLibrary.append("message", "Creating $(target)...");
-    engine.addDefaultKey("cppStaticLibrary", cppStaticLibrary);
-  }
-  {
-    Map<String, String> cApplication;
-    cApplication.append("input", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
-    cApplication.append("output", "$(buildDir)/$(target)$(if $(Win32),.exe)");
-    cApplication.append("command", "$(CC) -o $(output) $(input) $(linkFlags) $(LDFLAGS) $(patsubst %,-L%,$(libPaths)) $(patsubst %,-l%,$(libs))");
-    cApplication.append("message", "Linking $(target)...");
-    engine.addDefaultKey("cApplication", cApplication);
-  }
-  {
-    Map<String, String> cDynamicLibrary;
-    cDynamicLibrary.append("input", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
-    cDynamicLibrary.append("output", "$(buildDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.dll,.so)");
-    cDynamicLibrary.append("__soFlags", "$(if $(Win32),,-fpic)");
-    cDynamicLibrary.append("command", "$(CC) -shared $(__soFlags) -o $(output) $(input) $(linkFlags) $(LDFLAGS) $(patsubst %,-L%,$(libPaths)) $(patsubst %,-l%,$(libs))");
-    cDynamicLibrary.append("message", "Linking $(target)...");
-    engine.addDefaultKey("cDynamicLibrary", cDynamicLibrary);
-  }
-  {
-    Map<String, String> cStaticLibrary;
-    cStaticLibrary.append("input", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
-    cStaticLibrary.append("output", "$(buildDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.lib,.a)");
-    cStaticLibrary.append("command", "$(AR) rcs $(output) $(input)");
-    cStaticLibrary.append("message", "Creating $(target)...");
-    engine.addDefaultKey("cStaticLibrary", cStaticLibrary);
+    Map<String, String> cSource;
+    cSource.append("command", "__cSource");
+    engine.addDefaultKey("cSource", cSource);
   }
   {
     Map<String, String> cppSource;
-    cppSource.append("__ofile", "$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file)))");
-    cppSource.append("input", "$(file)");
-    cppSource.append("output", "$(__ofile)");
-    cppSource.append("command", "$(CXX) -MMD $(__soFlags) -o $(__ofile) -c $(file) $(cppFlags) $(CXXFLAGS) $(patsubst %,-D%,$(defines)) $(patsubst %,-I%,$(includePaths))");
-    cppSource.append("message", "$(file)");
+    cppSource.append("command", "__cppSource");
     engine.addDefaultKey("cppSource", cppSource);
   }
   {
-    Map<String, String> cSource;
-    cSource.append("__ofile", "$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file)))");
-    cSource.append("input", "$(file)");
-    cSource.append("output", "$(__ofile)");
-    cSource.append("command", "$(CC) -MMD $(__soFlags) -o $(__ofile) -c $(file) $(cFlags) $(CFLAGS) $(patsubst %,-D%,$(defines)) $(patsubst %,-I%,$(includePaths))");
-    cSource.append("message", "$(file)");
-    engine.addDefaultKey("cSource", cSource);
+    Map<String, String> cApplication;
+    cApplication.append("command", "__cApplication");
+    cApplication.append("output", "$(buildDir)/$(target)$(if $(Win32),.exe)");
+    engine.addDefaultKey("cApplication", cApplication);
+  }
+  {
+    Map<String, String> cppApplication;
+    cppApplication.append("command", "__cppApplication");
+    cppApplication.append("output", "$(buildDir)/$(target)$(if $(Win32),.exe)");
+    engine.addDefaultKey("cppApplication", cppApplication);
+  }
+  {
+    Map<String, String> cDynamicLibrary;
+    cDynamicLibrary.append("command", "__cDynamicLibrary");
+    cDynamicLibrary.append("output", "$(buildDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.dll,.so)");
+    engine.addDefaultKey("cDynamicLibrary", cDynamicLibrary);
+  }
+  {
+    Map<String, String> cppDynamicLibrary;
+    cppDynamicLibrary.append("command", "__cppDynamicLibrary");
+    cppDynamicLibrary.append("output", "$(buildDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.dll,.so)");
+    engine.addDefaultKey("cppDynamicLibrary", cppDynamicLibrary);
+  }
+  {
+    Map<String, String> cStaticLibrary;
+    cStaticLibrary.append("command", "__cStaticLibrary");
+    cStaticLibrary.append("output", "$(buildDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.lib,.a)");
+    engine.addDefaultKey("cStaticLibrary", cStaticLibrary);
+  }
+  {
+    Map<String, String> cppStaticLibrary;
+    cppStaticLibrary.append("command", "__cppStaticLibrary");
+    cppStaticLibrary.append("output", "$(buildDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.lib,.a)");
+    engine.addDefaultKey("cppStaticLibrary", cppStaticLibrary);
   }
 
   // add user arguments
@@ -115,6 +94,15 @@ bool Make::generate(const Map<String, String>& userArgs)
   // step #3: generate output files
   if(!generateMakefile())
     return false;
+  for(const List<Platform>::Node* k = platforms.getFirst(); k; k = k->getNext())
+    for(const List<Platform::Config>::Node* j = k->data.configs.getFirst(); j; j = j->getNext())
+      for(const List<Platform::Config::Target>::Node* i = j->data.targets.getFirst(); i; i = i->getNext())
+      {
+        const Platform::Config::Target& target = i->data;
+        if(!target.files.isEmpty() || !target.command.isEmpty() || !target.output.isEmpty() || !target.type.isEmpty())
+          if(!generateTargetMakefile(k->data, j->data, target))
+            return false;
+      }
 
   return true;
 }
@@ -165,13 +153,15 @@ bool Make::readFile()
         engine.getKeys("output", target.output, false);
         engine.getKeys("input", target.input, false);
 
+        target.buildDir = engine.getFirstKey("buildDir", true);
+
         if(engine.enterKey("files"))
         {
           List<String> files;
           engine.getKeys(files);
           for(const List<String>::Node* i = files.getFirst(); i; i = i->getNext())
           {
-            Platform::Config::Target::File& file = target.files.append();
+            Platform::Config::Target::File& file = target.files.append(Platform::Config::Target::File(i->data));
 
             engine.enterUnnamedKey();
             engine.addDefaultKey("file", i->data);
@@ -205,28 +195,71 @@ bool Make::processData()
 {
   for(List<Platform>::Node* k = platforms.getLast(); k; k = k->getPrevious())
     for(List<Platform::Config>::Node* j = k->data.configs.getLast(); j; j = j->getPrevious())
-    {
-      Platform::Config& config = j->data;
-      for(List<Platform::Config::Target>::Node* i = config.targets.getFirst(); i; i = i->getNext())
+      for(List<Platform::Config::Target>::Node* i = j->data.targets.getFirst(); i; i = i->getNext())
       {
-        const Platform::Config::Target& target = i->data;
+        Platform::Config::Target& target = i->data;
+        String firstCommand;
+        if(!target.command.isEmpty())
+          firstCommand = target.command.getFirst()->data;
+
+        if(firstCommand  == "__cApplication" || firstCommand  == "__cppApplication" || 
+           firstCommand  == "__cDynamicLibrary" || firstCommand  == "__cppDynamicLibrary" ||
+           firstCommand  == "__cStaticLibrary" || firstCommand  == "__cppStaticLibrary")
+        {
+          target.type = firstCommand;
+          target.command.clear();
+          target.input.clear();
+          String linker = !strncmp(firstCommand.getData(), "__cpp", 5) ? String("$(CXX)") : String("$(CC)");
+          if(firstCommand  == "__cApplication" || firstCommand  == "__cppApplication")
+            target.command.append(linker + " -o $@ $(__OBJECTS) $(__LINKFLAGS) $(LDFLAGS) $(__LIBPATHS) $(__LIBS)");
+          else if(firstCommand  == "__cDynamicLibrary" || firstCommand  == "__cppDynamicLibrary")
+            target.command.append(linker + " -shared $(__SOFLAGS) -o $@ $(__OBJECTS) $(__LINKFLAGS) $(LDFLAGS) $(__LIBPATHS) $(__LIBS)");
+          else if(firstCommand  == "__cStaticLibrary" || firstCommand  == "__cppStaticLibrary")
+            target.command.append("$(AR) rcs $@ $(__OBJECTS)");
+          target.input.append("$(__OBJECTS)");
+        }
 
         for(const List<String>::Node* i = target.output.getFirst(); i; i = i->getNext())
         {
           String outputDir = File::getDirname(i->data);
-          if(outputDir != "." && !config.outputDirs.find(outputDir))
-            config.outputDirs.append(outputDir);
+          if(outputDir != "." && !target.outputDirs.find(outputDir))
+            target.outputDirs.append(outputDir);
         }
 
-        for(const List<Platform::Config::Target::File>::Node* j = target.files.getFirst(); j; j = j->getNext())
-          for(const List<String>::Node* i = j->data.output.getFirst(); i; i = i->getNext())
+        for(List<Platform::Config::Target::File>::Node* j = target.files.getFirst(); j; j = j->getNext())
+        {
+          Platform::Config::Target::File& file = j->data;
+          String firstCommand;
+          if(!file.command.isEmpty())
+            firstCommand = file.command.getFirst()->data;
+
+          if(firstCommand  == "__cSource" || firstCommand  == "__cppSource")
+          {
+            file.type = firstCommand;
+            file.command.clear();
+            file.output.clear();
+            file.input.clear();
+            String fileName = file.name;
+            fileName.subst("../", "");
+            fileName = target.buildDir + "/" + File::getWithoutExtension(fileName) + ".o";
+            file.output.append(fileName);
+            target.objects.append(fileName);
+            file.input.append(file.name);
+            String compiler = firstCommand  == "__cppSource" ? String("$(CXX)") : String("$(CC)");
+            file.command.append(compiler + " -MMD $(__SOFLAGS) -o $@ -c $< $(__CPPFLAGS) $(CXXFLAGS) $(__DEFINES) $(__INCLUDEPATHS)");
+          }
+
+          for(const List<String>::Node* i = file.output.getFirst(); i; i = i->getNext())
           {
             String outputDir = File::getDirname(i->data);
-            if(outputDir != "." && !config.outputDirs.find(outputDir))
-              config.outputDirs.append(outputDir);
+            if(outputDir != "." && !target.outputDirs.find(outputDir))
+              target.outputDirs.append(outputDir);
           }
+
+          for(const List<String>::Node* i = file.dependencies.getFirst(); i; i = i->getNext())
+            target.dependencies.append(i->data);
+        }
       }
-    }
   return true;
 }
 
@@ -236,6 +269,18 @@ bool Make::generateMakefile()
   fileWrite("\n");
 
   fileWrite(".SUFFIXES:\n"); // disable some built-in rules
+
+  String phony;
+  for(List<Platform>::Node* k = platforms.getFirst(); k; k = 0)
+    for(List<Platform::Config>::Node* j = k->data.configs.getFirst(); j; j = 0)
+      for(List<Platform::Config::Target>::Node* i = j->data.targets.getFirst(); i; i = i->getNext())
+      {
+        if(!phony.isEmpty())
+          phony.append(' ');
+        phony.append(i->data.name);
+      }
+  fileWrite(String(".PHONY: ") + phony + "\n"); // disable some built-in rules
+
   fileWrite("\n");
 
   if(platforms.getSize() == 1)
@@ -263,7 +308,7 @@ bool Make::generateMakefile()
 void Make::generateMakefilePlatform(Platform& platform)
 {
   if(platform.configs.getSize() == 1)
-    generateMakefileConfig(platform.configs.getFirst()->data);
+    generateMakefileConfig(platform, platform.configs.getFirst()->data);
   else if(platform.configs.getSize() > 1)
   {
     for(List<Platform::Config>::Node* j = platform.configs.getLast(); j; j = j->getPrevious())
@@ -274,64 +319,130 @@ void Make::generateMakefilePlatform(Platform& platform)
       else 
         fileWrite(String("else ifeq ($(config),") + config.name + ")\n");
       fileWrite("\n");
-      generateMakefileConfig(config);
+      generateMakefileConfig(platform, config);
     }
     fileWrite("endif\n");
     fileWrite("\n");
   }
 }
 
-void Make::generateMakefileConfig(Platform::Config& config)
+void Make::generateMakefileConfig(const Platform& platform, const Platform::Config& config)
 {
   for(const List<Platform::Config::Target>::Node* i = config.targets.getFirst(); i; i = i->getNext())
   {
     const Platform::Config::Target& target = i->data;
 
-    if(target.output.isEmpty() || target.name != target.output.getFirst()->data)
+    fileWrite(target.name + ": " + join(target.dependencies) + "\n");
+    if(!target.files.isEmpty() || !target.command.isEmpty() || !target.output.isEmpty() || !target.type.isEmpty())
+      fileWrite(String("\t@$(MAKE) -r -f ") + target.name + "-" + platform.name + "-" + config.name + ".make\n");
+    fileWrite("\n");
+  }
+}
+
+bool Make::generateTargetMakefile(const Platform& platform, const Platform::Config& config, const Platform::Config::Target& target)
+{
+  fileOpen(target.name + "-" + platform.name + "-" + config.name + ".make");
+  fileWrite("\n");
+
+  fileWrite(".SUFFIXES:\n"); // disable some built-in rules
+
+  if(target.output.isEmpty() || target.name != target.output.getFirst()->data)
+  {
+    fileWrite(String(".PHONY: ") + target.name + "\n");
+    fileWrite("\n");
+    if(target.output.isEmpty())
+      fileWrite(target.name + ": ;\n");
+    else
+      fileWrite(target.name + ": " + target.output.getFirst()->data + "\n");
+  }
+  fileWrite("\n");
+
+  for(const Map<String, void*>::Node* i = target.outputDirs.getFirst(); i; i = i->getNext())
+  {
+    fileWrite(i->key + ":\n");
+    fileWrite("\t@mkdir -p $@\n");
+    fileWrite("\n");
+  }
+
+  if(!target.output.isEmpty())
+  {
+    const String& outputFile = target.output.getFirst()->data;
+
+    String reqDirs;
+    for(const List<String>::Node* i = target.output.getFirst(); i; i = i->getNext())
     {
-      fileWrite(String(".PHONY: ") + target.name + "\n");
-      if(target.output.isEmpty())
-        fileWrite(target.name + ": " + join(target.dependencies) + "\n");
-      else
-        fileWrite(target.name + ": " + target.output.getFirst()->data + " " + join(target.dependencies) + "\n");
-      fileWrite("\n");
-    }
-
-    if(!target.output.isEmpty())
-    {
-      const String& outputFile = target.output.getFirst()->data;
-      fileWrite(outputFile + ": " + join(target.input) + " " + join(target.dependencies) + " | \n");
-      bool hasMessage = !target.message.isEmpty();
-      if(hasMessage)
-        fileWrite(joinCommands("\t@echo \"", "\"\n", target.message));
-      if(!target.command.isEmpty())
-        fileWrite(joinCommands(hasMessage ? String("\t@") : String("\t"), "\n", target.command));
-      fileWrite("\n");
-
-      for(const List<String>::Node* i = target.output.getFirst()->getNext(); i; i = i->getNext())
-        fileWrite(i->data + ": " + outputFile + "\n");
-    }
-
-    for(const List<Platform::Config::Target::File>::Node* i = target.files.getFirst(); i; i = i->getNext())
-    {
-      const Platform::Config::Target::File& file = i->data;
-
-      if(!file.output.isEmpty())
+      String dir = File::getDirname(i->data);
+      if(dir != ".")
       {
-        const String& outputFile = file.output.getFirst()->data;
-        fileWrite(outputFile + ": " + join(file.input) + " " + join(file.dependencies) + " | \n");
-        bool hasMessage = !file.message.isEmpty();
-        if(hasMessage)
-          fileWrite(joinCommands("\t@echo \"", "\"\n", file.message));
-        if(!file.command.isEmpty())
-          fileWrite(joinCommands(hasMessage ? String("\t@") : String("\t"), "\n", file.command));
-        fileWrite("\n");
-
-        for(const List<String>::Node* i = file.output.getFirst()->getNext(); i; i = i->getNext())
-          fileWrite(i->data + ": " + outputFile + "\n");
+        if(!reqDirs.isEmpty())
+          reqDirs.append(' ');
+        reqDirs.append(dir);
       }
     }
+
+    fileWrite(outputFile + ": " + join(target.input) + " | " + reqDirs + "\n");
+    bool hasMessage = !target.message.isEmpty();
+    if(hasMessage)
+      fileWrite(joinCommands("\t@echo \"", "\"\n", target.message));
+    if(!target.command.isEmpty())
+      fileWrite(joinCommands(hasMessage ? String("\t@") : String("\t"), "\n", target.command));
+    fileWrite("\n");
+
+    for(const List<String>::Node* i = target.output.getFirst()->getNext(); i; i = i->getNext())
+      fileWrite(i->data + ": " + outputFile + "\n");
   }
+
+  for(const List<Platform::Config::Target::File>::Node* i = target.files.getFirst(); i; i = i->getNext())
+  {
+    const Platform::Config::Target::File& file = i->data;
+
+    if(!file.output.isEmpty())
+    {
+      const String& outputFile = file.output.getFirst()->data;
+
+      String reqDirs;
+      for(const List<String>::Node* i = file.output.getFirst(); i; i = i->getNext())
+      {
+        String dir = File::getDirname(i->data);
+        if(dir != ".")
+        {
+          if(!reqDirs.isEmpty())
+            reqDirs.append(' ');
+          reqDirs.append(dir);
+        }
+      }
+
+      fileWrite(outputFile + ": " + join(file.input) + " | " + reqDirs + "\n");
+      bool hasMessage = !file.message.isEmpty();
+      if(hasMessage)
+        fileWrite(joinCommands("\t@echo \"", "\"\n", file.message));
+      if(!file.command.isEmpty())
+        fileWrite(joinCommands(hasMessage ? String("\t@") : String("\t"), "\n", file.command));
+      fileWrite("\n");
+
+      for(const List<String>::Node* i = file.output.getFirst()->getNext(); i; i = i->getNext())
+        fileWrite(i->data + ": " + outputFile + "\n");
+    }
+  }
+
+  if(!target.objects.isEmpty())
+  {
+    fileWrite("-include $(__OBJECTS:%.o=%.d)\n");
+    fileWrite("\n");
+
+    fileWrite("%.h: ;\n");
+    fileWrite("%.hh: ;\n");
+    fileWrite("%.hxx: ;\n");
+    fileWrite("%.hpp: ;\n");
+    fileWrite("%.c: ;\n");
+    fileWrite("%.cc: ;\n");
+    fileWrite("%.cxx: ;\n");
+    fileWrite("%.cpp: ;\n");
+    fileWrite("%.d: ;\n");
+  }
+
+  fileClose();
+  return true;
 }
 
 void Make::fileOpen(const String& name)

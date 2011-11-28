@@ -30,29 +30,38 @@ private:
         class File
         {
         public:
+
+          String name;
+          String type;
           List<String> output;
           List<String> input;
           List<String> command;
           List<String> message;
           List<String> dependencies;
+
+          File(const String& name) : name(name) {}
         };
 
         Target(const String& name) : name(name) {}
 
         String name;
+        String type;
         List<File> files;
         List<String> output;
         List<String> input;
         List<String> command;
         List<String> message;
         List<String> dependencies;
+        String buildDir;
+
+        Map<String, void*> outputDirs;
+        List<String> objects;
       };
 
       Config(const String& name) : name(name) {}
 
       String name;
       List<Target> targets;
-      Map<String, void*> outputDirs;
     };
 
     Platform(const String& name) : name(name) {}
@@ -74,7 +83,8 @@ private:
 
   bool generateMakefile();
   void generateMakefilePlatform(Platform& platform);
-  void generateMakefileConfig(Platform::Config& config);
+  void generateMakefileConfig(const Platform& platform, const Platform::Config& config);
+  bool generateTargetMakefile(const Platform& platform, const Platform::Config& config, const Platform::Config::Target& target);
 
   void fileOpen(const String& name);
   void fileWrite(const String& data);
