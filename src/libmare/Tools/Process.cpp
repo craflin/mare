@@ -414,7 +414,7 @@ success:
     if(execv(programPath.getData(), (char* const*)argv) == -1)
     {
       fprintf(stderr, "%s: %s\n", Error::program, Error::getString().getData());
-      exit(EXIT_FAILURE);
+      _exit(EXIT_FAILURE);
     }
     ASSERT(false); // unreachable
     return 0;
