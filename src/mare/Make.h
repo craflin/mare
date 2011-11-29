@@ -91,9 +91,10 @@ private:
 
   bool processData();
 
-  bool generateMakefile();
-  void generateMakefilePlatform(Platform& platform);
-  void generateMakefileConfig(const Platform& platform, const Platform::Config& config);
+  bool generateMetaMakefile();
+  void generateMetaMakefilePlatform(Platform& platform);
+  void generateMetaMakefileConfig(const Platform& platform, const Platform::Config& config);
+  bool generateMakefile(const Platform& platform, const Platform::Config& config);
   bool generateTargetMakefile(const Platform& platform, const Platform::Config& config, const Platform::Config::Target& target);
 
   void fileOpen(const String& name);

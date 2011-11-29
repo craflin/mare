@@ -97,8 +97,12 @@ bool Make::generate(const Map<String, String>& userArgs)
     return false;
 
   // step #3: generate output files
-  if(!generateMakefile())
+  if(!generateMetaMakefile())
     return false;
+  for(const List<Platform>::Node* k = platforms.getFirst(); k; k = k->getNext())
+    for(const List<Platform::Config>::Node* j = k->data.configs.getFirst(); j; j = j->getNext())
+      if(!generateMakefile(k->data, j->data))
+        return false;
   for(const List<Platform>::Node* k = platforms.getFirst(); k; k = k->getNext())
     for(const List<Platform::Config>::Node* j = k->data.configs.getFirst(); j; j = j->getNext())
       for(const List<Platform::Config::Target>::Node* i = j->data.targets.getFirst(); i; i = i->getNext())
@@ -290,9 +294,67 @@ bool Make::processData()
   return true;
 }
 
-bool Make::generateMakefile()
+bool Make::generateMetaMakefile()
 {
   fileOpen("Makefile");
+  fileWrite("\n");
+
+  if(platforms.getSize() == 1)
+    generateMetaMakefilePlatform(platforms.getFirst()->data);
+  else if(platforms.getSize() > 1)
+  {
+    for(List<Platform>::Node* j = platforms.getLast(); j; j = j->getPrevious())
+    {
+      Platform& platform = j->data;
+      if(j == platforms.getLast())
+        fileWrite(String("ifeq ($(platform),") + platform.name + ")\n");
+      else if(j == platforms.getFirst())
+        fileWrite(String("else\n"));
+      else 
+        fileWrite(String("else ifeq ($(platform),") + platform.name + ")\n");
+      fileWrite("\n");
+      generateMetaMakefilePlatform(platform);
+    }
+    fileWrite("endif\n");
+  }
+
+  fileWrite("\n");
+  fileClose();
+  return true;
+}
+
+void Make::generateMetaMakefilePlatform(Platform& platform)
+{
+  if(platform.configs.getSize() == 1)
+    generateMetaMakefileConfig(platform, platform.configs.getFirst()->data);
+  else if(platform.configs.getSize() > 1)
+  {
+    for(List<Platform::Config>::Node* j = platform.configs.getLast(); j; j = j->getPrevious())
+    {
+      Platform::Config& config = j->data;
+      if(j == platform.configs.getLast())
+        fileWrite(String("ifeq ($(config),") + config.name + ")\n");
+      else if(j == platform.configs.getFirst())
+        fileWrite(String("else\n"));
+      else
+        fileWrite(String("else ifeq ($(config),") + config.name + ")\n");
+      fileWrite("\n");
+      generateMetaMakefileConfig(platform, config);
+    }
+    fileWrite("endif\n");
+    fileWrite("\n");
+  }
+}
+
+void Make::generateMetaMakefileConfig(const Platform& platform, const Platform::Config& config)
+{
+  fileWrite(String("include Makefile-") + platform.name + "-" + config.name + "\n");
+  fileWrite("\n");
+}
+
+bool Make::generateMakefile(const Platform& platform, const Platform::Config& config)
+{
+  fileOpen(String("Makefile-") + platform.name + "-" + config.name);
   fileWrite("\n");
 
   fileWrite(".SUFFIXES:\n"); // disable some built-in rules
@@ -306,59 +368,9 @@ bool Make::generateMakefile()
           phony.append(' ');
         phony.append(i->data.name);
       }
-  fileWrite(String(".PHONY: ") + phony + "\n"); // disable some built-in rules
-
+  fileWrite(String(".PHONY: ") + phony + "\n");
   fileWrite("\n");
 
-  if(platforms.getSize() == 1)
-    generateMakefilePlatform(platforms.getFirst()->data);
-  else if(platforms.getSize() > 1)
-  {
-    for(List<Platform>::Node* j = platforms.getLast(); j; j = j->getPrevious())
-    {
-      Platform& platform = j->data;
-      if(j == platforms.getLast())
-        fileWrite(String("ifeq ($(platform),") + platform.name + ")\n");
-      else if(j == platforms.getFirst())
-        fileWrite(String("else\n"));
-      else 
-        fileWrite(String("else ifeq ($(platform),") + platform.name + ")\n");
-      fileWrite("\n");
-      generateMakefilePlatform(platform);
-    }
-    fileWrite("endif\n");
-  }
-
-  fileWrite("\n");
-  fileClose();
-  return true;
-}
-
-void Make::generateMakefilePlatform(Platform& platform)
-{
-  if(platform.configs.getSize() == 1)
-    generateMakefileConfig(platform, platform.configs.getFirst()->data);
-  else if(platform.configs.getSize() > 1)
-  {
-    for(List<Platform::Config>::Node* j = platform.configs.getLast(); j; j = j->getPrevious())
-    {
-      Platform::Config& config = j->data;
-      if(j == platform.configs.getLast())
-        fileWrite(String("ifeq ($(config),") + config.name + ")\n");
-      else if(j == platform.configs.getFirst())
-        fileWrite(String("else\n"));
-      else
-        fileWrite(String("else ifeq ($(config),") + config.name + ")\n");
-      fileWrite("\n");
-      generateMakefileConfig(platform, config);
-    }
-    fileWrite("endif\n");
-    fileWrite("\n");
-  }
-}
-
-void Make::generateMakefileConfig(const Platform& platform, const Platform::Config& config)
-{
   for(const List<Platform::Config::Target>::Node* i = config.targets.getFirst(); i; i = i->getNext())
   {
     const Platform::Config::Target& target = i->data;
@@ -368,6 +380,9 @@ void Make::generateMakefileConfig(const Platform& platform, const Platform::Conf
       fileWrite(String("\t@$(MAKE) --no-print-directory -r -f ") + target.name + "-" + platform.name + "-" + config.name + ".make\n");
     fileWrite("\n");
   }
+  
+  fileClose();
+  return true;
 }
 
 bool Make::generateTargetMakefile(const Platform& platform, const Platform::Config& config, const Platform::Config::Target& target)
