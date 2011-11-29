@@ -472,13 +472,13 @@ bool CMake::generateProject(Project& project)
     if(!config.output.isEmpty())
     {
       String outputDirectory = File::getDirname(config.output.getFirst()->data);
-      fileWrite(String("set_property(TARGET ") + project.name + " PROPERTY ARCHIVE_OUTPUT_DIRECTORY " + outputDirectory + ")\n");
-      fileWrite(String("set_property(TARGET ") + project.name + " PROPERTY LIBRARY_OUTPUT_DIRECTORY " + outputDirectory + ")\n");
-      fileWrite(String("set_property(TARGET ") + project.name + " PROPERTY RUNTIME_OUTPUT_DIRECTORY " + outputDirectory + ")\n");
+      fileWrite(String("set_property(TARGET ") + project.name + " PROPERTY ARCHIVE_OUTPUT_DIRECTORY \"" + outputDirectory + "\")\n");
+      fileWrite(String("set_property(TARGET ") + project.name + " PROPERTY LIBRARY_OUTPUT_DIRECTORY \"" + outputDirectory + "\")\n");
+      fileWrite(String("set_property(TARGET ") + project.name + " PROPERTY RUNTIME_OUTPUT_DIRECTORY \"" + outputDirectory + "\")\n");
 
       String outputName = File::getWithoutExtension(File::getBasename(config.output.getFirst()->data));
       outputName.patsubst("lib%", "%");
-      fileWrite(String("set_property(TARGET ") + project.name + " PROPERTY OUTPUT_NAME " + outputName + ")\n");
+      fileWrite(String("set_property(TARGET ") + project.name + " PROPERTY OUTPUT_NAME \"" + outputName + "\")\n");
     }
 
     if(!config.linkFlags.isEmpty())
