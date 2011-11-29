@@ -52,10 +52,20 @@ private:
         List<String> command;
         List<String> message;
         List<String> dependencies;
+        
         String buildDir;
-
+        List<String> soFlags;
+        List<String> cppFlags;
+        List<String> cFlags;
+        List<String> linkFlags;
+        List<String> defines;
+        List<String> includePaths;
+        List<String> libPaths;
+        List<String> libs;
+        
         Map<String, void*> outputDirs;
         List<String> objects;
+        List<String> nonObjects;
       };
 
       Config(const String& name) : name(name) {}
@@ -90,7 +100,7 @@ private:
   void fileWrite(const String& data);
   void fileClose();
 
-  static String join(const List<String>& items);
+  static String join(const List<String>& items, const String& preifx = String());
   static String joinCommands(const String& prefix, const String& suffix, const List<String>& commands);
 };
 
