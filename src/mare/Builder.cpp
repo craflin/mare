@@ -20,6 +20,7 @@ bool Builder::build(const Map<String, String>& userArgs)
   engine.addDefaultKey("configurations", "Debug Release");
   engine.addDefaultKey("targets"); // an empty target list exists per default
   engine.addDefaultKey("buildDir", "$(configuration)");
+  engine.addDefaultKey("cFlags", "-Wall $(if $(Debug),-g,-Os -fomit-frame-pointer)");
   engine.addDefaultKey("cppFlags", "-Wall $(if $(Debug),-g,-Os -fomit-frame-pointer)");
   engine.addDefaultKey("linkFlags", "$(if $(Debug),,-s)");
   {
@@ -78,7 +79,7 @@ bool Builder::build(const Map<String, String>& userArgs)
     cppSource.append("__dfile", "$(patsubst %.o,%.d,$(__ofile))");
     cppSource.append("input", "$(file) $(filter-out %.o: \\,$(readfile $(__dfile)))");
     cppSource.append("output", "$(__ofile) $(__dfile)");
-    cppSource.append("command", "$(CXX) -MMD $(__soFlags) -o $(__ofile) -c $(file) $(cppFlags) $(CXXFLAGS) $(patsubst %,-D%,$(defines)) $(patsubst %,-I%,$(includePaths))");
+    cppSource.append("command", "$(CXX) -MMD $(__soFlags) -o $(__ofile) -c $(file) $(cppFlags) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) $(patsubst %,-D%,$(defines)) $(patsubst %,-I%,$(includePaths))");
     cppSource.append("message", "$(file)");
     engine.addDefaultKey("cppSource", cppSource);
   }
@@ -88,7 +89,7 @@ bool Builder::build(const Map<String, String>& userArgs)
     cSource.append("__dfile", "$(patsubst %.o,%.d,$(__ofile))");
     cSource.append("input", "$(file) $(filter-out %.o: \\,$(readfile $(__dfile)))");
     cSource.append("output", "$(__ofile) $(__dfile)");
-    cSource.append("command", "$(CC) -MMD $(__soFlags) -o $(__ofile) -c $(file) $(cFlags) $(CFLAGS) $(patsubst %,-D%,$(defines)) $(patsubst %,-I%,$(includePaths))");
+    cSource.append("command", "$(CC) -MMD $(__soFlags) -o $(__ofile) -c $(file) $(cFlags) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(patsubst %,-D%,$(defines)) $(patsubst %,-I%,$(includePaths))");
     cSource.append("message", "$(file)");
     engine.addDefaultKey("cSource", cSource);
   }
