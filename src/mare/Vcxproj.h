@@ -49,7 +49,7 @@ private:
       List<String> outputs;
       List<String> inputs;
       List<String> dependencies;
-      List<String> cppFlags;
+      List<String> cAndCppFlags;
       Map<String, void*> linkFlags;
       List<String> defines;
       List<String> includePaths;

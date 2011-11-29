@@ -265,7 +265,8 @@ bool Vcxproj::readFile()
           projectConfig.command.clear();
         }
 
-        engine.getKeys("cppFlags", projectConfig.cppFlags, true);
+        engine.getKeys("cppFlags", projectConfig.cAndCppFlags, true);
+        engine.getKeys("cFlags", projectConfig.cAndCppFlags, true);
         List<String> linkFlags;
         engine.getKeys("linkFlags", linkFlags, true);
         for(const List<String>::Node* i = linkFlags.getFirst(); i; i = i->getNext())
@@ -740,7 +741,7 @@ bool Vcxproj::generateVcxproj(Project& project)
 
       {
         List<String> additionalOptions;
-        for(const List<String>::Node* i = config.cppFlags.getFirst(); i; i = i->getNext())
+        for(const List<String>::Node* i = config.cAndCppFlags.getFirst(); i; i = i->getNext())
           if(!knownCppOptions.find(i->data))
             additionalOptions.append(i->data);
 
@@ -748,7 +749,7 @@ bool Vcxproj::generateVcxproj(Project& project)
           fileWrite(String("      <AdditionalOptions>") + join(additionalOptions, ' ') + " %(AdditionalOptions)</AdditionalOptions>\r\n");
 
         Map<String, void*> usedOptions;
-        for(const List<String>::Node* i = config.cppFlags.getFirst(); i; i = i->getNext())
+        for(const List<String>::Node* i = config.cAndCppFlags.getFirst(); i; i = i->getNext())
         {
           const Map<String, Option>::Node* node = knownCppOptions.find(i->data);
           if(node)
