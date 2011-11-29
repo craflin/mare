@@ -487,7 +487,7 @@ bool CMake::generateProject(Project& project)
         {}
         // fileWrite(String("set_property(TARGET ") + project.name + " PROPERTY STATIC_LIBRARY_FLAGS " + join(config.linkFlags) + ")\n");
       else
-        fileWrite(String("set_property(TARGET ") + project.name + " PROPERTY LINK_FLAGS " + join(config.linkFlags) + ")\n");
+        fileWrite(String("set_property(TARGET ") + project.name + " PROPERTY LINK_FLAGS \"" + join(config.linkFlags) + "\")\n");
     }
 
     if(!config.defines.isEmpty())
