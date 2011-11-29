@@ -8,8 +8,6 @@
 
 #include "Error.h"
 
-const char* Error::program;
-
 String Error::getString()
 {
 #ifdef _WIN32

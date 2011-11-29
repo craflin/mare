@@ -23,7 +23,7 @@ static const char* COPYRIGHT = "Copyright (C) 2011 Colin Graf";
 static void errorHandler(void* userData, const String& file, int line, const String& message)
 {
   if(line < 0)
-    fprintf(stderr, "%s: %s\n", Error::program, message.getData());
+    fprintf(stderr, "%s: %s\n", (const char*)userData, message.getData());
   else
   {
     if(line > 0)
@@ -118,7 +118,6 @@ static void showHelp(const char* executable)
 
 int main(int argc, char* argv[])
 {
-  Error::program = argv[0];
   Map<String, String> userArgs;
   List<String> inputPlatforms, inputConfigs, inputTargets;
   String inputFile("Marefile"), inputDir;
@@ -274,7 +273,7 @@ int main(int argc, char* argv[])
 
   // start the engine
   {
-    Engine engine(errorHandler, 0);
+    Engine engine(errorHandler, argv[0]);
     if(!engine.load(inputFile))
     {
       if(showHelp)

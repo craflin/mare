@@ -143,7 +143,7 @@ unsigned int Process::start(const String& rawCommandLine)
         const int len = 12 + MAX_PATH * 2 + 2;
         char buffer[len];
         int i = file.read(buffer, len);
-        if(i < 12 || strncmp(buffer, "!<symlink>ÿþ", 12) != 0)
+        if(i < 12 || strncmp(buffer, "!<symlink>Ã¿Ã¾", 12) != 0)
           return success;
         i &= ~1;
         wchar_t* wdest = (wchar_t*)(buffer + 12);
@@ -411,9 +411,10 @@ success:
   }
   else // child
   {
-    if(execv(programPath.getData(), (char* const*)argv) == -1)
+    const char* executable = programPath.getData();
+    if(execv(executable, (char* const*)argv) == -1)
     {
-      fprintf(stderr, "%s: %s\n", Error::program, Error::getString().getData());
+      fprintf(stderr, "%s: %s\n", executable, Error::getString().getData());
       _exit(EXIT_FAILURE);
     }
     ASSERT(false); // unreachable
