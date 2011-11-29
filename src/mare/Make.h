@@ -63,6 +63,10 @@ private:
         List<String> libPaths;
         List<String> libs;
         
+        String cppCompiler;
+        String cCompiler;
+        String linker;
+        
         Map<String, void*> outputDirs;
         List<String> objects;
         List<String> nonObjects;

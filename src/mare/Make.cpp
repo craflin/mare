@@ -171,6 +171,10 @@ bool Make::readFile()
         engine.getKeys("includePaths", target.includePaths, true);
         engine.getKeys("libPaths", target.libPaths, true);
         engine.getKeys("libs", target.libs, true);
+        
+        target.cppCompiler = engine.getFirstKey("cppCompiler", true);
+        target.cCompiler = engine.getFirstKey("cCompiler", true);
+        target.linker = engine.getFirstKey("linker", true);
 
         if(engine.enterKey("files"))
         {
@@ -226,7 +230,7 @@ bool Make::processData()
           target.type = firstCommand;
           target.command.clear();
           target.message.clear();
-          String linker = !strncmp(firstCommand.getData(), "__cpp", 5) ? String("$(CXX)") : String("$(CC)");
+          String linker = !strncmp(firstCommand.getData(), "__cpp", 5) ? String("$(__CXXLINKER)") : String("$(__CCLINKER)");
           if(firstCommand  == "__cApplication" || firstCommand  == "__cppApplication")
           {
             target.command.append(linker + " -o $@ $(__OBJECTS) $(__LINKFLAGS) $(LDFLAGS) $(__LIBPATHS) $(__LIBS)");
@@ -239,7 +243,7 @@ bool Make::processData()
           }
           else if(firstCommand  == "__cStaticLibrary" || firstCommand  == "__cppStaticLibrary")
           {
-            target.command.append("$(AR) rcs $@ $(__OBJECTS)");
+            target.command.append("$(__ARLINKER) rcs $@ $(__OBJECTS)");
             target.message.append(String("Creating ") + target.name + "...");
           }
         }
@@ -380,7 +384,7 @@ bool Make::generateMakefile(const Platform& platform, const Platform::Config& co
       fileWrite(String("\t@$(MAKE) --no-print-directory -r -f ") + target.name + "-" + platform.name + "-" + config.name + ".make\n");
     fileWrite("\n");
   }
-  
+
   fileClose();
   return true;
 }
@@ -407,6 +411,50 @@ bool Make::generateTargetMakefile(const Platform& platform, const Platform::Conf
     fileWrite(String("__LIBPATHS := ") + join(target.libPaths, "-L") + "\n");
     fileWrite(String("__LIBS := ") + join(target.libs, "-l") + "\n");
     
+    fileWrite("\n");
+    
+    if(!target.cppCompiler.isEmpty() || !target.linker.isEmpty())
+    {
+      fileWrite("ifeq ($(origin CXX),default)\n");
+      if(!target.cppCompiler.isEmpty())
+        fileWrite(String("  CXX := ") + target.cppCompiler + "\n");
+      if(!target.linker.isEmpty())
+        fileWrite(String("  __CXXLINKER := ") + target.linker + "\n");
+      else
+        fileWrite("  __CXXLINKER := $(CXX)\n");
+      fileWrite("else\n");
+      fileWrite("  __CXXLINKER := $(CXX)\n");
+      fileWrite("endif\n");
+    }
+    else
+      fileWrite("__CXXLINKER := $(CXX)\n");
+    fileWrite("\n");
+    
+    if(!target.cCompiler.isEmpty() || !target.linker.isEmpty())
+    {
+      fileWrite("ifeq ($(origin CC),default)\n");
+      if(!target.cCompiler.isEmpty())
+        fileWrite(String("  CC := ") + target.cCompiler + "\n");
+      if(!target.linker.isEmpty())
+        fileWrite(String("  __CCLINKER := ") + target.linker + "\n");
+      else
+        fileWrite("  __CCLINKER := $(CC)\n");
+      fileWrite("else\n");
+      fileWrite("  __CCLINKER := $(CC)\n");
+      fileWrite("endif\n");
+    }
+    else
+      fileWrite("__CCLINKER := $(CC)\n");
+    fileWrite("\n");
+    
+    if(!target.linker.isEmpty())
+    {
+      fileWrite("ifeq ($(origin AR),default)\n");
+      fileWrite(String("  __ARLINKER := ") + target.linker + "\n");
+      fileWrite("endif\n");
+    }
+    else
+      fileWrite("__ARLINKER := $(AR)\n");
     fileWrite("\n");
   }
 
