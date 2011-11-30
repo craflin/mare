@@ -13,7 +13,7 @@ void BlockStatement::execute(Namespace& space)
 
 void AssignStatement::execute(Namespace& space)
 {
-  space.addKey(variable, value);
+  space.addKey(variable, flags, value);
 }
 
 void RemoveStatement::execute(Namespace& space)
@@ -113,7 +113,7 @@ void BinaryStatement::execute(Namespace& space)
 
 void StringStatement::execute(Namespace& space)
 {
-  space.addKey(value, 0);
+  space.addKey(value, 0, 0);
 }
 
 void ReferenceStatement::execute(Namespace& space)

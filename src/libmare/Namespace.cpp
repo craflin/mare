@@ -256,7 +256,16 @@ String Namespace::evaluateString(const String& string)
         if(*input == ',') ++input;
         Word::append(words, output);
       }
-      // TODO: call, value, eval, origin, falvor, error, warning, info?
+      else if(cmd == "origin")
+      {
+        String var;
+        handle(engine, input, var, ",)"); if(*input == ',') ++input;
+
+        engine.pushAndLeaveKey();
+        output.append(engine.getKeyOrigin(var));
+        engine.popKey();
+      }
+      // TODO: call, value, eval, falvor, error, warning, info?
       else if(cmd == "lower")
       {
         String text;
@@ -364,6 +373,28 @@ Namespace* Namespace::enterNewKey(const String& name)
   return space;
 }
 
+String Namespace::getKeyOrigin(const String& name)
+{
+  compile();
+
+  Word key(name, 0);
+  Word* word;
+  Map<Word, Namespace*>::Node* j = variables.find(key);
+  if(j)
+    word = &j->key;
+  else
+  {
+    Namespace* space;
+    if(!engine->resolveScript(key, word, space))
+      return String("undefined");
+  }
+  if(word->flags & Word::defaultFlag)
+    return String("default");
+  if(word->flags & Word::commandLineFlag)
+    return String("command line");
+  return String("file");
+}
+
 bool Namespace::resolveScript2(const String& name, Word*& word, Namespace*& result)
 {
   ASSERT(!(flags & compilingFlag));
@@ -389,7 +420,7 @@ bool Namespace::resolveScript2(const String& name, Word*& word, Namespace*& resu
   return false;
 }
 
-void Namespace::addKey(const String& key, Statement* value)
+void Namespace::addKey(const String& key, unsigned int wordFlags, Statement* value)
 {
   // evaluate variables
   String evaluatedKey = evaluateString(key);
@@ -409,12 +440,13 @@ void Namespace::addKey(const String& key, Statement* value)
   Word::split(evaluatedKey, words);
 
   // add each word
-  for(const List<Word>::Node* i = words.getFirst(); i; i = i->getNext())
+  for(List<Word>::Node* i = words.getFirst(); i; i = i->getNext())
   {
-    const Word& word = i->data;
+    Word& word = i->data;
+    word.flags |= wordFlags;
 
     // expand wildcards
-    if(!(word.flags & Word::quotedFlag) && strpbrk(word.getData(), "*?")) 
+    if(word.flags == 0 && strpbrk(word.getData(), "*?")) 
     {
       List<String> files;
       Directory::findFiles(word, files);
@@ -597,17 +629,18 @@ void Namespace::addDefaultKey(const String& key)
   addDefaultStatement(stringStatement);
 }
 
-void Namespace::addDefaultKey(const String& key, const String& value)
+void Namespace::addDefaultKey(const String& key, unsigned int flags, const String& value)
 {
   StringStatement* stringStatement = new StringStatement(*this);
   stringStatement->value = value;
   AssignStatement* assignStatement = new AssignStatement(*this);
   assignStatement->variable = key;
+  assignStatement->flags = flags;
   assignStatement->value = stringStatement;
   addDefaultStatement(assignStatement);
 }
 
-void Namespace::addDefaultKey(const String& key, const Map<String, String>& value)
+void Namespace::addDefaultKey(const String& key, unsigned int flags, const Map<String, String>& value)
 {
   BlockStatement* blockStatement = new BlockStatement(*this);
   for(const Map<String, String>::Node* i = value.getFirst(); i; i = i->getNext())
@@ -621,6 +654,7 @@ void Namespace::addDefaultKey(const String& key, const Map<String, String>& valu
   }
   AssignStatement* assignStatement = new AssignStatement(*this);
   assignStatement->variable = key;
+  assignStatement->flags = flags;
   assignStatement->value = blockStatement;
   addDefaultStatement(assignStatement);
 }

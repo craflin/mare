@@ -18,13 +18,14 @@ public:
   Namespace* enterKey(const String& name, bool allowInheritance);
   Namespace* enterUnnamedKey(Statement* statement);
   Namespace* enterNewKey(const String& name);
+  String getKeyOrigin(const String& key);
   void getKeys(List<String>& keys);
   void getText(List<String>& text);
   void appendKeys(String& output);
   String getFirstKey();
   inline Engine& getEngine() {return *engine;}
 
-  void addKey(const String& key, Statement* value);
+  void addKey(const String& key, unsigned int flags, Statement* value);
   void addKeyRaw(const Word& key, Statement* value);
   void setKeyRaw(const Word& key);
   void removeAllKeys();
@@ -36,8 +37,8 @@ public:
 
   void addDefaultStatement(Statement* statement);
   void addDefaultKey(const String& key);
-  void addDefaultKey(const String& key, const String& value);
-  void addDefaultKey(const String& key, const Map<String, String>& value);
+  void addDefaultKey(const String& key, unsigned int flags, const String& value);
+  void addDefaultKey(const String& key, unsigned int flags, const Map<String, String>& value);
 
 private:
   enum Flags

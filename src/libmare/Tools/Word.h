@@ -10,12 +10,16 @@ public:
   enum Flags
   {
     quotedFlag = (1 << 1),
+
+    defaultFlag = (1 << 16), /**< used for built-in keys */
+    commandLineFlag = (1 << 17), /**< used for command line keys */
   };
 
   unsigned int flags;
 
   Word(const String& word, unsigned int flags) : String(word), flags(flags) {}
 
+  Word& operator=(const Word& other);
   Word& operator=(const String& other);
 
   bool operator==(const Word& other) const;

@@ -28,6 +28,8 @@ public:
   void enterNewKey(const String& key);
   void enterRootKey();
 
+  String getKeyOrigin(const String& key);
+
   bool leaveKey();
   
   void getKeys(List<String>& keys);
@@ -40,6 +42,7 @@ public:
   void addDefaultKey(const String& key);
   void addDefaultKey(const String& key, const String& value);
   void addDefaultKey(const String& key, const Map<String, String>& value);
+  void addCommandLineKey(const String& key, const String& value);
   
   void pushAndLeaveKey(); // TODO: hide these functions
   bool popKey();

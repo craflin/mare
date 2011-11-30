@@ -4,6 +4,13 @@
 
 #include "Word.h"
 
+Word& Word::operator=(const Word& other)
+{
+  (String&)*this = other;
+  flags = other.flags;
+  return *this;
+}
+
 Word& Word::operator=(const String& other)
 {
   (String&)*this = other;

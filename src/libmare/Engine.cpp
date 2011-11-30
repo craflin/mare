@@ -61,6 +61,11 @@ void Engine::enterRootKey()
   currentSpace = subSpace;
 }
 
+String Engine::getKeyOrigin(const String& key)
+{
+  return currentSpace->getKeyOrigin(key);
+}
+
 bool Engine::resolveScript(const String& key, Word*& word, Namespace*& result)
 {
   for(Namespace* space = currentSpace->getParent(); space; space = space->getParent())
@@ -136,12 +141,17 @@ void Engine::addDefaultKey(const String& key)
 
 void Engine::addDefaultKey(const String& key, const String& value)
 {
-  currentSpace->addDefaultKey(key, value);
+  currentSpace->addDefaultKey(key, Word::defaultFlag, value);
 }
 
 void Engine::addDefaultKey(const String& key, const Map<String, String>& value)
 {
-  currentSpace->addDefaultKey(key, value);
+  currentSpace->addDefaultKey(key, Word::defaultFlag, value);
+}
+
+void Engine::addCommandLineKey(const String& key, const String& value)
+{
+  currentSpace->addDefaultKey(key, Word::commandLineFlag, value);
 }
 
 void Engine::setKey(const Word& key)

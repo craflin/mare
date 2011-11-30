@@ -30,9 +30,10 @@ private:
 class AssignStatement : public Statement
 {
 public:
-  AssignStatement(Scope& scope) : Statement(scope), value(0) {}
+  AssignStatement(Scope& scope) : Statement(scope), flags(0), value(0) {}
 
   String variable;
+  unsigned int flags;
   Statement* value;
 
 private:
