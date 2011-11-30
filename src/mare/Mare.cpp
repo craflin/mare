@@ -2,7 +2,7 @@
 #include <cstdio>
 #include <ctype.h>
 
-#include "Builder.h"
+#include "Mare.h"
 
 #include "Tools/Assert.h"
 #include "Tools/Process.h"
@@ -11,7 +11,7 @@
 #include "Tools/Error.h"
 #include "Engine.h"
 
-bool Builder::build(const Map<String, String>& userArgs)
+bool Mare::build(const Map<String, String>& userArgs)
 {
   // add default rules and stuff
   engine.addDefaultKey("cCompiler", "gcc");
@@ -123,7 +123,7 @@ bool Builder::build(const Map<String, String>& userArgs)
   return true;
 }
 
-bool Builder::buildFile()
+bool Mare::buildFile()
 {
   // enter root key
   engine.enterRootKey();
@@ -217,7 +217,7 @@ class Target;
 class Rule
 {
 public:
-  const Builder* builder;
+  const Mare* builder;
   Target* target;
 
   String name; /**< The main input file or the name of the target */
@@ -594,7 +594,7 @@ public:
   }
 };
 
-bool Builder::buildTargets(const String& platform, const String& configuration)
+bool Mare::buildTargets(const String& platform, const String& configuration)
 {
   RuleSet ruleSet;
 
@@ -676,7 +676,7 @@ bool Builder::buildTargets(const String& platform, const String& configuration)
   return ruleSet.build(engine, jobs <= 0 ? (Process::getProcessorCount() - jobs) : jobs, clean, rebuild, showDebug);
 }
 
-String Builder::join(const List<String>& words)
+String Mare::join(const List<String>& words)
 {
   int totalLen = words.getSize() * 3;
   for(const List<String>::Node* i = words.getFirst(); i; i = i->getNext())

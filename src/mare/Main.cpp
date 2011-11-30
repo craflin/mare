@@ -14,7 +14,7 @@
 #include <getopt.h>
 #endif
 
-#include "Builder.h"
+#include "Mare.h"
 #include "Vcxproj.h"
 
 static const char* VERSION   = "0.3";
@@ -309,8 +309,8 @@ int main(int argc, char* argv[])
 
     // direct build
     {
-      Builder builder(engine, inputPlatforms, inputConfigs, inputTargets, showDebug, clean, rebuild, jobs, ignoreDependencies);
-      if(!builder.build(userArgs))
+      Mare mare(engine, inputPlatforms, inputConfigs, inputTargets, showDebug, clean, rebuild, jobs, ignoreDependencies);
+      if(!mare.build(userArgs))
         return EXIT_FAILURE;
       return EXIT_SUCCESS;
     }

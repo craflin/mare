@@ -3,23 +3,23 @@
   <ItemGroup>
     <ClCompile Include="..\src\mare\Main.cpp" />
     <ClCompile Include="..\src\mare\Vcxproj.cpp" />
-    <ClCompile Include="..\src\mare\Builder.cpp" />
     <ClCompile Include="..\src\mare\Tools\md5.cpp">
       <Filter>Tools</Filter>
     </ClCompile>
     <ClCompile Include="..\src\mare\Tools\Win32\getopt.cpp">
       <Filter>Tools\Win32</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\mare\Mare.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\mare\Vcxproj.h" />
-    <ClInclude Include="..\src\mare\Builder.h" />
     <ClInclude Include="..\src\mare\Tools\md5.h">
       <Filter>Tools</Filter>
     </ClInclude>
     <ClInclude Include="..\src\mare\Tools\Win32\getopt.h">
       <Filter>Tools\Win32</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\mare\Mare.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Tools">

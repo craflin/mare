@@ -8,11 +8,11 @@ class Engine;
 class Word;
 class String;
 
-class Builder
+class Mare
 {
 public:
 
-  Builder(Engine& engine, List<String>& inputPlatforms, List<String>& inputConfigs, List<String>& inputTargets, bool showDebug, bool clean, bool rebuild, int jobs, bool ignoreDependencies) :
+  Mare(Engine& engine, List<String>& inputPlatforms, List<String>& inputConfigs, List<String>& inputTargets, bool showDebug, bool clean, bool rebuild, int jobs, bool ignoreDependencies) :
     engine(engine), showDebug(showDebug), clean(clean), rebuild(rebuild), jobs(jobs), ignoreDependencies(ignoreDependencies), inputPlatforms(inputPlatforms), inputConfigs(inputConfigs), inputTargets(inputTargets) {}
 
   bool build(const Map<String, String>& userArgs);
