@@ -7,9 +7,14 @@
 class Word : public String
 {
 public:
-  bool quoted;
+  enum Flags
+  {
+    quotedFlag = (1 << 1),
+  };
 
-  Word(const String& word, bool quoted) : String(word), quoted(quoted) {}
+  unsigned int flags;
+
+  Word(const String& word, unsigned int flags) : String(word), flags(flags) {}
 
   Word& operator=(const String& other);
 

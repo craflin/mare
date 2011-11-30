@@ -46,7 +46,7 @@ void Word::split(const String& text, List<Word>& words)
         else if(*end == '"')
           break;
       if(end > str) // TODO: read escaped spaces as ordinary spaces?
-        words.append(Word(text.substr(str - text.getData(), end - str), true));
+        words.append(Word(text.substr(str - text.getData(), end - str), Word::quotedFlag));
       str = end;
       if(*str)
         ++str; // skip closing '"'
@@ -58,7 +58,7 @@ void Word::split(const String& text, List<Word>& words)
         if(isspace(*end))
           break;
       // TODO: read escaped spaces as ordinary spaces
-      words.append(Word(text.substr(str - text.getData(), end - str), false));
+      words.append(Word(text.substr(str - text.getData(), end - str), 0));
       str = end;
     }
   }
@@ -87,7 +87,7 @@ void Word::append(const List<Word>& words, String& text)
 
 void Word::appendTo(String& text) const
 {
-  if(quoted)
+  if(flags & quotedFlag)
   {
     text.append('"');
     text.append(*this);
@@ -107,7 +107,7 @@ void Word::splitLines(const String& text, List<Word>& words)
       if(*end == '\n' || *end == '\r')
         break;
     // TODO: read escaped spaces as ordinary spaces
-    words.append(Word(text.substr(str - text.getData(), end - str), false));
+    words.append(Word(text.substr(str - text.getData(), end - str), 0));
     str = end;
     if(*str)
     {

@@ -316,7 +316,7 @@ Namespace* Namespace::enterKey(const String& name, bool allowInheritance)
 {
   compile();
 
-  Word key(name, false);
+  Word key(name, 0);
   Map<Word, Namespace*>::Node* j = variables.find(key);
   if(j)
   {
@@ -349,7 +349,7 @@ Namespace* Namespace::enterNewKey(const String& name)
 {
   ASSERT(!(flags & compiledFlag));
 
-  Word key(name, false);
+  Word key(name, 0);
   Map<Word, Namespace*>::Node* j = variables.find(key);
   if(j)
   {
@@ -370,7 +370,7 @@ bool Namespace::resolveScript2(const String& name, Word*& word, Namespace*& resu
   compile();
 
   // try a local lookup
-  Word key(name, false);
+  Word key(name, 0);
   Map<Word, Namespace*>::Node* node = variables.find(key);
   if(node)
   {
@@ -414,12 +414,12 @@ void Namespace::addKey(const String& key, Statement* value)
     const Word& word = i->data;
 
     // expand wildcards
-    if(!word.quoted && strpbrk(word.getData(), "*?")) 
+    if(!(word.flags & Word::quotedFlag) && strpbrk(word.getData(), "*?")) 
     {
       List<String> files;
       Directory::findFiles(word, files);
       for(const List<String>::Node* i = files.getFirst(); i; i = i->getNext())
-        addKeyRaw(Word(i->data, false), value);
+        addKeyRaw(Word(i->data, 0), value);
     }
     else
       addKeyRaw(word, value);
@@ -451,7 +451,7 @@ void Namespace::removeKey(const String& key)
     const Word& word = i->data;
 
     // expand wildcards
-    if(!word.quoted && strpbrk(word.getData(), "*?")) 
+    if(!(word.flags & Word::quotedFlag) && strpbrk(word.getData(), "*?")) 
     {
       List<String> files;
       Directory::findFiles(word, files);
@@ -487,7 +487,7 @@ void Namespace::removeKeyRaw(const String& key)
 {
   ASSERT(!(flags & compiledFlag));
   //ASSERT(!key.isEmpty());
-  Word wkey(key, false);
+  Word wkey(key, 0);
   Map<Word, Namespace*>::Node* node = variables.find(wkey);
   if(node)
   {

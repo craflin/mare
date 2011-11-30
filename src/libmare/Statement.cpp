@@ -101,7 +101,7 @@ void BinaryStatement::execute(Namespace& space)
       delete leftSpace;
       delete rightSpace;
       if(result)
-        space.addKeyRaw(Word("true", false), 0);
+        space.addKeyRaw(Word("true", 0), 0);
     }
     break;
 
@@ -151,7 +151,7 @@ void UnaryStatement::execute(Namespace& space)
       bool result = opSpace->getFirstKey().isEmpty();
       delete opSpace;
       if(result)
-        space.addKeyRaw(Word("true", false), 0);
+        space.addKeyRaw(Word("true", 0), 0);
     }
     break;
   default:
