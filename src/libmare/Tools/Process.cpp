@@ -143,7 +143,7 @@ unsigned int Process::start(const String& rawCommandLine)
         const int len = 12 + MAX_PATH * 2 + 2;
         char buffer[len];
         int i = file.read(buffer, len);
-        if(i < 12 || strncmp(buffer, "!<symlink>ÿþ", 12) != 0)
+        if(i < 12 || strncmp(buffer, "!<symlink>\xff\xfe", 12) != 0)
           return success;
         i &= ~1;
         wchar_t* wdest = (wchar_t*)(buffer + 12);
