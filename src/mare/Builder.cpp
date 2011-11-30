@@ -14,9 +14,8 @@
 bool Builder::build(const Map<String, String>& userArgs)
 {
   // add default rules and stuff
-  engine.addDefaultKey("CC", "gcc");
-  engine.addDefaultKey("CXX", "g++");
-  engine.addDefaultKey("AR", "ar");
+  engine.addDefaultKey("cCompiler", "gcc");
+  engine.addDefaultKey("cppCompiler", "g++");
   engine.addDefaultKey("configurations", "Debug Release");
   engine.addDefaultKey("targets"); // an empty target list exists per default
   engine.addDefaultKey("buildDir", "$(configuration)");
@@ -27,8 +26,9 @@ bool Builder::build(const Map<String, String>& userArgs)
     Map<String, String> cppApplication;
     cppApplication.append("input", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
     cppApplication.append("output", "$(buildDir)/$(target)$(if $(Win32),.exe)");
-    cppApplication.append("command", "$(CXX) -o $(output) $(input) $(linkFlags) $(LDFLAGS) $(patsubst %,-L%,$(libPaths)) $(patsubst %,-l%,$(libs))");
+    cppApplication.append("command", "$(linker) -o $(output) $(input) $(linkFlags) $(LDFLAGS) $(patsubst %,-L%,$(libPaths)) $(patsubst %,-l%,$(libs))");
     cppApplication.append("message", "Linking $(target)...");
+    cppApplication.append("linker", "$(if $(linker),$(linker),$(cppCompiler))");
     engine.addDefaultKey("cppApplication", cppApplication);
   }
   {
@@ -36,24 +36,27 @@ bool Builder::build(const Map<String, String>& userArgs)
     cppDynamicLibrary.append("input", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
     cppDynamicLibrary.append("output", "$(buildDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.dll,.so)");
     cppDynamicLibrary.append("__soFlags", "$(if $(Win32),,-fpic)");
-    cppDynamicLibrary.append("command", "$(CXX) -shared $(__soFlags) -o $(output) $(input) $(linkFlags) $(LDFLAGS) $(patsubst %,-L%,$(libPaths)) $(patsubst %,-l%,$(libs))");
+    cppDynamicLibrary.append("command", "$(linker) -shared $(__soFlags) -o $(output) $(input) $(linkFlags) $(LDFLAGS) $(patsubst %,-L%,$(libPaths)) $(patsubst %,-l%,$(libs))");
     cppDynamicLibrary.append("message", "Linking $(target)...");
+    cppDynamicLibrary.append("linker", "$(if $(linker),$(linker),$(cppCompiler))");
     engine.addDefaultKey("cppDynamicLibrary", cppDynamicLibrary);
   }
   {
     Map<String, String> cppStaticLibrary;
     cppStaticLibrary.append("input", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
     cppStaticLibrary.append("output", "$(buildDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.lib,.a)");
-    cppStaticLibrary.append("command", "$(AR) rcs $(output) $(input)");
+    cppStaticLibrary.append("command", "$(linker) rcs $(output) $(input)");
     cppStaticLibrary.append("message", "Creating $(target)...");
+    cppStaticLibrary.append("linker", "$(if $(linker),$(linker),ar)");
     engine.addDefaultKey("cppStaticLibrary", cppStaticLibrary);
   }
   {
     Map<String, String> cApplication;
     cApplication.append("input", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
     cApplication.append("output", "$(buildDir)/$(target)$(if $(Win32),.exe)");
-    cApplication.append("command", "$(CC) -o $(output) $(input) $(linkFlags) $(LDFLAGS) $(patsubst %,-L%,$(libPaths)) $(patsubst %,-l%,$(libs))");
+    cApplication.append("command", "$(linker) -o $(output) $(input) $(linkFlags) $(LDFLAGS) $(patsubst %,-L%,$(libPaths)) $(patsubst %,-l%,$(libs))");
     cApplication.append("message", "Linking $(target)...");
+    cApplication.append("linker", "$(if $(linker),$(linker),$(cCompiler))");
     engine.addDefaultKey("cApplication", cApplication);
   }
   {
@@ -61,16 +64,18 @@ bool Builder::build(const Map<String, String>& userArgs)
     cDynamicLibrary.append("input", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
     cDynamicLibrary.append("output", "$(buildDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.dll,.so)");
     cDynamicLibrary.append("__soFlags", "$(if $(Win32),,-fpic)");
-    cDynamicLibrary.append("command", "$(CC) -shared $(__soFlags) -o $(output) $(input) $(linkFlags) $(LDFLAGS) $(patsubst %,-L%,$(libPaths)) $(patsubst %,-l%,$(libs))");
+    cDynamicLibrary.append("command", "$(linker) -shared $(__soFlags) -o $(output) $(input) $(linkFlags) $(LDFLAGS) $(patsubst %,-L%,$(libPaths)) $(patsubst %,-l%,$(libs))");
     cDynamicLibrary.append("message", "Linking $(target)...");
+    cDynamicLibrary.append("linker", "$(if $(linker),$(linker),$(cCompiler))");
     engine.addDefaultKey("cDynamicLibrary", cDynamicLibrary);
   }
   {
     Map<String, String> cStaticLibrary;
     cStaticLibrary.append("input", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
     cStaticLibrary.append("output", "$(buildDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.lib,.a)");
-    cStaticLibrary.append("command", "$(AR) rcs $(output) $(input)");
+    cStaticLibrary.append("command", "$(linker) rcs $(output) $(input)");
     cStaticLibrary.append("message", "Creating $(target)...");
+    cStaticLibrary.append("linker", "$(if $(linker),$(linker),ar)");
     engine.addDefaultKey("cStaticLibrary", cStaticLibrary);
   }
   {
@@ -79,7 +84,7 @@ bool Builder::build(const Map<String, String>& userArgs)
     cppSource.append("__dfile", "$(patsubst %.o,%.d,$(__ofile))");
     cppSource.append("input", "$(file) $(filter-out %.o: \\,$(readfile $(__dfile)))");
     cppSource.append("output", "$(__ofile) $(__dfile)");
-    cppSource.append("command", "$(CXX) -MMD $(__soFlags) -o $(__ofile) -c $(file) $(cppFlags) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) $(patsubst %,-D%,$(defines)) $(patsubst %,-I%,$(includePaths))");
+    cppSource.append("command", "$(cppCompiler) -MMD $(__soFlags) -o $(__ofile) -c $(file) $(cppFlags) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) $(patsubst %,-D%,$(defines)) $(patsubst %,-I%,$(includePaths))");
     cppSource.append("message", "$(file)");
     engine.addDefaultKey("cppSource", cppSource);
   }
@@ -89,7 +94,7 @@ bool Builder::build(const Map<String, String>& userArgs)
     cSource.append("__dfile", "$(patsubst %.o,%.d,$(__ofile))");
     cSource.append("input", "$(file) $(filter-out %.o: \\,$(readfile $(__dfile)))");
     cSource.append("output", "$(__ofile) $(__dfile)");
-    cSource.append("command", "$(CC) -MMD $(__soFlags) -o $(__ofile) -c $(file) $(cFlags) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(patsubst %,-D%,$(defines)) $(patsubst %,-I%,$(includePaths))");
+    cSource.append("command", "$(cCompiler) -MMD $(__soFlags) -o $(__ofile) -c $(file) $(cFlags) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(patsubst %,-D%,$(defines)) $(patsubst %,-I%,$(includePaths))");
     cSource.append("message", "$(file)");
     engine.addDefaultKey("cSource", cSource);
   }

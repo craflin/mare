@@ -682,7 +682,7 @@ void Namespace::compile()
     return;
   if(flags & compilingFlag)
   {
-    ASSERT(false);
+    //ASSERT(false);
     return;
   }
   flags |= compilingFlag;
