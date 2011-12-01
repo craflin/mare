@@ -332,7 +332,15 @@ Namespace* Namespace::enterKey(const String& name, bool allowInheritance)
     if(!j->data)
       return (j->data = new Namespace(*this, this, engine, 0, 0, 0));
     if(allowInheritance || !(j->data->flags & inheritedFlag))
-      return j->data;
+    {
+      Namespace* result = j->data;
+      do
+      {
+        if(!(result->flags & compilingFlag))
+          return result;
+        result = result->next;
+      } while(result);
+    }
   }
 
   if(allowInheritance)
@@ -369,17 +377,11 @@ String Namespace::getKeyOrigin(const String& name)
 {
   compile();
 
-  Word key(name, 0);
   Word* word;
-  Map<Word, Namespace*>::Node* j = variables.find(key);
-  if(j)
-    word = &j->key;
-  else
-  {
-    Namespace* space;
-    if(!engine->resolveScript(key, word, space))
+  Namespace* space;
+  if(!resolveScript2(name, word, space))
+    if(!engine->resolveScript(name, word, space))
       return String("undefined");
-  }
   if(word->flags & Word::defaultFlag)
     return String("default");
   if(word->flags & Word::commandLineFlag)
@@ -708,7 +710,7 @@ void Namespace::compile()
     return;
   if(flags & compilingFlag)
   {
-    //ASSERT(false);
+    ASSERT(false);
     return;
   }
   flags |= compilingFlag;
