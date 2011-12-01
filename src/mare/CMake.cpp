@@ -159,6 +159,10 @@ bool CMake::readFile()
         engine.getKeys("includePaths", projectConfig.includePaths, true);
         engine.getKeys("libPaths", projectConfig.libPaths, true);
         engine.getKeys("libs", projectConfig.libs, true);
+        
+        projectConfig.cppCompiler = engine.getFirstKey("cppCompiler", true);
+        projectConfig.cCompiler = engine.getFirstKey("cCompiler", true);
+        projectConfig.linker = engine.getFirstKey("linker", true);
 
         if(engine.enterKey("files"))
         {
@@ -469,6 +473,15 @@ bool CMake::generateProject(Project& project)
     //String configUpName = i->key;
     //configUpName.uppercase();
 
+    if(!config.cppCompiler.isEmpty())
+      fileWrite(String("set(CMAKE_CXX_COMPILER \"") + config.cppCompiler + "\")\n");
+    if(!config.cCompiler.isEmpty())
+      fileWrite(String("set(CMAKE_C_COMPILER \"") + config.cCompiler + "\")\n");
+    if(!config.cppFlags.isEmpty())
+      fileWrite(String("set(CMAKE_CXX_FLAGS \"") + join(config.cppFlags) + "\")\n");
+    if(!config.cFlags.isEmpty())
+      fileWrite(String("set(CMAKE_C_FLAGS \"") + join(config.cFlags) + "\")\n");
+
     if(!config.output.isEmpty())
     {
       String outputDirectory = File::getDirname(config.output.getFirst()->data);
@@ -492,11 +505,6 @@ bool CMake::generateProject(Project& project)
 
     if(!config.defines.isEmpty())
       fileWrite(String("set_property(TARGET ") + project.name + " PROPERTY COMPILE_DEFINITIONS " + join(config.defines) + ")\n");
-
-    if(!config.cppFlags.isEmpty())
-      fileWrite(String("set(CMAKE_CXX_FLAGS \"") + join(config.cppFlags) + "\")\n");
-    if(!config.cFlags.isEmpty())
-      fileWrite(String("set(CMAKE_C_FLAGS \"") + join(config.cFlags) + "\")\n");
   }
 
   if(!project.dependencies.isEmpty())

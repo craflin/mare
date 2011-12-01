@@ -40,6 +40,10 @@ private:
       List<String> linkFlags;
       List<String> dependencies;
       
+      String cppCompiler;
+      String cCompiler;
+      String linker;
+      
       Config(const String& name) : name(name) {}
     };
 
