@@ -62,7 +62,7 @@ bool CMake::generate(const Map<String, String>& userArgs)
 
   // add user arguments
   for(const Map<String, String>::Node* i = userArgs.getFirst(); i; i = i->getNext())
-    engine.addDefaultKey(i->key, i->data);
+    engine.addCommandLineKey(i->key, i->data);
 
   // step #1: read input file
   if(!readFile())
