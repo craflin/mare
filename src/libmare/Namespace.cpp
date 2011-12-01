@@ -357,17 +357,9 @@ Namespace* Namespace::enterUnnamedKey(Statement* statement)
 Namespace* Namespace::enterNewKey(const String& name)
 {
   ASSERT(!(flags & compiledFlag));
+  ASSERT(variables.isEmpty());
 
   Word key(name, 0);
-  Map<Word, Namespace*>::Node* j = variables.find(key);
-  if(j)
-  {
-    if(!j->data)
-      return (j->data = new Namespace(*this, this, engine, 0, 0, 0));
-    if(!(j->data->flags & inheritedFlag))
-      return j->data;
-  }
-
   Namespace* space = new Namespace(*this, this, engine, 0, 0, 0);
   variables.append(key, space);
   return space;
