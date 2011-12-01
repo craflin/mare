@@ -665,9 +665,10 @@ bool Vcxproj::generateVcxproj(Project& project)
       fileWrite(String("    <NMakeCleanCommandLine Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">" + joinCommands(config.cleanCommand) + "</NMakeCleanCommandLine>\r\n");
       if(!config.outputs.isEmpty())
         fileWrite(String("    <NMakeOutput Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">" + join(config.outputs) + "</NMakeOutput>\r\n");
+
+      fileWrite(String("    <NMakePreprocessorDefinitions Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">" + join(config.defines) + ";$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>\r\n");
+      fileWrite(String("    <NMakeIncludeSearchPath Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">" + join(config.includePaths) + ";$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>\r\n");
       /*
-      fileWrite(String("    <NMakePreprocessorDefinitions Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\"><?lua=formatTable(config.defines, \";\")?>;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>\r\n");
-      fileWrite(String("    <NMakeIncludeSearchPath Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\"><?lua=formatTable(config.includePaths, \";\", nil, nil, xmlEscapePath)?>;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>\r\n");
       fileWrite(String("    <NMakeForcedIncludes Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">$(NMakeForcedIncludes)</NMakeForcedIncludes>\r\n");
       fileWrite(String("    <NMakeAssemblySearchPath Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">$(NMakeAssemblySearchPath)</NMakeAssemblySearchPath>\r\n");
       fileWrite(String("    <NMakeForcedUsingAssemblies Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">$(NMakeForcedUsingAssemblies)</NMakeForcedUsingAssemblies>\r\n");
