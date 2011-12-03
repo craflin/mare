@@ -75,7 +75,7 @@ private:
       Config(const String& name) : name(name) {}
 
       String name;
-      List<Target> targets;
+      Map<String, Target> targets;
     };
 
     Platform(const String& name) : name(name) {}

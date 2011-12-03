@@ -105,7 +105,7 @@ bool Make::generate(const Map<String, String>& userArgs)
         return false;
   for(const List<Platform>::Node* k = platforms.getFirst(); k; k = k->getNext())
     for(const List<Platform::Config>::Node* j = k->data.configs.getFirst(); j; j = j->getNext())
-      for(const List<Platform::Config::Target>::Node* i = j->data.targets.getFirst(); i; i = i->getNext())
+      for(const Map<String, Platform::Config::Target>::Node* i = j->data.targets.getFirst(); i; i = i->getNext())
       {
         const Platform::Config::Target& target = i->data;
         if(!target.files.isEmpty() || !target.command.isEmpty() || !target.output.isEmpty() || !target.type.isEmpty())
@@ -154,7 +154,7 @@ bool Make::readFile()
           return false;
         }
 
-        Platform::Config::Target& target = config.targets.append(Platform::Config::Target(targetName));
+        Platform::Config::Target& target = config.targets.append(targetName, Platform::Config::Target(targetName));
 
         engine.getText("command", target.command, false);
         engine.getText("message", target.message, false);
@@ -216,7 +216,11 @@ bool Make::processData()
 {
   for(List<Platform>::Node* k = platforms.getLast(); k; k = k->getPrevious())
     for(List<Platform::Config>::Node* j = k->data.configs.getLast(); j; j = j->getPrevious())
-      for(List<Platform::Config::Target>::Node* i = j->data.targets.getFirst(); i; i = i->getNext())
+    {
+      Platform::Config& config = j->data;
+
+      // handle {c,cpp}{Application,DynamicLibrary,StaticLibrary,Source} rules
+      for(Map<String, Platform::Config::Target>::Node* i = config.targets.getFirst(); i; i = i->getNext())
       {
         Platform::Config::Target& target = i->data;
         String firstCommand;
@@ -248,13 +252,6 @@ bool Make::processData()
           }
         }
 
-        for(const List<String>::Node* i = target.output.getFirst(); i; i = i->getNext())
-        {
-          String outputDir = File::getDirname(i->data);
-          if(outputDir != "." && !target.outputDirs.find(outputDir))
-            target.outputDirs.append(outputDir);
-        }
-
         for(List<Platform::Config::Target::File>::Node* j = target.files.getFirst(); j; j = j->getNext())
         {
           Platform::Config::Target::File& file = j->data;
@@ -283,18 +280,73 @@ bool Make::processData()
           }
           else if(!file.output.isEmpty())
             target.nonObjects.append(file.output.getFirst()->data);
+        }
+      }
 
-          for(const List<String>::Node* i = file.output.getFirst(); i; i = i->getNext())
+      // generate outputDirs list
+      for(Map<String, Platform::Config::Target>::Node* i = config.targets.getFirst(); i; i = i->getNext())
+      {
+        Platform::Config::Target& target = i->data;
+
+        for(const List<String>::Node* i = target.output.getFirst(); i; i = i->getNext())
+        {
+          String outputDir = File::getDirname(i->data);
+          if(outputDir != "." && !target.outputDirs.find(outputDir))
+            target.outputDirs.append(outputDir);
+        }
+
+        for(List<Platform::Config::Target::File>::Node* j = target.files.getFirst(); j; j = j->getNext())
+          for(const List<String>::Node* i = j->data.output.getFirst(); i; i = i->getNext())
           {
             String outputDir = File::getDirname(i->data);
             if(outputDir != "." && !target.outputDirs.find(outputDir))
               target.outputDirs.append(outputDir);
           }
+      }
 
+      // convert dependencies into additional input files
+      for(Map<String, Platform::Config::Target>::Node* i = config.targets.getFirst(); i; i = i->getNext())
+      {
+        Platform::Config::Target& target = i->data;
+        for(const List<String>::Node* i = target.dependencies.getFirst(); i; i = i->getNext())
+        {
+          const Map<String, Platform::Config::Target>::Node* node = config.targets.find(i->data);
+          if(!node)
+            printf("warning: Cannot resolve dependency \"%s\"\n", i->data.getData());
+          else if(&node->data == &target)
+            continue;
+          else
+            for(const List<String>::Node* j = node->data.output.getFirst(); j; j = j->getNext())
+              target.input.append(j->data);
+        }
+        for(List<Platform::Config::Target::File>::Node* j = target.files.getFirst(); j; j = j->getNext())
+        {
+          Platform::Config::Target::File& file = j->data;
           for(const List<String>::Node* i = file.dependencies.getFirst(); i; i = i->getNext())
-            target.dependencies.append(i->data);
+          {
+            const Map<String, Platform::Config::Target>::Node* node = config.targets.find(i->data);
+            if(!node)
+              printf("warning: Cannot resolve dependency \"%s\"\n", i->data.getData());
+            else if(&node->data == &target)
+              continue;
+            else
+              for(const List<String>::Node* j = node->data.output.getFirst(); j; j = j->getNext())
+                file.input.append(j->data);
+          }
         }
       }
+
+      // add file dependencies to target dependencies
+      for(Map<String, Platform::Config::Target>::Node* i = config.targets.getFirst(); i; i = i->getNext())
+      {
+        Platform::Config::Target& target = i->data;
+        for(const List<Platform::Config::Target::File>::Node* j = target.files.getFirst(); j; j = j->getNext())
+          for(const List<String>::Node* i = j->data.dependencies.getFirst(); i; i = i->getNext())
+            target.dependencies.append(i->data);
+      }
+    
+
+    }
   return true;
 }
 
@@ -366,7 +418,7 @@ bool Make::generateMakefile(const Platform& platform, const Platform::Config& co
   String phony;
   for(List<Platform>::Node* k = platforms.getFirst(); k; k = 0)
     for(List<Platform::Config>::Node* j = k->data.configs.getFirst(); j; j = 0)
-      for(List<Platform::Config::Target>::Node* i = j->data.targets.getFirst(); i; i = i->getNext())
+      for(Map<String, Platform::Config::Target>::Node* i = j->data.targets.getFirst(); i; i = i->getNext())
       {
         if(!phony.isEmpty())
           phony.append(' ');
@@ -375,7 +427,7 @@ bool Make::generateMakefile(const Platform& platform, const Platform::Config& co
   fileWrite(String(".PHONY: ") + phony + "\n");
   fileWrite("\n");
 
-  for(const List<Platform::Config::Target>::Node* i = config.targets.getFirst(); i; i = i->getNext())
+  for(const Map<String, Platform::Config::Target>::Node* i = config.targets.getFirst(); i; i = i->getNext())
   {
     const Platform::Config::Target& target = i->data;
 
