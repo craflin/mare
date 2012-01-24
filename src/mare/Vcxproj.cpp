@@ -65,6 +65,8 @@ bool Vcxproj::generate(const Map<String, String>& userArgs)
   knownCppOptions.append("/GS-", Option("BufferSecurityCheck", "false"));
   knownCppOptions.append("/Gy", Option("FunctionLevelLinking", "true"));
   knownCppOptions.append("/Gy-", Option("FunctionLevelLinking", "false"));
+  knownCppOptions.append("/arch:SSE", Option("EnableEnhancedInstructionSet", "StreamingSIMDExtensions"));
+  knownCppOptions.append("/arch:SSE2", Option("EnableEnhancedInstructionSet", "StreamingSIMDExtensions2"));
   knownCppOptions.append("/fp:precise", Option("FloatingPointModel", "Precise"));
   knownCppOptions.append("/fp:strict", Option("FloatingPointModel", "Strict"));
   knownCppOptions.append("/fp:fast", Option("FloatingPointModel", "Fast"));
