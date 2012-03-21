@@ -149,7 +149,7 @@ bool Directory::read(bool dirsOnly, String& name, bool& isDir)
       isDir = false;
       if(dent->d_type == DT_DIR)
         isDir = true;
-      else if(dent->d_type == DT_LNK)
+      else if(dent->d_type == DT_LNK || dent->d_type == DT_UNKNOWN)
       {
         String path = dirpath;
         path.append('/');
