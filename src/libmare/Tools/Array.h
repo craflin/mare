@@ -75,7 +75,7 @@ private:
       T* oldData = data;
       this->capacity = capacity + 16 + (capacity >> 1);
       data = new T[this->capacity];
-      for(T* pos = data, * end = data + size, * oldPos = oldData; pos < end;)
+      for(T* pos = data, * end = data + this->size, * oldPos = oldData; pos < end;)
         *(pos++) = *(oldPos++);
       if(oldData)
         delete[] oldData;
