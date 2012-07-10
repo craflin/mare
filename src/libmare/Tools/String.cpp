@@ -370,7 +370,7 @@ String& String::lowercase()
 {
   grow(data->length, data->length); // detach
   for(char* str = (char*)data->str; *str; ++str)
-    *str = tolower(*str);
+    *str = tolower(*(unsigned char*)str);
   return *this;
 }
 
@@ -378,6 +378,6 @@ String& String::uppercase()
 {
   grow(data->length, data->length); // detach
   for(char* str = (char*)data->str; *str; ++str)
-    *str = toupper(*str);
+    *str = toupper(*(unsigned char*)str);
   return *this;
 }

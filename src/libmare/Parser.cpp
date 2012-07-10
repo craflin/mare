@@ -228,7 +228,7 @@ void Parser::nextToken()
 
     default: // space, keyword or identifier
 
-      if(isspace(c))
+      if(isspace(*(unsigned char*)&c))
         goto handleNextChar;
 
       if(isalpha(c) || c == '_')

@@ -39,7 +39,7 @@ void Word::split(const String& text, List<Word>& words)
   const char* str = text.getData();
   for(;;)
   {
-    while(isspace(*str))
+    while(isspace(*(unsigned char*)str))
       ++str;
     if(!*str)
       break;
@@ -62,7 +62,7 @@ void Word::split(const String& text, List<Word>& words)
     {
       const char* end = str;
       for(; *end; ++end)
-        if(isspace(*end))
+        if(isspace(*(unsigned char*)end))
           break;
       // TODO: read escaped spaces as ordinary spaces
       words.append(Word(text.substr(str - text.getData(), end - str), 0));

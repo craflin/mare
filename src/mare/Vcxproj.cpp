@@ -1145,7 +1145,7 @@ String Vcxproj::joinCommands(const List<String>& commands)
       String program(i->data);
       program.subst("/", "\\");
       for(const char* str = program.getData(); *str; ++str)
-          if(isspace(*str))
+          if(isspace(*(unsigned char*)str))
           {
             result.append('"');
             result.append(xmlEscape(program));
@@ -1158,7 +1158,7 @@ String Vcxproj::joinCommands(const List<String>& commands)
       {
         result.append(' ');
         for(const char* str = i->data.getData(); *str; ++str)
-          if(isspace(*str))
+          if(isspace(*(unsigned char*)str))
           {
             result.append('"');
             result.append(xmlEscape(i->data));

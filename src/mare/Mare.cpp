@@ -690,7 +690,7 @@ String Mare::join(const List<String>& words)
     int len = result.getLength();
     char* dest = result.getData(len) + len; 
     for(const char* str = i->data.getData(); *str; ++str)
-      if(isspace(*str))
+      if(isspace(*(unsigned char*)str))
       {
         result.setLength(len); // fall back
         result.append('"');
