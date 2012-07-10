@@ -31,6 +31,8 @@ public:
 
   static unsigned  int getProcessorCount();
 
+  static String getArchitecture();
+
 private:
 #ifdef _WIN32
   void* hProcess;

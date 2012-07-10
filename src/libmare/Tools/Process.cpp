@@ -10,6 +10,7 @@
 #include <sys/wait.h>
 #include <cstdio>
 #include <cstring>
+#include <sys/utsname.h> // uname
 #endif
 
 #include "Assert.h"
@@ -491,5 +492,24 @@ unsigned  int Process::getProcessorCount()
   return sysconf(_SC_NPROCESSORS_CONF);
 //#else
   //return 1;
+#endif
+}
+
+String Process::getArchitecture()
+{
+#ifndef _WIN32
+  struct utsname utsn;
+  if(uname(&utsn) == 0)
+    return String(utsn.machine, -1);
+#else
+#if defined(_WIN64) || defined(_M_X64) || defined(_M_AMD64) | defined(__amd64__) || defined(__amd64) || defined(__x86_64__) || defined(__x86_64)
+  return String("x86_64");
+#elif defined(_WIN32) || defined(__i686_)
+  return String("i686");
+#else
+  return String("unknown");
+  // add your architecture :)
+  // http://predef.sourceforge.net/preos.html
+#endif
 #endif
 }

@@ -112,6 +112,10 @@ bool Mare::build(const Map<String, String>& userArgs)
   engine.addDefaultKey("host", platform); // the platform on which the compiler is run
   engine.addDefaultKey("platforms", platform); // the target platform of the compiler
 
+  String architecture = Process::getArchitecture();
+  engine.addDefaultKey("architecture", architecture);
+  engine.addDefaultKey("arch", architecture);
+
   // add user arguments
   for(const Map<String, String>::Node* i = userArgs.getFirst(); i; i = i->getNext())
     engine.addCommandLineKey(i->key, i->data);
