@@ -504,7 +504,13 @@ String Process::getArchitecture()
 #else
 #if defined(_WIN64) || defined(_M_X64) || defined(_M_AMD64) | defined(__amd64__) || defined(__amd64) || defined(__x86_64__) || defined(__x86_64)
   return String("x86_64");
-#elif defined(_WIN32) || defined(__i686_)
+#elif defined(_WIN32) || defined(__i686__)
+#if defined(_WIN32) || !defined(_WIN64)
+  BOOL Wow64Process;
+  if(IsWow64Process(GetCurrentProcess(), &Wow64Process))
+    if(Wow64Process)
+      return String("x86_64");
+#endif
   return String("i686");
 #else
   return String("unknown");
