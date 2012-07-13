@@ -46,7 +46,7 @@ private:
   /** statements ::= '{' { statement } '}' | statement */
   Statement* readStatements();
 
-  /** statement ::= ( 'if' expression statements [ 'else' statements ] | 'input' ( string | quotedstring ) | assignment ) { ( ',' | ';' ) } */
+  /** statement ::= ( 'if' expression statements [ 'else' statements ] | 'include' ( string | quotedstring ) | assignment ) { ( ',' | ';' ) } */
   Statement* readStatement();
 
   /** assignment ::= '-' ( string | quotedstring ) | ( string | quotedstring ) [ ( '=' | '+=' | '-=' ) expression  */
