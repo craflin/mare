@@ -56,11 +56,12 @@ static void showUsage(const char* executable)
   puts("Options:");
   puts("");
   puts("    -f <file>, --file=<file>");
-  puts("        Use <file> as a marefile.");
+  puts("        Use <file> as input marefile.");
+  puts("        The default value of <file> is \"Marefile\".");
   puts("");
-  puts("    --vcxproj [ 2010 ]");
-  puts("        Generate a .sln and .vcxproj files for Visual Studio 2010 from the");
-  puts("        marefile.");
+  puts("    --vcxproj[=<version>]");
+  puts("        Convert the marefile into a .sln and .vcxproj files for Visual Studio.");
+  puts("        <version> can be set to 2010 or 2012.");
   puts("");
   puts("    config=<config>, --config=<config>");
   puts("        Build using configuration <config> as declared in the marefile (Debug");
@@ -155,8 +156,12 @@ int main(int argc, char* argv[])
       else
       {
         const char* arg = argv[i] + 2;
+        int arglen = strlen(arg);
+        const char* argarg = strchr(arg, '=');
+        if(argarg)
+          arglen = argarg - arg;
         for(struct option* opt = long_options; opt->name; ++opt)
-          if(strcmp(arg, opt->name) == 0)
+          if(strncmp(arg, opt->name, arglen) == 0 && strlen(opt->name) == arglen)
           {
             nargv[nargc++] = argv[i];
             goto nextarg;
@@ -197,6 +202,8 @@ int main(int argc, char* argv[])
             {
               if(strcmp(optarg, "2010") == 0)
                 generateVcxproj = 2010;
+              else if(strcmp(optarg, "2012") == 0)
+                generateVcxproj = 2012;
               else // unknown version
                 ::showHelp(argv[0]);
             }

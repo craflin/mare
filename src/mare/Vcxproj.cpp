@@ -499,7 +499,10 @@ bool Vcxproj::generateSln()
   // header
   fileWrite("﻿\r\n");
   fileWrite("Microsoft Visual Studio Solution File, Format Version 11.00\r\n");
-  fileWrite("# Visual Studio 2010\r\n");
+  if(version == 2012)
+    fileWrite("# Visual Studio 2012\r\n");
+  else
+    fileWrite("# Visual Studio 2010\r\n");
 
   // project list
   for(const Map<String, Project>::Node* i = projects.getFirst(); i; i = i->getNext())
@@ -620,6 +623,8 @@ bool Vcxproj::generateVcxproj(Project& project)
       fileWrite("    <UseDebugLibraries>true</UseDebugLibraries>\r\n"); // i have no idea what this option does and how to change it in the project settings in visual studio
     else                                                                // appearantly it changes some compiler/linker default values?
       fileWrite("    <UseDebugLibraries>false</UseDebugLibraries>\r\n");
+    if(version == 2012)
+      fileWrite("    <PlatformToolset>v110</PlatformToolset>\r\n");
     if(config.linkFlags.find("/LTCG"))
       fileWrite("    <WholeProgramOptimization>true</WholeProgramOptimization>\r\n");
 
