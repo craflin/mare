@@ -20,6 +20,7 @@
 #include "CodeLite.h"
 #include "CodeBlocks.h"
 #include "CMake.h"
+#include "NetBeans.h"
 
 static const char* VERSION   = "0.3";
 static const char* COPYRIGHT = "Copyright (C) 2011 Colin Graf";
@@ -81,6 +82,9 @@ static void showUsage(const char* executable)
   puts("    --cmake");
   puts("        Try to translate the marefile into a CMakeLists.txt files for cmake.");
   puts("        (experimental)");
+  puts("");
+  puts("    --netbeans");
+  puts("        Generate project files for NetBeans. (experimental)");
   puts("");
   puts("    config=<config>, --config=<config>");
   puts("        Build using configuration <config> as declared in the marefile (Debug");
@@ -152,6 +156,7 @@ int main(int argc, char* argv[])
   bool generateCodeLite = false;
   bool generateCodeBlocks = false;
   bool generateCMake = false;
+  bool generateNetBeans = false;
 
   // parse args
   {
@@ -169,6 +174,7 @@ int main(int argc, char* argv[])
       {"codelite", no_argument , 0, 0},
       {"codeblocks", no_argument , 0, 0},
       {"cmake", no_argument , 0, 0},
+      {"netbeans", no_argument , 0, 0},
       {0, 0, 0, 0}
     };
 
@@ -243,6 +249,8 @@ int main(int argc, char* argv[])
             generateCodeBlocks = true;
           else if(opt == "cmake")
             generateCMake = true;
+          else if(opt == "netbeans")
+            generateNetBeans = true;
           else if(opt == "clean")
             clean = true;
           else if(opt == "rebuild")
@@ -381,6 +389,15 @@ int main(int argc, char* argv[])
     {
       CMake cMake(engine, inputConfigs);
       if(!cMake.generate(userArgs))
+        return EXIT_FAILURE;
+      return EXIT_SUCCESS;
+    }
+
+    // generate codeblocks mode?
+    if(generateNetBeans)
+    {
+      NetBeans netBeans(engine);
+      if(!netBeans.generate(userArgs))
         return EXIT_FAILURE;
       return EXIT_SUCCESS;
     }
