@@ -39,7 +39,7 @@ Compiling mare
 
 ### Windows
 
-Git and Visual Studio 2010 (or newer) are required to compile Mare on Windows (e.g. Windows Xp, Windows 7). https://github.com/jeffco/mare.git has the be cloned into a working directory. The directory "VS2010" of the working copy will then contain project files for Visual Studio that can be used to compile the program. The resulting binary file (mare.exe) can be found in the directory "Debug" or "Release" depending on which configuration was used.
+Git and Visual Studio 2010 (or newer) are required to compile Mare on Windows (e.g. Windows Xp, Windows 7). https://github.com/craflin/mare.git has the be cloned into a working directory. The directory "VS2010" of the working copy will then contain project files for Visual Studio that can be used to compile the program. The resulting binary file (mare.exe) can be found in the directory "Debug" or "Release" depending on which configuration was used.
 
 ### GNU/Linux
 
@@ -47,7 +47,7 @@ Git, a compiler compatible with g++ and Make are required to compile Mare on GNU
 
 ```
 $ cd /your/working/directory
-$ git clone https://github.com/jeffco/mare.git mare
+$ git clone https://github.com/craflin/mare.git mare
 $ cd mare
 $ make
 ```

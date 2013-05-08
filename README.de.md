@@ -38,7 +38,7 @@ Kompilation
 ### Windows
 
 Um Mare unter Windows zu kompilieren, wird git und Visual Studio 2010 (oder neuer) benötigt.
-https://github.com/jeffco/mare.git wird in ein beliebiges Arbeitsverzeichnis geklont. Im Verzeichnis "VS2010" befinden sich dann Projektdateien für Visual Studio mit denen Mare kompiliert werden kann.
+https://github.com/craflin/mare.git wird in ein beliebiges Arbeitsverzeichnis geklont. Im Verzeichnis "VS2010" befinden sich dann Projektdateien für Visual Studio mit denen Mare kompiliert werden kann.
 
 ### Linux
 
@@ -46,7 +46,7 @@ Um Mare unter Linux (oder einem ähnlichen Betriebssystem) zu übersetzen, wird gi
 
 ```
 $ cd /your/working/directory
-$ git clone https://github.com/jeffco/mare.git mare
+$ git clone https://github.com/craflin/mare.git mare
 $ cd mare
 $ make
 ```
