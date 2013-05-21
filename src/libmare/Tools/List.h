@@ -124,6 +124,52 @@ public:
 
   inline bool isEmpty() const {return first == 0;}
 
+  /**
+  * Sorts the list using the comparator \c cmp.
+  * Note: This function may change the data element of an existing node.
+  * @param The comparator used to compare two data elements.
+  */
+  void sort(int (*cmp)(const T& a, const T& b))
+  {
+    if(first == last)
+      return;
+    struct QuickSort
+    {
+      int (*compare)(const T& a, const T& b);
+      inline static void swap(Node* a, Node* b)
+      {
+        T tmp = a->data;
+        a->data = b->data;
+        b->data = tmp;
+      }
+      inline void sort(Node* left, Node* right)
+      {
+        Node* ptr0, * ptr1, * ptr2;
+        ptr0 = ptr1 = ptr2 = left;
+        const T& pivot = left->data;
+        do
+        {
+          ptr2 = ptr2->next;
+          if(compare(ptr2->data, pivot) < 0)
+          {
+            ptr0 = ptr1;
+            ptr1 = ptr1->next;
+            swap(ptr1, ptr2);
+          }
+        } while(ptr2 != right);
+        swap(left, ptr1);
+        if(ptr1 != right)
+          ptr1 = ptr1->next;
+        if(left != ptr0)
+          sort(left, ptr0);
+        if(ptr1 != right)
+          sort(ptr1, right);
+      }
+    } a;
+    a.compare = cmp;
+    a.sort(first, last);
+  }
+
 private:
   Node* first;
   Node* last;

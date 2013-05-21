@@ -69,8 +69,52 @@ bool Process::isRunning() const
 
 unsigned int Process::start(const String& rawCommandLine)
 {
+  // split commands into words
   List<Word> command;
   Word::split(rawCommandLine, command);
+
+  // separate leading environment variables from the command line
+  Map<String, String> environmentVariables;
+  for(List<Word>::Node* envNode = command.getFirst(); envNode; envNode = command.getFirst())
+  {
+    const char* data = envNode->data.getData();
+    const char* sep = strchr(data, '=');
+    if(sep)
+    {
+      if(environmentVariables.isEmpty())
+      { // load existing variable list
+#ifdef _WIN32
+        char* existingStrings = GetEnvironmentStrings();
+        for(const char* p = existingStrings;;)
+        {
+          if(*p)
+          {
+            int len = strlen(p);
+            const char* sep = strchr(p, '=');
+            environmentVariables.append(String(p, sep - p), String(p, len));
+            p += len + 1;
+          }
+          else
+            break;
+        }
+        FreeEnvironmentStrings(existingStrings);
+#else
+        // TODO
+#endif
+      }
+
+      // add or override a variable
+      String key(data, sep - data);
+      Map<String, String>::Node* existingNode = environmentVariables.find(key);
+      if(existingNode)
+        existingNode->data = envNode->data;
+      else
+        environmentVariables.append(key, envNode->data);
+      command.removeFirst();
+    }
+    else
+      break;
+  }
 
 #ifdef _WIN32
   struct Executable
@@ -235,7 +279,38 @@ unsigned int Process::start(const String& rawCommandLine)
   si.cb = sizeof(si);
   ZeroMemory(&pi, sizeof(pi));
 
-  if(!CreateProcess(programPath.getData(), (char*)commandLine.getData(), NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+  char* envblock = 0;
+  if(!environmentVariables.isEmpty())
+  {
+    int envlen = 1;
+    const String** envStrings = (const String**)_alloca(environmentVariables.getSize() * sizeof(String*));
+    const String** j = envStrings;
+    for(Map<String, String>::Node* i = environmentVariables.getFirst(); i; i = i->getNext())
+    {
+      envlen += i->data.getLength() + 1;
+      *(j++) = &i->data;
+    }
+    struct SortFunction
+    {
+      static int cmp(const void* a, const void* b)
+      {
+        return _stricmp((*(const String**)a)->getData(), (*(const String**)b)->getData());
+      }
+    };
+    qsort(envStrings, environmentVariables.getSize(), sizeof(char*), SortFunction::cmp);
+
+    envblock = (char*)_alloca(envlen);
+    char* p = envblock; 
+    for(const String** i = envStrings, ** end = envStrings + environmentVariables.getSize(); i < end; ++i)
+    {
+      int varlen = (*i)->getLength() + 1;
+      memcpy(p, (*i)->getData(), varlen);
+      p += varlen;
+    }
+    *p = '\0';
+  }
+
+  if(!CreateProcess(programPath.getData(), (char*)commandLine.getData(), NULL, NULL, FALSE, 0, envblock, NULL, &si, &pi))
   {
     DWORD lastError = GetLastError();
     if(!programPath.isEmpty())
