@@ -189,7 +189,7 @@ int main(int argc, char* argv[])
       else
       {
         const char* arg = argv[i] + 2;
-        int arglen = strlen(arg);
+        unsigned int arglen = strlen(arg);
         const char* argarg = strchr(arg, '=');
         if(argarg)
           arglen = argarg - arg;

@@ -82,13 +82,13 @@ void Word::append(const List<Word>& words, String& text)
   text.setCapacity(totalLen + 16);
 
   const List<Word>::Node* i = words.getFirst();
-  const List<Word>::Node* previousWord = i;
+  //const List<Word>::Node* previousWord = i;
   i->data.appendTo(text);
   for(i = i->getNext(); i; i = i->getNext())
   {
     text.append(/*previousWord->data.terminated ? '\n' : */' ');
     i->data.appendTo(text);
-    previousWord = i;
+    //previousWord = i;
   }
 }
 
