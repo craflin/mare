@@ -73,7 +73,7 @@ unsigned int Process::start(const String& rawCommandLine)
   List<Word> command;
   Word::split(rawCommandLine, command);
 
-  // separate leading environment variables from the command line
+  // separate leading environment variables and the command line
   Map<String, String> environmentVariables;
   for(List<Word>::Node* envNode = command.getFirst(); envNode; envNode = command.getFirst())
   {
@@ -81,28 +81,12 @@ unsigned int Process::start(const String& rawCommandLine)
     const char* sep = strchr(data, '=');
     if(sep)
     {
+      // load list of existing existing variables
       if(environmentVariables.isEmpty())
-      { // load existing variable list
-#ifdef _WIN32
-        char* existingStrings = GetEnvironmentStrings();
-        for(const char* p = existingStrings; *p;)
-        {
-          int len = strlen(p);
-          const char* sep = strchr(p, '=');
-          if(sep)
-            environmentVariables.append(String(p, sep - p), String(p, len));
-          p += len + 1;
-        }
-        FreeEnvironmentStrings(existingStrings);
-#else
-        for(char** pp = environ; *pp; ++pp)
-        {
-          const char* p = *pp;
-          const char* sep = strchr(p, '=');
-          if(sep)
-            environmentVariables.append(String(p, sep - p), String(p, strlen(p)));
-        }
-#endif
+      {
+        const Map<String, String>& envs = getEnvironmentVariables();
+        for(const Map<String, String>::Node* i = envs.getFirst(); i; i = i->getNext())
+          environmentVariables.append(i->key, i->data);
       }
 
       // add or override a variable
@@ -112,6 +96,8 @@ unsigned int Process::start(const String& rawCommandLine)
         existingNode->data = envNode->data;
       else
         environmentVariables.append(key, envNode->data);
+
+      //
       command.removeFirst();
     }
     else
@@ -606,3 +592,33 @@ String Process::getArchitecture()
 #endif
 }
 
+const Map<String, String>& Process::getEnvironmentVariables()
+{
+  static const Map<String, String>* loadedEnvironmentVariables = 0;
+  if(loadedEnvironmentVariables)
+    return *loadedEnvironmentVariables;
+
+  static Map<String, String> environmentVariables;
+#ifdef _WIN32
+  char* existingStrings = GetEnvironmentStrings();
+  for(const char* p = existingStrings; *p;)
+  {
+    int len = strlen(p);
+    const char* sep = strchr(p, '=');
+    if(sep)
+      environmentVariables.append(String(p, sep - p), String(p, len));
+    p += len + 1;
+  }
+  FreeEnvironmentStrings(existingStrings);
+#else
+  for(char** pp = environ; *pp; ++pp)
+  {
+    const char* p = *pp;
+    const char* sep = strchr(p, '=');
+    if(sep)
+      environmentVariables.append(String(p, sep - p), String(p, strlen(p)));
+  }
+#endif
+  loadedEnvironmentVariables = &environmentVariables;
+  return environmentVariables;
+}

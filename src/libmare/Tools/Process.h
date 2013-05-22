@@ -3,6 +3,7 @@
 #pragma once
 
 #include "String.h"
+#include "Map.h"
 
 class Process
 {
@@ -31,6 +32,12 @@ public:
   static unsigned  int getProcessorCount();
 
   static String getArchitecture();
+
+  /**
+  * Returns the environment variables of the current process.
+  * @return A map that contains the environment variables.
+  */
+  static const Map<String, String>& getEnvironmentVariables();
 
 private:
 #ifdef _WIN32
