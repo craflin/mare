@@ -5,6 +5,7 @@
 #include "Tools/File.h"
 #include "Tools/Directory.h"
 #include "Tools/Word.h"
+#include "Tools/Process.h"
 #include "Namespace.h"
 #include "Statement.h"
 #include "Engine.h"
@@ -322,6 +323,13 @@ String Namespace::evaluateString(const String& string)
       {
         engine.appendKeys(output);
         engine.leaveKey();
+      }
+      else
+      {
+        const Map<String, String>& envs = Process::getEnvironmentVariables();
+        const Map<String, String>::Node* envNode = envs.find(variable);
+        if(envNode)
+          output.append(envNode->data.getData() + envNode->key.getLength() + 1, envNode->data.getLength() - (envNode->key.getLength() + 1));
       }
       engine.popKey();
     }
