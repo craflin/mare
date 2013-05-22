@@ -85,21 +85,23 @@ unsigned int Process::start(const String& rawCommandLine)
       { // load existing variable list
 #ifdef _WIN32
         char* existingStrings = GetEnvironmentStrings();
-        for(const char* p = existingStrings;;)
+        for(const char* p = existingStrings; *p;)
         {
-          if(*p)
-          {
-            int len = strlen(p);
-            const char* sep = strchr(p, '=');
+          int len = strlen(p);
+          const char* sep = strchr(p, '=');
+          if(sep)
             environmentVariables.append(String(p, sep - p), String(p, len));
-            p += len + 1;
-          }
-          else
-            break;
+          p += len + 1;
         }
         FreeEnvironmentStrings(existingStrings);
 #else
-        // TODO
+        for(char** pp = environ; *pp; ++pp)
+        {
+          const char* p = *pp;
+          const char* sep = strchr(p, '=');
+          if(sep)
+            environmentVariables.append(String(p, sep - p), String(p, strlen(p)));
+        }
 #endif
       }
 
@@ -470,12 +472,6 @@ success:
     }
   }
 
-  const char** argv = (const char**)alloca(sizeof(const char*) * (command.getSize() + 1));
-  int i = 0;
-  for(const List<Word>::Node* j = command.getFirst(); j; j = j->getNext())
-    argv[i++] = j->data.getData();
-  argv[i] = 0;
-
   int r = vfork();
   if(r == -1)
     return 0;
@@ -487,8 +483,24 @@ success:
   }
   else // child
   {
+    const char** argv = (const char**)alloca(sizeof(const char*) * (command.getSize() + 1));
+    int i = 0;
+    for(const List<Word>::Node* j = command.getFirst(); j; j = j->getNext())
+      argv[i++] = j->data.getData();
+    argv[i] = 0;
+
+    const char** envp = (const char**)environ;
+    if(!environmentVariables.isEmpty())
+    {
+      envp = (const char**)alloca(sizeof(const char*) * (environmentVariables.getSize() + 1));
+      int i = 0;
+      for(const Map<String, String>::Node* j = environmentVariables.getFirst(); j; j = j->getNext())
+        envp[i++] = j->data.getData();
+      envp[i] = 0;
+    }
+
     const char* executable = programPath.getData();
-    if(execv(executable, (char* const*)argv) == -1)
+    if(execve(executable, (char* const*)argv, (char* const*)envp) == -1)
     {
       fprintf(stderr, "%s: %s\n", executable, Error::getString().getData());
       _exit(EXIT_FAILURE);
