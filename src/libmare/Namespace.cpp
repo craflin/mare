@@ -22,43 +22,55 @@ String Namespace::evaluateString(const String& string)
     static void handle(Engine& engine, const char*& input, String& output, const char* endchars, bool evaluate = true)
     {
       while(*input && !strchr(endchars, *input))
-        if(*input == '$' && input[1] == '(')
+      {
+        if(*input == '$')
         {
-          input += 2;
-          String varOrCommand;
-          handle(engine, input, varOrCommand, " )", evaluate);
-          if(*input == ' ')
+          if(input[1] == '(')
           {
-            ++input;
-            if(evaluate)
-              handleCommand(engine, varOrCommand, input, output);
+            input += 2;
+            String varOrCommand;
+            handle(engine, input, varOrCommand, " )", evaluate);
+            if(*input == ' ')
+            {
+              ++input;
+              if(evaluate)
+                handleCommand(engine, varOrCommand, input, output);
 
-            // skip further arguements
-            if(*input && *input != ')')
-              for(;;)
-              {
-                handle(engine, input, output, ",)", false);
-                if(*input != ',')
-                  break;
-                ++input;
-              }
+              // skip further arguements
+              if(*input && *input != ')')
+                for(;;)
+                {
+                  handle(engine, input, output, ",)", false);
+                  if(*input != ',')
+                    break;
+                  ++input;
+                }
+            }
+            else
+            {
+              if(evaluate)
+                handleVariable(engine, varOrCommand, output);
+            }
+            if(*input == ')')
+              ++input;
+          }
+          else if(input[1] == '$')
+          {
+            input += 2;
+            if(evaluate)
+              output.append('$');;
           }
           else
-          {
-            if(evaluate)
-              handleVariable(engine, varOrCommand, output);
-          }
-          if(*input == ')')
-            ++input;
+            ++input; // ignore isolated $ sign
+          continue;
         }
-        else
-        {
-          const char* str = input++;
-          while(*input && *input != '$' && !strchr(endchars, *input))
-            ++input;
-          if(evaluate)
-            output.append(str, input - str);
-        }
+
+        const char* str = input++;
+        while(*input && *input != '$' && !strchr(endchars, *input))
+          ++input;
+        if(evaluate)
+          output.append(str, input - str);
+      }
     }
     static void handleCommand(Engine& engine, const String& cmd, const char*& input, String& output)
     {
