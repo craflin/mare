@@ -58,15 +58,17 @@ bool CodeLite::generate(const Map<String, String>& userArgs)
   for(const Map<String, String>::Node* i = userArgs.getFirst(); i; i = i->getNext())
     engine.addCommandLineKey(i->key, i->data);
 
-  //
+  // step #1: read input file
   if(!readFile())
     return false;
 
-  // generate solution file
-  if(!generateWorkspace())
+  // step #2: ...
+  if(!processData())
     return false;
 
-  // generate project files
+  // step #3:  generate workspace and project files
+  if(!generateWorkspace())
+    return false;
   if(!generateProjects())
     return false;
 
@@ -208,6 +210,11 @@ bool CodeLite::readFile()
     }
   }
 
+  return true;
+}
+
+bool CodeLite::processData()
+{
   return true;
 }
 

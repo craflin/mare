@@ -155,17 +155,17 @@ bool Vcxproj::generate(const Map<String, String>& userArgs)
   for(const Map<String, String>::Node* i = userArgs.getFirst(); i; i = i->getNext())
     engine.addCommandLineKey(i->key, i->data);
 
-  //
+  // step #1: read input file
   if(!readFile())
     return false;
-  if(!resolveDependencies())
+
+  // step #2: ...
+  if(!processData())
     return false;
 
-  // generate solution file
+  // step #3: generate solution and project files
   if(!generateSln())
     return false;
-
-  // generate project files
   if(!generateVcxprojs())
     return false;
 
@@ -351,6 +351,14 @@ bool Vcxproj::readFile()
       }
     }
   }
+
+  return true;
+}
+
+bool Vcxproj::processData()
+{
+  if(!resolveDependencies())
+    return false;
 
   return true;
 }

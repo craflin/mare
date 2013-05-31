@@ -59,15 +59,15 @@ bool NetBeans::generate(const Map<String, String>& userArgs)
   for(const Map<String, String>::Node* i = userArgs.getFirst(); i; i = i->getNext())
     engine.addCommandLineKey(i->key, i->data);
 
-  // read project data from marefile
+  // step #1: read project data from marefile
   if(!readFile())
     return false;
     
-  // ...
+  // step #2: ...
   if(!processData())
     return false;
 
-  // generate project files
+  // step #3: generate project files
   for(Map<String, Project>::Node* i = projects.getFirst(); i; i = i->getNext())
     if(!generateProject(i->data))
       return false;

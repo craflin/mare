@@ -122,6 +122,8 @@ private:
   String openedFile; /**< The file that is currently written */
 
   bool readFile();
+
+  bool processData();
   bool resolveDependencies();
 
   bool generateSln();

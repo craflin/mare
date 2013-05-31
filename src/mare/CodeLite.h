@@ -94,6 +94,8 @@ private:
 
   bool readFile();
 
+  bool processData();
+
   bool generateWorkspace();
   bool generateProjects();
   bool generateProject(Project& project);
