@@ -311,6 +311,14 @@ bool Vcxproj::processData()
     {
       Project::Config& projectConfig = i->data;
 
+      Map<String, void*> defines;
+      for(List<String>::Node* i = projectConfig.defines.getFirst(); i; i = i->getNext())
+        defines.append(i->data, 0);
+      if(defines.find("UNICODE") || defines.find("_UNICODE"))
+        projectConfig.otherFlags.append("Unicode");
+      else if(defines.find("_MBCS"))
+        projectConfig.otherFlags.append("MultiByte");
+
       // determine project type
       projectConfig.type = "Utility";
       if(!projectConfig.command.isEmpty())
@@ -667,10 +675,10 @@ bool Vcxproj::generateVcxproj(Project& project)
       fileWrite("    <PlatformToolset>v110</PlatformToolset>\r\n");
     if(config.linkFlags.find("/LTCG"))
       fileWrite("    <WholeProgramOptimization>true</WholeProgramOptimization>\r\n");
-//    if(config.linkFlags.find("???"))
-//      fileWrite("    <CharacterSet>MultiByte</CharacterSet>\r\n");
-//    else if(config.linkFlags.find("???"))
-//      fileWrite("    <CharacterSet>Unicode</CharacterSet>\r\n");
+    if(config.otherFlags.find("MultiByte"))
+      fileWrite("    <CharacterSet>MultiByte</CharacterSet>\r\n");
+    else if(config.otherFlags.find("Unicode"))
+      fileWrite("    <CharacterSet>Unicode</CharacterSet>\r\n");
 
     fileWrite("  </PropertyGroup>\r\n");
   }

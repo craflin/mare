@@ -55,6 +55,7 @@ private:
       List<String> includePaths;
       List<String> libPaths;
       List<String> libs;
+      Map<String, void*> otherFlags;
 
       Config(const String& name, const String& platform) : name(name), platform(platform) {}
     };
