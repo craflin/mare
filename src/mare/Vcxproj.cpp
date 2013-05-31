@@ -237,8 +237,11 @@ bool Vcxproj::readFile()
         engine.getKeys("output", projectConfig.outputs, false);
         engine.getKeys("input", projectConfig.inputs, false);
 
-        engine.getKeys("cppFlags", projectConfig.cAndCppFlags, true);
-        engine.getKeys("cFlags", projectConfig.cAndCppFlags, true);
+        List<String> cAndCppFlags;
+        engine.getKeys("cppFlags", cAndCppFlags, true);
+        engine.getKeys("cFlags", cAndCppFlags, true);
+        for(const List<String>::Node* i = cAndCppFlags.getFirst(); i; i = i->getNext())
+          projectConfig.cAndCppFlags.append(i->data, 0);
         List<String> linkFlags;
         engine.getKeys("linkFlags", linkFlags, true);
         for(const List<String>::Node* i = linkFlags.getFirst(); i; i = i->getNext())
@@ -273,6 +276,8 @@ bool Vcxproj::readFile()
             engine.getKeys("output", fileConfig.outputs, false);
             engine.getKeys("input", fileConfig.inputs, false);
             engine.getKeys("dependencies", fileConfig.dependencies, false);
+            engine.getKeys("cppFlags", fileConfig.cAndCppFlags, false);
+            engine.getKeys("cFlags", fileConfig.cAndCppFlags, false);
             engine.leaveKey(); // VERIFY(engine.enterKey(i->data));
             engine.leaveKey();
           }
@@ -306,7 +311,7 @@ bool Vcxproj::processData()
       filter.projects.append(&project);
     }
 
-    //
+    // for each configuation
     for(Map<String, Project::Config>::Node* i = project.configs.getFirst(); i; i = i->getNext())
     {
       Project::Config& projectConfig = i->data;
@@ -347,7 +352,7 @@ bool Vcxproj::processData()
           project.dependencies.append(i->data);
     }
 
-    // check file types
+    // for each file
     for(Map<String, Project::File>::Node* i = project.files.getFirst(); i; i = i->getNext())
     {
       Project::File& file = i->data;
@@ -376,12 +381,19 @@ bool Vcxproj::processData()
             file.type = type;
         }
 
+        //
+        if(!fileConfig.cAndCppFlags.isEmpty())
+          file.useDefaultSettings = false;
+
         // add dependencies of the file to project's dependencies
         for(const List<String>::Node* i = fileConfig.dependencies.getFirst(); i; i = i->getNext())
           if(!project.dependencies.find(i->data))
             project.dependencies.append(i->data);
-
       }
+
+      //
+      if(file.configs.getSize() < project.configs.getSize())
+        file.useDefaultSettings = false;
     }
 
     // set special file type for header files
@@ -642,6 +654,7 @@ bool Vcxproj::generateVcxproj(Project& project)
   fileWrite("<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n");
   fileWrite("<Project DefaultTargets=\"Build\" ToolsVersion=\"4.0\" xmlns=\"http://schemas.microsoft.com/developer/msbuild/2003\">\r\n");
 
+  // write configuration list
   fileWrite("  <ItemGroup Label=\"ProjectConfigurations\">\r\n");
   for(const Map<String, Project::Config>::Node* i = project.configs.getFirst(); i; i = i->getNext())
   {
@@ -653,12 +666,14 @@ bool Vcxproj::generateVcxproj(Project& project)
   }
   fileWrite("  </ItemGroup>\r\n");
 
+  // write project name
   fileWrite("  <PropertyGroup Label=\"Globals\">\r\n");
   //fileWrite(String("    <ProjectName>") + project.name + "</ProjectName>\r\n");
   fileWrite(String("    <ProjectGuid>{") + project.guid + "}</ProjectGuid>\r\n");
   fileWrite(String("    <RootNamespace>") + project.name + "</RootNamespace>\r\n");
   fileWrite("  </PropertyGroup>\r\n");
 
+  // write general configuration
   fileWrite("  <Import Project=\"$(VCTargetsPath)\\Microsoft.Cpp.Default.props\" />\r\n");
 
   for(const Map<String, Project::Config>::Node* i = project.configs.getFirst(); i; i = i->getNext())
@@ -765,6 +780,7 @@ bool Vcxproj::generateVcxproj(Project& project)
 
   fileWrite("  </PropertyGroup>\r\n");
 
+  // write configuation settings
   for(const Map<String, Project::Config>::Node* i = project.configs.getFirst(); i; i = i->getNext())
   {
     const Project::Config& config = i->data;
@@ -801,17 +817,16 @@ bool Vcxproj::generateVcxproj(Project& project)
 
       {
         List<String> additionalOptions;
-        for(const List<String>::Node* i = config.cAndCppFlags.getFirst(); i; i = i->getNext())
-          if(!knownCppOptions.find(i->data))
-            additionalOptions.append(i->data);
-
+        for(const Map<String, void*>::Node* i = config.cAndCppFlags.getFirst(); i; i = i->getNext())
+          if(!knownCppOptions.find(i->key))
+            additionalOptions.append(i->key);
         if(!additionalOptions.isEmpty())
           fileWrite(String("      <AdditionalOptions>") + join(additionalOptions, ' ') + " %(AdditionalOptions)</AdditionalOptions>\r\n");
 
         Map<String, void*> usedOptions;
-        for(const List<String>::Node* i = config.cAndCppFlags.getFirst(); i; i = i->getNext())
+        for(const Map<String, void*>::Node* i = config.cAndCppFlags.getFirst(); i; i = i->getNext())
         {
-          const Map<String, Option>::Node* node = knownCppOptions.find(i->data);
+          const Map<String, Option>::Node* node = knownCppOptions.find(i->key);
           if(node)
           {
             const Option& option = node->data;
@@ -851,7 +866,6 @@ bool Vcxproj::generateVcxproj(Project& project)
         for(const Map<String, void*>::Node* i = config.linkFlags.getFirst(); i; i = i->getNext())
           if(!knownLinkOptions.find(i->key))
             additionalOptions.append(i->key);
-
         if(!additionalOptions.isEmpty())
           fileWrite(String("      <AdditionalOptions>") + join(additionalOptions, ' ') + " %(AdditionalOptions)</AdditionalOptions>\r\n");
 
@@ -915,6 +929,7 @@ bool Vcxproj::generateVcxproj(Project& project)
     fileWrite("  </ItemDefinitionGroup>\r\n");
   }
 
+  // write file list
   fileWrite("  <ItemGroup>\r\n");
   for(Map<String, Project::File>::Node* i = project.files.getFirst(); i; i = i->getNext())
   {
@@ -965,20 +980,60 @@ bool Vcxproj::generateVcxproj(Project& project)
     }
     else
     {
-      if(file.configs.getSize() < project.configs.getSize())
+      if(file.useDefaultSettings)
+        fileWrite(String("    <") + file.type + " Include=\"" + path + "\" />\r\n");
+      else
       {
         fileWrite(String("    <") + file.type + " Include=\"" + path + "\">\r\n");
         for(const Map<String, Project::Config>::Node* i = project.configs.getFirst(); i; i = i->getNext())
-          if(!file.configs.find(i->key))
-            fileWrite(String("      <ExcludedFromBuild Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">true</ExcludedFromBuild>\r\n");
+        {
+          const String& configKey = i->key;
+          const Project::Config& projectConfig = i->data;
+          const Map<String, Project::File::Config>::Node* node = file.configs.find(configKey);
+          if(!node)
+            fileWrite(String("      <ExcludedFromBuild Condition=\"'$(Configuration)|$(Platform)'=='") + configKey + "'\">true</ExcludedFromBuild>\r\n");
+          else
+          {
+            const Project::File::Config& fileConfig = node->data;
+
+            {
+              List<String> additionalOptions;
+              for(const List<String>::Node* i = fileConfig.cAndCppFlags.getFirst(); i; i = i->getNext())
+                if(!projectConfig.cAndCppFlags.find(i->data) && !knownCppOptions.find(i->data))
+                  additionalOptions.append(i->data);
+
+              if(!additionalOptions.isEmpty())
+                fileWrite(String("      <AdditionalOptions Condition=\"'$(Configuration)|$(Platform)'=='") + configKey + "'\">" + join(additionalOptions, ' ') + " %(AdditionalOptions)</AdditionalOptions>\r\n");
+
+              Map<String, void*> usedOptions;
+              for(const List<String>::Node* i = fileConfig.cAndCppFlags.getFirst(); i; i = i->getNext())
+                if(!projectConfig.cAndCppFlags.find(i->data))
+                {
+                  const Map<String, Option>::Node* node = knownCppOptions.find(i->data);
+                  if(node)
+                  {
+                    const Option& option = node->data;
+                    if(usedOptions.find(option.name))
+                    {
+                      // TODO: warning or error
+                    }
+                    else
+                    {
+                      usedOptions.append(option.name);
+                      fileWrite(String("      <") + option.name + " Condition=\"'$(Configuration)|$(Platform)'=='" + configKey + "'\">" + option.value + "</" + option.name + ">\r\n");
+                    }
+                  }
+                }
+            }
+          }
+        }
         fileWrite(String("    </") + file.type + ">\r\n");
       }
-      else
-        fileWrite(String("    <") + file.type + " Include=\"" + path + "\" />\r\n");
     }
   }
   fileWrite("  </ItemGroup>\r\n");
 
+  // write dependencies
   if(!project.dependencies.isEmpty())
   {
     fileWrite("  <ItemGroup>\r\n");

@@ -49,7 +49,7 @@ private:
       List<String> outputs;
       List<String> inputs;
       List<String> dependencies;
-      List<String> cAndCppFlags;
+      Map<String, void*> cAndCppFlags;
       Map<String, void*> linkFlags;
       List<String> defines;
       List<String> includePaths;
@@ -71,11 +71,15 @@ private:
         List<String> outputs;
         List<String> inputs;
         List<String> dependencies;
+        List<String> cAndCppFlags;
       };
 
       String type;
       String filter;
       Map<String, Config> configs;
+      bool useDefaultSettings;
+
+      File() : useDefaultSettings(true) {}
     };
 
     String name;
