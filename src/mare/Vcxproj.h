@@ -79,6 +79,7 @@ private:
 
     String name;
     String guid;
+    String filter;
     Map<String, Config> configs;
     Map<String, File> files;
     Map<String, void*> dependencies;

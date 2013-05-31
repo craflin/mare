@@ -15,7 +15,7 @@
 
 bool Vcxproj::generate(const Map<String, String>& userArgs)
 {
-  // general tab:
+  // C/C++ general tab:
   knownCppOptions.append("/Z7", Option("DebugInformationFormat", "OldStyle"));
   knownCppOptions.append("/Zi", Option("DebugInformationFormat", "ProgramDatabase"));
   knownCppOptions.append("/ZI", Option("DebugInformationFormat", "EditAndContinue"));
@@ -32,7 +32,7 @@ bool Vcxproj::generate(const Map<String, String>& userArgs)
   knownCppOptions.append("/MP", Option("MultiProcessorCompilation", "true"));
   // TODO: use unicode for assembler listing
 
-  // optimization tab:
+  // C/C++ optimization tab:
   knownCppOptions.append("/O1", Option("Optimization", "MinSize"));
   knownCppOptions.append("/O2", Option("Optimization", "MaxSpeed"));
   knownCppOptions.append("/Od", Option("Optimization", "Disabled"));
@@ -48,9 +48,9 @@ bool Vcxproj::generate(const Map<String, String>& userArgs)
   knownCppOptions.append("/GT", Option("EnableFiberSafeOptimizations", "true"));
   knownCppOptions.append("/GL", Option("WholeProgramOptimization", "true"));
 
-  // TODO: Preprocessor tab
+  // TODO: C/C++ Preprocessor tab
 
-  // code generation tab:
+  // C/C++ code generation tab:
   knownCppOptions.append("/GF", Option("StringPooling", "true"));
   knownCppOptions.append("/Gm", Option("MinimalRebuild", "true"));
   knownCppOptions.append("/Gm-", Option("MinimalRebuild", "false"));
@@ -73,7 +73,7 @@ bool Vcxproj::generate(const Map<String, String>& userArgs)
   // TODO: floating point exceptions
   // TODO: create hotpatchable image
 
-  // language tab
+  // C/C++ language tab
   // TODO: disable language extensions
   knownCppOptions.append("/Zc:wchar_t", Option("TreatWChar_tAsBuiltInType", "true"));
   knownCppOptions.append("/Zc:wchar_t-", Option("TreatWChar_tAsBuiltInType", "false"));
@@ -81,24 +81,28 @@ bool Vcxproj::generate(const Map<String, String>& userArgs)
   // TODO: enable rtti
   // TODO: openmp
 
-  // TODO: pch tab
-  // TODO: output files tab?
-  // TODO: browse information tab?
-  // TODO: advanced tab?
+  // TODO: C/C++ pch tab
+  // TODO: C/C++ output files tab?
+  // TODO: C/C++ browse information tab?
+  // TODO: C/C++ advanced tab?
 
-  // TODO: serveral linker tabs?
+  // linker tabs:
 
-  // debugging tab:
+  // TODO: linker general tab
+  // TODO: linker input tab
+  // TODO: linker manifest file tab
+
+  // linker debugging tab:
   knownLinkOptions.append("/DEBUG", Option("GenerateDebugInformation", "true"));
   // TODO: more options?
 
-  // system tab:
+  // linker system tab:
   knownLinkOptions.append("/SUBSYSTEM:CONSOLE", Option("SubSystem", "Console"));
   knownLinkOptions.append("/SUBSYSTEM:WINDOWS", Option("SubSystem", "Windows"));
   // TODO: more SubSystems
   // TODO: more system tab options?
 
-  // optimization tab:
+  // linker optimization tab:
   knownLinkOptions.append("/INCREMENTAL");
   knownLinkOptions.append("/OPT:REF", Option("OptimizeReferences", "true"));
   knownLinkOptions.append("/OPT:NOREF", Option("OptimizeReferences", "false"));
@@ -109,6 +113,9 @@ bool Vcxproj::generate(const Map<String, String>& userArgs)
   // TODO: more LTCG options?
   // TODO: more options?
 
+  // TODO: Manifest Tool tabs?
+
+  //
   engine.addDefaultKey("tool", "vcxproj");
   engine.addDefaultKey("vcxproj", "vcxproj");
   engine.addDefaultKey("host", "Win32");
@@ -210,28 +217,12 @@ bool Vcxproj::readFile()
           return false;
         }
 
-        bool isNewProject = false;
         Map<String, Project>::Node* node = projects.find(i->data);
-        Project* project;
-        if(node)
-          project = &node->data;
-        else
-        {
-          project = &projects.append(i->data, Project(i->data, createSomethingLikeGUID(i->data)));
-          isNewProject = true;
-        }
-        Project::Config& projectConfig = project->configs.append(configKey, Project::Config(config.name, config.platform));
+        Project& project = node ? node->data : projects.append(i->data, Project(i->data, createSomethingLikeGUID(i->data)));
+        Project::Config& projectConfig = project.configs.append(configKey, Project::Config(config.name, config.platform));
 
-        if(isNewProject)
-        {
-          String filterName = engine.getFirstKey("folder", false);
-          if(!filterName.isEmpty())
-          {
-            Map<String, ProjectFilter>::Node* node = projectFilters.find(filterName);
-            ProjectFilter& filter = node ? node->data : projectFilters.append(filterName, ProjectFilter(createSomethingLikeGUID(filterName)));
-            filter.projects.append(project);
-          }
-        }
+        if(project.filter.isEmpty())
+          project.filter = engine.getFirstKey("folder", false);
 
         engine.getText("buildCommand", projectConfig.buildCommand, false);
         engine.getText("reBuildCommand", projectConfig.reBuildCommand, false);
@@ -246,27 +237,6 @@ bool Vcxproj::readFile()
         engine.getKeys("output", projectConfig.outputs, false);
         engine.getKeys("input", projectConfig.inputs, false);
 
-        projectConfig.type = "Utility";
-        if(!projectConfig.command.isEmpty())
-        {
-          const String& firstCommandWord = Word::first(projectConfig.command.getFirst()->data);
-          if(firstCommandWord == "__Custom")
-          {
-            projectConfig.type = "Makefile";
-            projectConfig.command.clear();
-          }
-          else if(firstCommandWord == "__Application" || firstCommandWord == "__StaticLibrary" || firstCommandWord == "__DynamicLibrary")
-          {
-            projectConfig.type = firstCommandWord.substr(2);
-            projectConfig.command.clear();
-          }
-        }
-        if(!projectConfig.buildCommand.isEmpty())
-        {
-          projectConfig.type = "Makefile";
-          projectConfig.command.clear();
-        }
-
         engine.getKeys("cppFlags", projectConfig.cAndCppFlags, true);
         engine.getKeys("cFlags", projectConfig.cAndCppFlags, true);
         List<String> linkFlags;
@@ -279,21 +249,19 @@ bool Vcxproj::readFile()
         engine.getKeys("libPaths", projectConfig.libPaths, true);
         engine.getKeys("libs", projectConfig.libs, true);
         engine.getKeys("dependencies", projectConfig.dependencies, false);
-        for(const List<String>::Node* i = projectConfig.dependencies.getFirst(); i; i = i->getNext())
-          if(!project->dependencies.find(i->data))
-            project->dependencies.append(i->data);
         List<String> root;
         engine.getKeys("root", root, true);
         for(const List<String>::Node* i = root.getFirst(); i; i = i->getNext())
-          project->roots.append(i->data);
+          project.roots.append(i->data);
+
         if(engine.enterKey("files"))
         {
           List<String> files;
           engine.getKeys(files);
           for(const List<String>::Node* i = files.getFirst(); i; i = i->getNext())
           {
-            Map<String, Project::File>::Node* node = project->files.find(i->data);
-            Project::File& file = node ? node->data : project->files.append(i->data);
+            Map<String, Project::File>::Node* node = project.files.find(i->data);
+            Project::File& file = node ? node->data : project.files.append(i->data);
             Project::File::Config& fileConfig = file.configs.append(configKey);
 
             engine.enterUnnamedKey();
@@ -301,48 +269,16 @@ bool Vcxproj::readFile()
             VERIFY(engine.enterKey(i->data));
             engine.getText("command", fileConfig.command, false);
             file.filter = engine.getFirstKey("folder", false);
-            String firstCommandWord = fileConfig.command.isEmpty() ? String() : Word::first(fileConfig.command.getFirst()->data);
-            String type;
-            if(firstCommandWord == "__clCompile")
-              type = "ClCompile";
-            else if(firstCommandWord == "__rcCompile")
-              type = "ResourceCompile";
-            else if(!firstCommandWord.isEmpty())
-            {
-              type = "CustomBuild";
-              engine.getText("message", fileConfig.message, false);
-              engine.getKeys("output", fileConfig.outputs, false);
-              engine.getKeys("input", fileConfig.inputs, false);
-            }
-            if(!type.isEmpty())
-            {
-              if(!file.type.isEmpty() && file.type != type)
-              {
-                // TODO: warning or error?
-              }
-              else
-                file.type = type;
-            }
+            engine.getText("message", fileConfig.message, false);
+            engine.getKeys("output", fileConfig.outputs, false);
+            engine.getKeys("input", fileConfig.inputs, false);
             engine.getKeys("dependencies", fileConfig.dependencies, false);
-            for(const List<String>::Node* i = fileConfig.dependencies.getFirst(); i; i = i->getNext())
-              if(!project->dependencies.find(i->data))
-                project->dependencies.append(i->data);
             engine.leaveKey(); // VERIFY(engine.enterKey(i->data));
             engine.leaveKey();
           }
-          for(Map<String, Project::File>::Node* i = project->files.getFirst(); i; i = i->getNext())
-            if(i->data.type.isEmpty())
-            {
-              String extension = File::getExtension(i->key);
-              if(extension == "h" || extension == "hh" || extension == "hxx"  || extension == "hpp")
-                i->data.type = "ClInclude";
-              else
-                i->data.type = "None";
-            }
 
           engine.leaveKey();
         }
-
 
         engine.leaveKey();
         engine.leaveKey();
@@ -357,6 +293,102 @@ bool Vcxproj::readFile()
 
 bool Vcxproj::processData()
 {
+  // prepare project and file types
+  for(Map<String, Project>::Node* i = projects.getFirst(); i; i = i->getNext())
+  {
+    Project& project = i->data;
+
+    // handle project filter (solution explorer folder)
+    if(!project.filter.isEmpty())
+    {
+      Map<String, ProjectFilter>::Node* node = projectFilters.find(project.filter);
+      ProjectFilter& filter = node ? node->data : projectFilters.append(project.filter, ProjectFilter(createSomethingLikeGUID(project.filter)));
+      filter.projects.append(&project);
+    }
+
+    //
+    for(Map<String, Project::Config>::Node* i = project.configs.getFirst(); i; i = i->getNext())
+    {
+      Project::Config& projectConfig = i->data;
+
+      // determine project type
+      projectConfig.type = "Utility";
+      if(!projectConfig.command.isEmpty())
+      {
+        const String& firstCommandWord = Word::first(projectConfig.command.getFirst()->data);
+        if(firstCommandWord == "__Custom")
+        {
+          projectConfig.type = "Makefile";
+          projectConfig.command.clear();
+        }
+        else if(firstCommandWord == "__Application" || firstCommandWord == "__StaticLibrary" || firstCommandWord == "__DynamicLibrary")
+        {
+          projectConfig.type = firstCommandWord.substr(2);
+          projectConfig.command.clear();
+        }
+      }
+      if(!projectConfig.buildCommand.isEmpty())
+      {
+        projectConfig.type = "Makefile";
+        projectConfig.command.clear();
+      }
+
+      // add dependencies of this project configuration to the project's dependencies
+      for(const List<String>::Node* i = projectConfig.dependencies.getFirst(); i; i = i->getNext())
+        if(!project.dependencies.find(i->data))
+          project.dependencies.append(i->data);
+    }
+
+    // check file types
+    for(Map<String, Project::File>::Node* i = project.files.getFirst(); i; i = i->getNext())
+    {
+      Project::File& file = i->data;
+
+      for(Map<String, Project::File::Config>::Node* i = file.configs.getFirst(); i; i = i->getNext())
+      {
+        Project::File::Config& fileConfig = i->data;
+
+        // determine file type
+        String firstCommandWord = fileConfig.command.isEmpty() ? String() : Word::first(fileConfig.command.getFirst()->data);
+        String type;
+        if(firstCommandWord == "__clCompile")
+          type = "ClCompile";
+        else if(firstCommandWord == "__rcCompile")
+          type = "ResourceCompile";
+        else if(!firstCommandWord.isEmpty())
+          type = "CustomBuild";
+
+        if(!type.isEmpty())
+        {
+          if(!file.type.isEmpty() && file.type != type)
+          { // the file type must be consistent over with the other configurations
+            // TODO: warning or error?
+          }
+          else
+            file.type = type;
+        }
+
+        // add dependencies of the file to project's dependencies
+        for(const List<String>::Node* i = fileConfig.dependencies.getFirst(); i; i = i->getNext())
+          if(!project.dependencies.find(i->data))
+            project.dependencies.append(i->data);
+
+      }
+    }
+
+    // set special file type for header files
+    for(Map<String, Project::File>::Node* i = project.files.getFirst(); i; i = i->getNext())
+      if(i->data.type.isEmpty())
+      {
+        String extension = File::getExtension(i->key);
+        if(extension == "h" || extension == "hh" || extension == "hxx"  || extension == "hpp")
+          i->data.type = "ClInclude";
+        else
+          i->data.type = "None";
+      }
+  }
+
+  // resolve dependencies 
   if(!resolveDependencies())
     return false;
 
@@ -433,10 +465,10 @@ bool Vcxproj::resolveDependencies()
         if(!node)
           continue;
 
-        Project::File::Config& config = node->data;
+        Project::File::Config& fileConfig = node->data;
 
-        // resolve target dependencies (add outputs of the target to the list of input files)
-        for(const List<String>::Node* i = config.dependencies.getFirst(); i; i = i->getNext())
+        // resolve target dependencies (add outputs of the dependencies to the list of input files)
+        for(const List<String>::Node* i = fileConfig.dependencies.getFirst(); i; i = i->getNext())
         {
           const Map<String, Project>::Node* node = projects.find(i->data);
           if(node)
@@ -445,7 +477,7 @@ bool Vcxproj::resolveDependencies()
             const Map<String, Project::Config>::Node* node = depProj.configs.find(configKey);
             if(node)
               for(const List<String>::Node* i = node->data.outputs.getFirst(); i; i = i->getNext())
-                config.inputs.append(i->data);
+                fileConfig.inputs.append(i->data);
           }
         }
       }
@@ -635,6 +667,10 @@ bool Vcxproj::generateVcxproj(Project& project)
       fileWrite("    <PlatformToolset>v110</PlatformToolset>\r\n");
     if(config.linkFlags.find("/LTCG"))
       fileWrite("    <WholeProgramOptimization>true</WholeProgramOptimization>\r\n");
+//    if(config.linkFlags.find("???"))
+//      fileWrite("    <CharacterSet>MultiByte</CharacterSet>\r\n");
+//    else if(config.linkFlags.find("???"))
+//      fileWrite("    <CharacterSet>Unicode</CharacterSet>\r\n");
 
     fileWrite("  </PropertyGroup>\r\n");
   }
@@ -1049,7 +1085,8 @@ bool Vcxproj::generateVcxprojFilter(Project& project)
 
   fileWrite("  </ItemGroup>\r\n");
 
-  fileWrite("</Project>\r\n");
+  //fileWrite("</Project>\r\n");
+  fileWrite("</Project>");
 
   fileClose();
   return true;
