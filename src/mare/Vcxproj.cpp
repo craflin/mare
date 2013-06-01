@@ -81,7 +81,11 @@ bool Vcxproj::generate(const Map<String, String>& userArgs)
   // TODO: enable rtti
   // TODO: openmp
 
-  // TODO: C/C++ pch tab
+  // precompiled header tab
+  knownCppOptions.append("/Yu", Option("PrecompiledHeader", "Use", "NotUsing", "PrecompiledHeaderFile"));
+  knownCppOptions.append("/Yc", Option("PrecompiledHeader", "Create", "NotUsing", "PrecompiledHeaderFile"));
+  knownCppOptions.append("/Fp", Option(String(), String(), String(), "PrecompiledHeaderOutputFile"));
+
   // TODO: C/C++ output files tab?
   // TODO: C/C++ browse information tab?
   // TODO: C/C++ advanced tab?
@@ -276,8 +280,11 @@ bool Vcxproj::readFile()
             engine.getKeys("output", fileConfig.outputs, false);
             engine.getKeys("input", fileConfig.inputs, false);
             engine.getKeys("dependencies", fileConfig.dependencies, false);
-            engine.getKeys("cppFlags", fileConfig.cAndCppFlags, false);
-            engine.getKeys("cFlags", fileConfig.cAndCppFlags, false);
+            List<String> cAndCppFlags;
+            engine.getKeys("cppFlags", cAndCppFlags, false);
+            engine.getKeys("cFlags", cAndCppFlags, false);
+            for(const List<String>::Node* i = cAndCppFlags.getFirst(); i; i = i->getNext())
+              fileConfig.cAndCppFlags.append(i->data, 0);
             engine.leaveKey(); // VERIFY(engine.enterKey(i->data));
             engine.leaveKey();
           }
@@ -346,10 +353,69 @@ bool Vcxproj::processData()
         projectConfig.command.clear();
       }
 
-      // add dependencies of this project configuration to the project's dependencies
+      // add dependencies of this project configuration to the (global) project's dependencies
       for(const List<String>::Node* i = projectConfig.dependencies.getFirst(); i; i = i->getNext())
         if(!project.dependencies.find(i->data))
           project.dependencies.append(i->data);
+
+      // prepare c/cpp option list
+      {
+        List<String> additionalOptions;
+        for(const Map<String, void*>::Node* i = projectConfig.cAndCppFlags.getFirst(); i; i = i->getNext())
+          if(!knownCppOptions.find(i->key))
+            additionalOptions.append(i->key);
+        if(!additionalOptions.isEmpty())
+          projectConfig.cppOptions.append("AdditionalOptions", join(additionalOptions, ' ') + " %(AdditionalOptions)");
+
+        for(const Map<String, void*>::Node* i = projectConfig.cAndCppFlags.getFirst(); i; i = i->getNext())
+        {
+          const Map<String, Option>::Node* node = knownCppOptions.find(i->key);
+          if(node)
+          {
+            const Option& option = node->data;
+            if(!option.name.isEmpty())
+              if(projectConfig.cppOptions.find(option.name))
+              {
+                // TODO: warning or error
+              }
+              else
+                projectConfig.cppOptions.append(option.name, option.value);
+            if(option.hasParam(i->key))
+              if(projectConfig.cppOptions.find(option.paramName))
+              {
+                // TODO: warning or error
+              }
+              else
+                projectConfig.cppOptions.append(option.paramName, option.getParam(i->key));
+          }
+        }
+      }
+
+      // prepare link option list
+      {
+        List<String> additionalOptions;
+        for(const Map<String, void*>::Node* i = projectConfig.linkFlags.getFirst(); i; i = i->getNext())
+          if(!knownLinkOptions.find(i->key))
+            additionalOptions.append(i->key);
+        if(!additionalOptions.isEmpty())
+          projectConfig.linkOptions.append("AdditionalOptions", join(additionalOptions, ' ') + " %(AdditionalOptions)");
+
+        for(const Map<String, void*>::Node* i = projectConfig.linkFlags.getFirst(); i; i = i->getNext())
+        {
+          const Map<String, Option>::Node* node = knownLinkOptions.find(i->key);
+          if(node)
+          {
+            const Option& option = node->data;
+            if(!option.name.isEmpty())
+              if(projectConfig.linkOptions.find(option.name))
+              {
+                // TODO: warning or error
+              }
+              else
+                projectConfig.linkOptions.append(option.name, option.value);
+          }
+        }
+      }
     }
 
     // for each file
@@ -360,6 +426,7 @@ bool Vcxproj::processData()
       for(Map<String, Project::File::Config>::Node* i = file.configs.getFirst(); i; i = i->getNext())
       {
         Project::File::Config& fileConfig = i->data;
+        Project::Config& projectConfig = project.configs.find(i->key)->data;
 
         // determine file type
         String firstCommandWord = fileConfig.command.isEmpty() ? String() : Word::first(fileConfig.command.getFirst()->data);
@@ -381,14 +448,61 @@ bool Vcxproj::processData()
             file.type = type;
         }
 
-        //
-        if(!fileConfig.cAndCppFlags.isEmpty())
-          file.useDefaultSettings = false;
-
         // add dependencies of the file to project's dependencies
         for(const List<String>::Node* i = fileConfig.dependencies.getFirst(); i; i = i->getNext())
           if(!project.dependencies.find(i->data))
             project.dependencies.append(i->data);
+
+        // prepare cpp option list
+        {
+          List<String> additionalOptions;
+          for(const Map<String, void*>::Node* i = fileConfig.cAndCppFlags.getFirst(); i; i = i->getNext())
+            if(!projectConfig.cAndCppFlags.find(i->key) && !knownCppOptions.find(i->key))
+              additionalOptions.append(i->key);
+          if(!additionalOptions.isEmpty())
+            fileConfig.cppOptions.append("AdditionalOptions", join(additionalOptions, ' ') + " %(AdditionalOptions)");
+
+          for(const Map<String, void*>::Node* i = fileConfig.cAndCppFlags.getFirst(); i; i = i->getNext())
+            if(!projectConfig.cAndCppFlags.find(i->key))
+            {
+              const Map<String, Option>::Node* node = knownCppOptions.find(i->key);
+              if(node)
+              {
+                const Option& option = node->data;
+                if(!option.name.isEmpty())
+                  if(fileConfig.cppOptions.find(option.name))
+                  {
+                    // TODO: warning or error
+                  }
+                  else
+                    fileConfig.cppOptions.append(option.name, option.value);
+                if(option.hasParam(i->key))
+                  if(fileConfig.cppOptions.find(option.paramName))
+                  {
+                    // TODO: warning or error
+                  }
+                  else
+                    fileConfig.cppOptions.append(option.paramName, option.getParam(i->key));
+              }
+            }
+
+          if(!fileConfig.cAndCppFlags.isEmpty())
+            for(const Map<String, void*>::Node* i = projectConfig.cAndCppFlags.getFirst(); i; i = i->getNext())
+              if(!fileConfig.cAndCppFlags.find(i->key))
+              {
+                const Map<String, Option>::Node* node = knownCppOptions.find(i->key);
+                if(node)
+                {
+                    const Option& option = node->data;
+                    if(!option.unsetValue.isEmpty() && !fileConfig.cppOptions.find(i->key))
+                      fileConfig.cppOptions.append(option.name, option.unsetValue);
+                }
+              }
+
+          if(!fileConfig.cppOptions.isEmpty())
+            file.useDefaultSettings = false;
+        }
+
       }
 
       //
@@ -815,33 +929,8 @@ bool Vcxproj::generateVcxproj(Project& project)
       */
       fileWrite("    <ClCompile>\r\n");
 
-      {
-        List<String> additionalOptions;
-        for(const Map<String, void*>::Node* i = config.cAndCppFlags.getFirst(); i; i = i->getNext())
-          if(!knownCppOptions.find(i->key))
-            additionalOptions.append(i->key);
-        if(!additionalOptions.isEmpty())
-          fileWrite(String("      <AdditionalOptions>") + join(additionalOptions, ' ') + " %(AdditionalOptions)</AdditionalOptions>\r\n");
-
-        Map<String, void*> usedOptions;
-        for(const Map<String, void*>::Node* i = config.cAndCppFlags.getFirst(); i; i = i->getNext())
-        {
-          const Map<String, Option>::Node* node = knownCppOptions.find(i->key);
-          if(node)
-          {
-            const Option& option = node->data;
-            if(usedOptions.find(option.name))
-            {
-              // TODO: warning or error
-            }
-            else
-            {
-              usedOptions.append(option.name);
-              fileWrite(String("      <") + option.name + ">" + option.value + "</" + option.name + ">\r\n");
-            }
-          }
-        }
-      }
+      for(const Map<String, String>::Node* i = config.cppOptions.getFirst(); i; i = i->getNext())
+        fileWrite(String("      <") + i->key + ">" + i->data + "</" + i->key + ">\r\n");
 
       if(!config.includePaths.isEmpty())
         fileWrite(String("      <AdditionalIncludeDirectories>") + join(config.includePaths) + ";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>\r\n");
@@ -861,35 +950,8 @@ bool Vcxproj::generateVcxproj(Project& project)
 
       fileWrite("    <Link>\r\n");
 
-      {
-        List<String> additionalOptions;
-        for(const Map<String, void*>::Node* i = config.linkFlags.getFirst(); i; i = i->getNext())
-          if(!knownLinkOptions.find(i->key))
-            additionalOptions.append(i->key);
-        if(!additionalOptions.isEmpty())
-          fileWrite(String("      <AdditionalOptions>") + join(additionalOptions, ' ') + " %(AdditionalOptions)</AdditionalOptions>\r\n");
-
-        Map<String, void*> usedOptions;
-        for(const Map<String, void*>::Node* i = config.linkFlags.getFirst(); i; i = i->getNext())
-        {
-          const Map<String, Option>::Node* node = knownLinkOptions.find(i->key);
-          if(node)
-          {
-            const Option& option = node->data;
-              if(option.name.isEmpty())
-              continue;
-            if(usedOptions.find(option.name))
-            {
-              // TODO: warning or error
-            }
-            else
-            {
-              usedOptions.append(option.name);
-              fileWrite(String("      <") + option.name + ">" + option.value + "</" + option.name + ">\r\n");
-            }
-          }
-        }
-      }
+      for(const Map<String, String>::Node* i = config.linkOptions.getFirst(); i; i = i->getNext())
+        fileWrite(String("      <") + i->key + ">" + i->data + "</" + i->key + ">\r\n");
 
       if(!config.libs.isEmpty())
         fileWrite(String("      <AdditionalDependencies>") + join(config.libs, ';', ".lib") + ";%(AdditionalDependencies)</AdditionalDependencies>\r\n");
@@ -988,43 +1050,14 @@ bool Vcxproj::generateVcxproj(Project& project)
         for(const Map<String, Project::Config>::Node* i = project.configs.getFirst(); i; i = i->getNext())
         {
           const String& configKey = i->key;
-          const Project::Config& projectConfig = i->data;
           const Map<String, Project::File::Config>::Node* node = file.configs.find(configKey);
           if(!node)
             fileWrite(String("      <ExcludedFromBuild Condition=\"'$(Configuration)|$(Platform)'=='") + configKey + "'\">true</ExcludedFromBuild>\r\n");
           else
           {
             const Project::File::Config& fileConfig = node->data;
-
-            {
-              List<String> additionalOptions;
-              for(const List<String>::Node* i = fileConfig.cAndCppFlags.getFirst(); i; i = i->getNext())
-                if(!projectConfig.cAndCppFlags.find(i->data) && !knownCppOptions.find(i->data))
-                  additionalOptions.append(i->data);
-
-              if(!additionalOptions.isEmpty())
-                fileWrite(String("      <AdditionalOptions Condition=\"'$(Configuration)|$(Platform)'=='") + configKey + "'\">" + join(additionalOptions, ' ') + " %(AdditionalOptions)</AdditionalOptions>\r\n");
-
-              Map<String, void*> usedOptions;
-              for(const List<String>::Node* i = fileConfig.cAndCppFlags.getFirst(); i; i = i->getNext())
-                if(!projectConfig.cAndCppFlags.find(i->data))
-                {
-                  const Map<String, Option>::Node* node = knownCppOptions.find(i->data);
-                  if(node)
-                  {
-                    const Option& option = node->data;
-                    if(usedOptions.find(option.name))
-                    {
-                      // TODO: warning or error
-                    }
-                    else
-                    {
-                      usedOptions.append(option.name);
-                      fileWrite(String("      <") + option.name + " Condition=\"'$(Configuration)|$(Platform)'=='" + configKey + "'\">" + option.value + "</" + option.name + ">\r\n");
-                    }
-                  }
-                }
-            }
+            for(const Map<String, String>::Node* i = fileConfig.cppOptions.getFirst(); i; i = i->getNext())
+              fileWrite(String("      <") + i->key + ">" + i->data + "</" + i->key + ">\r\n");
           }
         }
         fileWrite(String("    </") + file.type + ">\r\n");
@@ -1306,4 +1339,32 @@ escape:
     default: result.append(*str); break;
     }
   return result;
+}
+
+Map<String, Vcxproj::Option>::Node* Vcxproj::OptionMap::find(const String& flag)
+{
+  const char* a = strchr(flag.getData(), '"');
+  if(a)
+  {
+    String optionName = flag.substr(0, a - flag.getData());
+    return Map<String, Vcxproj::Option>::find(optionName);
+  }
+  return Map<String, Vcxproj::Option>::find(flag);
+}
+
+bool Vcxproj::Option::hasParam(const String& flag) const
+{
+  return !paramName.isEmpty() && strchr(flag.getData(), '"');
+}
+
+String Vcxproj::Option::getParam(const String& flag) const
+{
+  const char* a = strchr(flag.getData(), '"');
+  if(!a)
+    return String();
+  ++a;
+  int len = strlen(a);
+  if(a[len - 1] == '"')
+    --len;
+  return flag.substr(a - flag.getData(), len);
 }

@@ -50,7 +50,9 @@ private:
       List<String> inputs;
       List<String> dependencies;
       Map<String, void*> cAndCppFlags;
+      Map<String, String> cppOptions;
       Map<String, void*> linkFlags;
+      Map<String, String> linkOptions;
       List<String> defines;
       List<String> includePaths;
       List<String> libPaths;
@@ -71,7 +73,8 @@ private:
         List<String> outputs;
         List<String> inputs;
         List<String> dependencies;
-        List<String> cAndCppFlags;
+        Map<String, void*> cAndCppFlags;
+        Map<String, String> cppOptions;
       };
 
       String type;
@@ -107,10 +110,21 @@ private:
   public:
     String name;
     String value;
+    String unsetValue;
+    String paramName;
 
     Option() {}
 
-    Option(const String& name, const String& value) : name(name), value(value) {}
+    Option(const String& name, const String& value, const String& unsetValue = String(), const String& paramName = String()) : name(name), value(value), unsetValue(unsetValue), paramName(paramName) {}
+
+    bool hasParam(const String& option) const;
+    String getParam(const String& option) const;
+  };
+
+  class OptionMap : public Map<String, Option>
+  {
+  public:
+    Node* find(const String& key);
   };
 
   Engine& engine;
@@ -122,7 +136,7 @@ private:
   Map<String, Config> configs;
   Map<String, Project> projects;
   Map<String, ProjectFilter> projectFilters;
-  Map<String, Option> knownCppOptions;
+  OptionMap knownCppOptions;
   Map<String, Option> knownLinkOptions;
 
   String openedFile; /**< The file that is currently written */
