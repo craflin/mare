@@ -54,6 +54,7 @@ private:
   char ffd[320]; /**< Buffer for WIN32_FIND_DATA */
   bool bufferedEntry; /**< Whether there is a buffered search result in ffd. */
   String dirpath; /**< The name of the directory. */
+  String patternExtension; /**< A search pattern file name extension (e.g. "inf" of "*.inf") */
 #else
   void* dp; /**< Directory descriptor. */
   String dirpath; /**< The path to the directory to search in */

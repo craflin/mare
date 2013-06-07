@@ -70,12 +70,16 @@ bool Directory::open(const String& dirpath, const String& pattern)
   }
 
   this->dirpath = dirpath;
+  const char* patExt = strrchr(pattern.getData(), '.');
+  this->patternExtension = (patExt && !strpbrk(patExt + 1, "*?")) ? String(patExt + 1, -1) : String();
+
   String searchPath = dirpath;
   searchPath.setCapacity(dirpath.getLength() + 1 + pattern.getLength());
   searchPath.append('/');
   searchPath.append(pattern);
 
-  findFile = FindFirstFile(searchPath.getData(), (LPWIN32_FIND_DATA)ffd);
+  findFile = FindFirstFileEx(searchPath.getData(),  FindExInfoBasic,  (LPWIN32_FIND_DATA)ffd,  FindExSearchNameMatch,  NULL, 0);
+  //findFile = FindFirstFile(searchPath.getData(), (LPWIN32_FIND_DATA)ffd);
   if(findFile == INVALID_HANDLE_VALUE)
     return false;
   bufferedEntry = true;
@@ -121,6 +125,14 @@ bool Directory::read(bool dirsOnly, String& name, bool& isDir)
     const char* str = ((LPWIN32_FIND_DATA)ffd)->cFileName;
     if(isDir && *str == '.' && (str[1] == '\0' || (str[1] == '.' && str[2] == '\0')))
       continue;
+
+    if(!patternExtension.isEmpty())
+    {
+      const char* patExt = strrchr(str, '.');
+      if(!patExt || _stricmp(patternExtension.getData(), patExt + 1) != 0)
+        continue;
+    }
+
     name = String(str, -1);
     return true;
   }
