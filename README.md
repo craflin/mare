@@ -140,7 +140,7 @@ targets = {
 }
 ```
 
-To improve clearness the rule to compile a .cpp file can be swapped out by declaring it next to the list of targets or list of files:
+To improve clearness, the rule to compile a .cpp file can be swapped out by declaring it next to the list of targets or list of files:
 
 ```
 targets = {
@@ -241,7 +241,7 @@ There is set of build-in rules (cApplication, cppApplication, cDynamicLibrary, c
 
 ### Specialization
 
-An "if &lt;expr&gt; &lt;statements&gt; [else &lt;statements&gt;]" expression can be used within a list. This allows adding customizations for certain configurations:
+An "if &lt;expr&gt; &lt;statements&gt; [else &lt;statements&gt;]" expression within the declaration of a list allows customizing lists for certain configurations:
 
 ```
 cppFlags = "-mmmx"
@@ -280,6 +280,8 @@ cppFlags = {
 }
 ...
 ```
+
+In the &lt;expr&gt; part of an if-statement, lists can be compared with another or with strings, using the operators ==, !=, &gt;, &lt;, &gt;= and &lt;=. Expressions can be enclosed in parenthesis and multiple expressions can be chained using boolean operators (&& and ||).
 
 To differentiate between configurations and other environmental conditions, Mare provides the following "variables":
 * "configuration" – the name of the configuration currently built (e.g. "Debug", "Release", ...) 
@@ -343,6 +345,16 @@ targets = {
   },
 };
 ...
+```
+
+### Variables
+
+Lists can be used like variables and the keys of a list can be inserted into a string with the syntax $(variable). Environment variables are used in case a list with the given name cannot be found.
+
+The environment variables of external tools called when executing a rule can be altered by environment variable declarations succeeding the command line:
+
+```
+command = "MYENV=hallo bash -c \"echo $$(MYENV)\""
 ```
 
 ### Functions
