@@ -1261,12 +1261,30 @@ String Vcxproj::join(const List<String>& items, char sep, const String& suffix)
   const List<String>::Node* i = items.getFirst();
   if(i)
   {
+    for(const char* str = i->data.getData(); *str; ++str)
+      if(isspace(*(unsigned char*)str))
+      {
+        result.append('"');
+        result.append(xmlEscape(i->data));
+        result.append('"');
+        goto next;
+      }
     result = xmlEscape(i->data);
+  next: ;
     result.append(suffix);
     for(i = i->getNext(); i; i = i->getNext())
     {
       result.append(sep);
+      for(const char* str = i->data.getData(); *str; ++str)
+        if(isspace(*(unsigned char*)str))
+        {
+          result.append('"');
+          result.append(xmlEscape(i->data));
+          result.append('"');
+          goto next2;
+        }
       result.append(xmlEscape(i->data));
+    next2: ;
       result.append(suffix);
     }
   }
@@ -1291,13 +1309,13 @@ String Vcxproj::joinCommands(const List<String>& commands)
       String program(i->data);
       program.subst("/", "\\");
       for(const char* str = program.getData(); *str; ++str)
-          if(isspace(*(unsigned char*)str))
-          {
-            result.append('"');
-            result.append(xmlEscape(program));
-            result.append('"');
-            goto next;
-          }
+        if(isspace(*(unsigned char*)str))
+        {
+          result.append('"');
+          result.append(xmlEscape(program));
+          result.append('"');
+          goto next;
+        }
         result.append(xmlEscape(program));
       next: ;
       for(i = i->getNext(); i; i = i->getNext())
