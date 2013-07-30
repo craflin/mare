@@ -110,7 +110,7 @@ public:
     return 0;
   }
 
-  T lookup(const K& key)
+  T lookup(const K& key) const
   {
     // TODO: use hash map
     for(Node* node = first; node; node = node->next)

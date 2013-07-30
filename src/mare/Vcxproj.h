@@ -53,11 +53,11 @@ private:
       Map<String, String> cppOptions;
       Map<String, void*> linkFlags;
       Map<String, String> linkOptions;
+      Map<String, String> vsOptions;
       List<String> defines;
       List<String> includePaths;
       List<String> libPaths;
       List<String> libs;
-      Map<String, void*> otherFlags;
 
       Config(const String& name, const String& platform) : name(name), platform(platform) {}
     };
@@ -118,7 +118,7 @@ private:
     Option(const String& name, const String& value, const String& unsetValue = String(), const String& paramName = String()) : name(name), value(value), unsetValue(unsetValue), paramName(paramName) {}
 
     bool hasParam(const String& option) const;
-    String getParam(const String& option) const;
+    static String getParam(const String& option);
   };
 
   class OptionMap : public Map<String, Option>
@@ -138,6 +138,7 @@ private:
   Map<String, ProjectFilter> projectFilters;
   OptionMap knownCppOptions;
   Map<String, Option> knownLinkOptions;
+  OptionMap knownVsOptions;
 
   String openedFile; /**< The file that is currently written */
 

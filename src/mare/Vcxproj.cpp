@@ -112,12 +112,15 @@ bool Vcxproj::generate(const Map<String, String>& userArgs)
   knownLinkOptions.append("/OPT:NOREF", Option("OptimizeReferences", "false"));
   knownLinkOptions.append("/OPT:ICF", Option("EnableCOMDATFolding", "true"));
   knownLinkOptions.append("/OPT:NOICF", Option("EnableCOMDATFolding", "false"));
-  //knownLinkOptions.append("/LTCG", Option("LinkTimeCodeGeneration", "UseLinkTimeCodeGeneration"));
   knownLinkOptions.append("/LTCG");
   // TODO: more LTCG options?
   // TODO: more options?
 
   // TODO: Manifest Tool tabs?
+
+  // pseudo cppFlags with no actual compiler flag representation
+  knownVsOptions.append("/CharacterSet", Option("CharacterSet", String()));
+  knownVsOptions.append("/PlatformToolset", Option("PlatformToolset", String()));
 
   //
   engine.addDefaultKey("tool", "vcxproj");
@@ -327,9 +330,15 @@ bool Vcxproj::processData()
       for(List<String>::Node* i = projectConfig.defines.getFirst(); i; i = i->getNext())
         defines.append(i->data, 0);
       if(defines.find("UNICODE") || defines.find("_UNICODE"))
-        projectConfig.otherFlags.append("Unicode");
+      {
+        if(!projectConfig.vsOptions.find("CharacterSet"))
+          projectConfig.vsOptions.append("CharacterSet", "Unicode");
+      }
       else if(defines.find("_MBCS"))
-        projectConfig.otherFlags.append("MultiByte");
+      {
+        if(!projectConfig.vsOptions.find("CharacterSet"))
+          projectConfig.vsOptions.append("CharacterSet", "MultiByte");
+      }
 
       // determine project type
       projectConfig.type = "Utility";
@@ -362,7 +371,7 @@ bool Vcxproj::processData()
       {
         List<String> additionalOptions;
         for(const Map<String, void*>::Node* i = projectConfig.cAndCppFlags.getFirst(); i; i = i->getNext())
-          if(!knownCppOptions.find(i->key))
+          if(!knownCppOptions.find(i->key) && !knownVsOptions.find(i->key))
             additionalOptions.append(i->key);
         if(!additionalOptions.isEmpty())
           projectConfig.cppOptions.append("AdditionalOptions", join(additionalOptions, ' ') + " %(AdditionalOptions)");
@@ -386,7 +395,13 @@ bool Vcxproj::processData()
                 // TODO: warning or error
               }
               else
-                projectConfig.cppOptions.append(option.paramName, option.getParam(i->key));
+                projectConfig.cppOptions.append(option.paramName, Option::getParam(i->key));
+          }
+          else
+          {
+            node = knownVsOptions.find(i->key);
+            if(node)
+              projectConfig.vsOptions.append(node->data.name, Option::getParam(i->key));
           }
         }
       }
@@ -395,7 +410,7 @@ bool Vcxproj::processData()
       {
         List<String> additionalOptions;
         for(const Map<String, void*>::Node* i = projectConfig.linkFlags.getFirst(); i; i = i->getNext())
-          if(!knownLinkOptions.find(i->key))
+          if(!knownLinkOptions.find(i->key) && !knownVsOptions.find(i->key))
             additionalOptions.append(i->key);
         if(!additionalOptions.isEmpty())
           projectConfig.linkOptions.append("AdditionalOptions", join(additionalOptions, ' ') + " %(AdditionalOptions)");
@@ -413,6 +428,12 @@ bool Vcxproj::processData()
               }
               else
                 projectConfig.linkOptions.append(option.name, option.value);
+          }
+          else
+          {
+            node = knownVsOptions.find(i->key);
+            if(node)
+              projectConfig.vsOptions.append(node->data.name, Option::getParam(i->key));
           }
         }
       }
@@ -457,7 +478,7 @@ bool Vcxproj::processData()
         {
           List<String> additionalOptions;
           for(const Map<String, void*>::Node* i = fileConfig.cAndCppFlags.getFirst(); i; i = i->getNext())
-            if(!projectConfig.cAndCppFlags.find(i->key) && !knownCppOptions.find(i->key))
+            if(!projectConfig.cAndCppFlags.find(i->key) && !knownCppOptions.find(i->key) && !knownVsOptions.find(i->key))
               additionalOptions.append(i->key);
           if(!additionalOptions.isEmpty())
             fileConfig.cppOptions.append("AdditionalOptions", join(additionalOptions, ' ') + " %(AdditionalOptions)");
@@ -482,7 +503,7 @@ bool Vcxproj::processData()
                     // TODO: warning or error
                   }
                   else
-                    fileConfig.cppOptions.append(option.paramName, option.getParam(i->key));
+                    fileConfig.cppOptions.append(option.paramName, Option::getParam(i->key));
               }
             }
 
@@ -800,14 +821,14 @@ bool Vcxproj::generateVcxproj(Project& project)
       fileWrite("    <UseDebugLibraries>true</UseDebugLibraries>\r\n"); // i have no idea what this option does and how to change it in the project settings in visual studio
     else                                                                // appearantly it changes some compiler/linker default values?
       fileWrite("    <UseDebugLibraries>false</UseDebugLibraries>\r\n");
-    if(version == 2012)
+    if(config.vsOptions.find("PlatformToolset"))
+      fileWrite(String("    <PlatformToolset>") + config.vsOptions.lookup("PlatformToolset") + "</PlatformToolset>\r\n");
+    else if(version == 2012)
       fileWrite("    <PlatformToolset>v110</PlatformToolset>\r\n");
     if(config.linkFlags.find("/LTCG"))
       fileWrite("    <WholeProgramOptimization>true</WholeProgramOptimization>\r\n");
-    if(config.otherFlags.find("MultiByte"))
-      fileWrite("    <CharacterSet>MultiByte</CharacterSet>\r\n");
-    else if(config.otherFlags.find("Unicode"))
-      fileWrite("    <CharacterSet>Unicode</CharacterSet>\r\n");
+    if(config.vsOptions.find("CharacterSet"))
+      fileWrite(String("    <CharacterSet>") + config.vsOptions.lookup("CharacterSet") + "</CharacterSet>\r\n");
 
     fileWrite("  </PropertyGroup>\r\n");
   }
@@ -1361,7 +1382,7 @@ escape:
 
 Map<String, Vcxproj::Option>::Node* Vcxproj::OptionMap::find(const String& flag)
 {
-  const char* a = strchr(flag.getData(), '"');
+  const char* a = strpbrk(flag.getData(), "\"=");
   if(a)
   {
     String optionName = flag.substr(0, a - flag.getData());
@@ -1375,11 +1396,17 @@ bool Vcxproj::Option::hasParam(const String& flag) const
   return !paramName.isEmpty() && strchr(flag.getData(), '"');
 }
 
-String Vcxproj::Option::getParam(const String& flag) const
+String Vcxproj::Option::getParam(const String& flag)
 {
-  const char* a = strchr(flag.getData(), '"');
+  const char* a = strpbrk(flag.getData(), "\"=");
   if(!a)
     return String();
+  if(*a == '=')
+  {
+    ++a;
+    if(*a != '"')
+      return String(a, strlen(a));
+  }
   ++a;
   int len = strlen(a);
   if(a[len - 1] == '"')
