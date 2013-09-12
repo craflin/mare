@@ -75,7 +75,8 @@ bool Directory::open(const String& dirpath, const String& pattern)
 
   String searchPath = dirpath;
   searchPath.setCapacity(dirpath.getLength() + 1 + pattern.getLength());
-  searchPath.append('/');
+  if(!dirpath.isEmpty())
+    searchPath.append('/');
   searchPath.append(pattern);
 
   findFile = FindFirstFileEx(searchPath.getData(),  FindExInfoBasic,  (LPWIN32_FIND_DATA)ffd,  FindExSearchNameMatch,  NULL, 0);
