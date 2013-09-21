@@ -1157,8 +1157,21 @@ bool Vcxproj::generateVcxprojFilter(Project& project)
 
     if(!file.filter.isEmpty()) // a user defined filter
     {
-      if(!filters.find(file.filter))
-        filters.append(file.filter);
+      List<String> filtersToAdd;
+      file.filter.subst("/", "\\");
+      String filterName = file.filter;
+      for(;;)
+      {
+        filtersToAdd.prepend(filterName);
+        filterName = File::getDirname(filterName);
+        if(filterName == ".")
+          break;
+      }
+      for(List<String>::Node* i = filtersToAdd.getFirst(); i; i = i->getNext())
+      {
+        if(!filters.find(i->data))
+          filters.append(i->data, createSomethingLikeGUID(i->data));
+      }
       continue;
     }
 
@@ -1166,6 +1179,7 @@ bool Vcxproj::generateVcxprojFilter(Project& project)
     List<String> filtersToAdd;
     String root;
     String filterName = File::getDirname(i->key);
+    filterName.subst("/", "\\");
     for(;;)
     {
       if(filterName == "." || File::getBasename(filterName) == "..")
@@ -1186,15 +1200,14 @@ bool Vcxproj::generateVcxprojFilter(Project& project)
       { // remove leading ../ and ./
         for(;;)
         {
-          if(strncmp(filterName.getData(), "../", 3) == 0)
+          if(strncmp(filterName.getData(), "..\\", 3) == 0)
             filterName = filterName.substr(3);
-          else if(strncmp(filterName.getData(), "./", 2) == 0)
+          else if(strncmp(filterName.getData(), ".\\", 2) == 0)
             filterName = filterName.substr(2);
           else
             break;
         }
       }
-      filterName.subst("/", "\\");
       if(!filters.find(filterName))
         filters.append(filterName, createSomethingLikeGUID(filterName));
       if(i == filtersToAdd.getLast())
