@@ -316,9 +316,32 @@ bool Vcxproj::processData()
     // handle project filter (solution explorer folder)
     if(!project.filter.isEmpty())
     {
-      Map<String, ProjectFilter>::Node* node = projectFilters.find(project.filter);
-      ProjectFilter& filter = node ? node->data : projectFilters.append(project.filter, ProjectFilter(createSomethingLikeGUID(project.filter)));
-      filter.projects.append(&project);
+      List<String> filtersToAdd;
+      String filterName = project.filter;
+      filterName.subst("/", "\\");
+      for(;;)
+      {
+        filtersToAdd.prepend(filterName);
+        filterName = File::getDirname(filterName);
+        if(filterName == ".")
+          break;
+      }
+      ProjectFilter* parentFilter = 0;
+      for(List<String>::Node* i = filtersToAdd.getFirst(); i; i = i->getNext())
+      {
+        String& filterName = i->data;
+        Map<String, ProjectFilter>::Node* node = projectFilters.find(filterName);
+        ProjectFilter& filter = node ? node->data : projectFilters.append(filterName, ProjectFilter(createSomethingLikeGUID(filterName)));
+        if(parentFilter)
+        {
+          parentFilter->filters.append(&filter);
+        }
+        if(!i->getNext())
+        {
+          filter.projects.append(&project);
+        }
+        parentFilter = &filter;
+      }
     }
 
     // for each configuation
@@ -709,7 +732,8 @@ bool Vcxproj::generateSln()
   // project filter list
   for(const Map<String, ProjectFilter>::Node* i = projectFilters.getFirst(); i; i = i->getNext())
   {
-    fileWrite(String("Project(\"{2150E333-8FDC-42A3-9474-1A3956D46DE8}\") = \"") + i->key + "\", \"" + i->key + "\", \"{" + i->data.guid + "}\"\r\n");
+    String name = File::getBasename(i->key);
+    fileWrite(String("Project(\"{2150E333-8FDC-42A3-9474-1A3956D46DE8}\") = \"") + name + "\", \"" + name + "\", \"{" + i->data.guid + "}\"\r\n");
     fileWrite("EndProject\r\n");
   }
 
@@ -759,6 +783,11 @@ bool Vcxproj::generateSln()
       {
         const Project& project = *i->data;
         fileWrite(String("\t\t{") + project.guid + "} = {" + filter.guid + "}\r\n");
+      }
+      for(const List<ProjectFilter*>::Node* i = filter.filters.getFirst(); i; i = i->getNext())
+      {
+        const ProjectFilter& childFilter = *i->data;
+        fileWrite(String("\t\t{") + childFilter.guid + "} = {" + filter.guid + "}\r\n");
       }
     }
     fileWrite("\tEndGlobalSection\r\n");

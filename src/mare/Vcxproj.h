@@ -101,6 +101,7 @@ private:
   public:
     String guid;
     List<Project*> projects;
+    List<ProjectFilter*> filters;
 
     ProjectFilter(const String& guid) : guid(guid) {}
   };
