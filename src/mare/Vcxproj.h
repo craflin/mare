@@ -86,6 +86,7 @@ private:
     };
 
     String name;
+    String displayName;
     String guid;
     String filter;
     Map<String, Config> configs;

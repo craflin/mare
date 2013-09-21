@@ -228,6 +228,8 @@ bool Vcxproj::readFile()
         Project& project = node ? node->data : projects.append(i->data, Project(i->data, createSomethingLikeGUID(i->data)));
         Project::Config& projectConfig = project.configs.append(configKey, Project::Config(config.name, config.platform));
 
+        if(project.displayName.isEmpty())
+          project.displayName = engine.getFirstKey("name", false);
         if(project.filter.isEmpty())
           project.filter = engine.getFirstKey("folder", false);
 
@@ -832,7 +834,8 @@ bool Vcxproj::generateVcxproj(Project& project)
 
   // write project name
   fileWrite("  <PropertyGroup Label=\"Globals\">\r\n");
-  //fileWrite(String("    <ProjectName>") + project.name + "</ProjectName>\r\n");
+  if(!project.displayName.isEmpty())
+    fileWrite(String("    <ProjectName>") + project.displayName + "</ProjectName>\r\n");
   fileWrite(String("    <ProjectGuid>{") + project.guid + "}</ProjectGuid>\r\n");
   fileWrite(String("    <RootNamespace>") + project.name + "</RootNamespace>\r\n");
   fileWrite("  </PropertyGroup>\r\n");
