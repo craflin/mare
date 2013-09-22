@@ -195,19 +195,10 @@ void Directory::findFiles(const String& pattern, List<String>& files)
     case '/':
     case '\\':
     case '\0':
-      {
-        int len = i - start;
-        if(len > 0)
-          chunks.append(pattern.substr(start, len));
-        start = i + 1;
-      }
-      break;
-    case '*':
-      if(str + 1 < end && str[1] == '*')
-      {
-        chunks.append(pattern.substr(start, i - start + 1));
-        start = i;
-      }
+      int len = i - start;
+      if(len > 0)
+        chunks.append(pattern.substr(start, len));
+      start = i + 1;
       break;
     }
 
@@ -216,6 +207,96 @@ void Directory::findFiles(const String& pattern, List<String>& files)
   {
     List<String>* files;
     bool dirsOnly;
+
+    void handlePath(const String& path, const String& pattern, const List<String>::Node* nextChunk)
+    {
+      const char* useWildcards = strpbrk(pattern.getData(), "*?");
+      const char* doubleStar = useWildcards ? strstr(useWildcards, "**") : 0;
+      if(doubleStar)
+      {
+        /*
+          if a**b / c
+            use a*b / c
+            use a* / **b / c
+          if a** / c
+            use a* / c   //?
+            use a* / ** / c
+          if **b / c
+            use *b / c
+            use * / **b / c
+          if ** /
+            use *
+            use * / **
+          if ** / c
+            use * / c //?
+            //use c //?
+            use * / ** / c
+        */
+
+        const List<String>::Node* nextNextChunk = 0;
+        String nextPattern;
+        if(nextChunk)
+        {
+          nextNextChunk = nextChunk->getNext();
+          nextPattern = nextChunk->data;
+        }
+
+        if(doubleStar != pattern.getData())
+        {
+          if (doubleStar != pattern.getData() + pattern.getLength() - 2) // pattern == a**b
+          {
+            String subPattern(pattern.getLength());
+            subPattern.append(pattern.getData(), doubleStar - pattern.getData()); // = a
+            subPattern.append(doubleStar + 1, pattern.getLength() - (doubleStar + 1 - pattern.getData())); // += *b
+            handlePath2(path, subPattern, nextPattern, nextNextChunk);
+            subPattern.clear();
+            subPattern.append(pattern.getData(), doubleStar + 1 - pattern.getData());
+            String nextPattern2(doubleStar, pattern.getLength() - (doubleStar - pattern.getData()));
+            handlePath2(path, subPattern, nextPattern2, nextChunk);
+          }
+          else // pattern == a**
+          {
+            String subPattern(pattern.getData(), pattern.getLength() - 1);
+            handlePath2(path, subPattern, nextPattern, nextNextChunk);
+            handlePath2(path, subPattern, "**", nextChunk);
+          }
+        }
+        else // pattern == **b || pattern == **
+        {
+          if(pattern.getLength() != 2) // pattern == **b
+          {
+            handlePath2(path, String(doubleStar + 1, pattern.getLength() - 1), nextPattern, nextNextChunk);
+            handlePath2(path, "*", pattern, nextChunk);
+          }
+          else // pattern == **
+          {
+            handlePath2(path, "*", nextPattern, nextNextChunk);
+            handlePath2(path, "*", pattern, nextChunk);
+          }
+        }
+      }
+      else if(useWildcards || nextChunk == 0)
+      {
+        const List<String>::Node* nextNextChunk = 0;
+        String nextPattern;
+        if(nextChunk)
+        {
+          nextNextChunk = nextChunk->getNext();
+          nextPattern = nextChunk->data;
+        }
+        handlePath2(path, pattern, nextPattern, nextNextChunk);
+      }
+      else // not a pattern
+        handleSubPath(path, pattern, true, nextChunk->data, nextChunk->getNext());
+    }
+
+    void handlePath2(const String& path, const String& pattern, const String& nextPattern, const List<String>::Node* nextNextChunk)
+    {
+      Directory dir; String name; bool isDir;
+      if(dir.open(path, pattern, !nextPattern.isEmpty() || dirsOnly))
+        while(dir.read(name, isDir))
+          handleSubPath(path, name, isDir, nextPattern, nextNextChunk);
+    }
 
     void handleSubPath(const String& path, const String& name, bool isDir, const String& nextPattern, const List<String>::Node* nextNextChunk)
     {
@@ -239,43 +320,6 @@ void Directory::findFiles(const String& pattern, List<String>& files)
       }
       else if(isDir)
         handlePath(subpath, nextPattern, nextNextChunk);
-    }
-
-    void handlePath(const String& path, const String& pattern, const List<String>::Node* nextChunk)
-    {
-      if(nextChunk && nextChunk->data.getLength() >= 2 && nextChunk->data.getData()[0] == '*' && nextChunk->data.getData()[1] == '*')
-      {
-        /*
-        if a* / **b / c
-          use a*b / c
-          foreach a*
-             use * / **b / c
-        // TODO:
-        if a / **b / c
-          use a / *b / c
-          use a / * / **b / c
-        */
-
-        const String& nextPattern = nextChunk->data;
-        String testPattern = pattern;
-        testPattern.setCapacity(pattern.getLength() + nextPattern.getLength() - 2);
-        testPattern.append(nextPattern.getData() + 2, nextPattern.getLength() - 2);
-        handlePath(path, testPattern, nextChunk->getNext());
-
-        Directory dir; String name; bool isDir;
-        if(dir.open(path, pattern, true))
-          while(dir.read(name, isDir))
-            handleSubPath(path, name, isDir, "*", nextChunk);
-      }
-      else if(strpbrk(pattern.getData(), "*?") || nextChunk == 0)
-      {
-        Directory dir; String name; bool isDir;
-        if(dir.open(path, pattern, nextChunk != 0 || dirsOnly))
-          while(dir.read(name, isDir))
-            handleSubPath(path, name, isDir, nextChunk ? nextChunk->data : String(), nextChunk ? nextChunk->getNext() : 0);
-      }
-      else // not a pattern
-        handleSubPath(path, pattern, true, nextChunk->data, nextChunk->getNext());
     }
   };
 
