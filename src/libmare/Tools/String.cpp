@@ -255,12 +255,12 @@ int String::subst(const String& from, const String& to)
 }
 
 
-static bool szWildMatch8(const char* pat, const char* str);
+static bool szWildMatch7(const char* pat, const char* str);
 static bool szWildMatch1(const char* pat, const char* str, const char*& matchstart, const char*& matchend);
 
 bool String::patmatch(const String& pattern) const
 {
-  return szWildMatch8(pattern.data->str, data->str);
+  return szWildMatch7(pattern.data->str, data->str);
 }
 
 bool String::patsubst(const String& pattern, const String& replace)
@@ -302,7 +302,7 @@ slightly modified wildcard matching functions based on Alessandro Cantatore's al
 http://xoomer.virgilio.it/acantato/dev/wildcard/wildmatch.html
 */
 
-static bool szWildMatch8(const char* pat, const char* str) {
+static bool szWildMatch7(const char* pat, const char* str) {
     const char* s, * p;
     bool star = false;
 
@@ -312,6 +312,7 @@ loopStart:
           case '%':
             star = true;
             str = s, pat = p;
+            do { ++pat; } while (*pat == '%');
             if (!*++pat) return true;
             goto loopStart;
           default:
@@ -319,14 +320,15 @@ loopStart:
             break;
       }
     }
-    if (*p == '%') ++p;
-    return (!*p);
+    while (*p == '%') ++p;
+    return !*p;
    
 starCheck:
     if (!star) return false;
     str++;
     goto loopStart;
 }
+
 
 static bool szWildMatch1(const char* pat, const char* str, const char*& matchstart, const char*& matchend)
 {
@@ -343,7 +345,7 @@ static bool szWildMatch1(const char* pat, const char* str, const char*& matchsta
         return true;
       }
       while(*str)
-        if(szWildMatch8(pat, str++))
+        if(szWildMatch7(pat, str++))
         {
           matchend = str - 1;
           return true;
