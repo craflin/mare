@@ -319,7 +319,7 @@ targets = {
 
 The wildcard pattern may contain the following placeholders:
 * * - matches any string within the name of a file (e.g. "*.cpp" matches "ab.cpp", "bcd.cpp")
-* ? - matches a single character within the name of a file (e.g. "a?.cpp" matches "ab.cpp", "ac.cpp" aber nicht mit "aef.cpp") 
+* ? - matches a single character within the name of a file (e.g. "a?.cpp" matches "ab.cpp", "ac.cpp" but not "aef.cpp") 
 * ** - matches any string (including slashes) within the path of a file (e.g. "**.cpp" matches "aa.cpp", "bb.cpp", "subdir/bbws.cpp", "subdir/subdir/bassb.cpp") 
 
 ### Space Characters in Keys

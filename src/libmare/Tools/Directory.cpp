@@ -60,7 +60,7 @@ bool Directory::remove(const String& dir)
   return true;
 }
 
-bool Directory::open(const String& dirpath, const String& pattern)
+bool Directory::open(const String& dirpath, const String& pattern, bool dirsOnly)
 {
 #ifdef _WIN32
   if(findFile != INVALID_HANDLE_VALUE)
@@ -69,6 +69,7 @@ bool Directory::open(const String& dirpath, const String& pattern)
     return false;
   }
 
+  this->dirsOnly = dirsOnly;
   this->dirpath = dirpath;
   const char* patExt = strrchr(pattern.getData(), '.');
   this->patternExtension = (patExt && !strpbrk(patExt + 1, "*?")) ? String(patExt + 1, -1) : String();
@@ -79,8 +80,7 @@ bool Directory::open(const String& dirpath, const String& pattern)
     searchPath.append('/');
   searchPath.append(pattern);
 
-  findFile = FindFirstFileEx(searchPath.getData(),  FindExInfoBasic,  (LPWIN32_FIND_DATA)ffd,  FindExSearchNameMatch,  NULL, 0);
-  //findFile = FindFirstFile(searchPath.getData(), (LPWIN32_FIND_DATA)ffd);
+  findFile = FindFirstFileEx(searchPath.getData(),  FindExInfoBasic,  (LPWIN32_FIND_DATA)ffd,  dirsOnly ? FindExSearchLimitToDirectories : FindExSearchNameMatch,  NULL, 0);
   if(findFile == INVALID_HANDLE_VALUE)
     return false;
   bufferedEntry = true;
@@ -92,6 +92,7 @@ bool Directory::open(const String& dirpath, const String& pattern)
     return false;
   }
 
+  this->dirsOnly = dirsOnly;
   this->dirpath = dirpath;
   this->pattern = pattern;
 
@@ -100,7 +101,7 @@ bool Directory::open(const String& dirpath, const String& pattern)
 #endif
 }
 
-bool Directory::read(bool dirsOnly, String& name, bool& isDir)
+bool Directory::read(String& name, bool& isDir)
 {
 #ifdef _WIN32
   if(!findFile)
@@ -214,16 +215,28 @@ void Directory::findFiles(const String& pattern, List<String>& files)
   struct FindFiles
   {
     List<String>* files;
+    bool dirsOnly;
 
     void handleSubPath(const String& path, const String& name, bool isDir, const String& nextPattern, const List<String>::Node* nextNextChunk)
     {
       String subpath = path;
-      subpath.setCapacity(path.getLength() + 1 + name.getLength());
+      subpath.setCapacity(path.getLength() + 2 + name.getLength());
       if(!path.isEmpty())
         subpath.append('/');
       subpath.append(name);
       if(nextPattern.isEmpty())
-        files->append(subpath);
+      {
+        if(dirsOnly)
+        {
+          if(isDir)
+          {
+            subpath.append('/');
+            files->append(subpath);
+          }
+        }
+        else
+          files->append(subpath);
+      }
       else if(isDir)
         handlePath(subpath, nextPattern, nextNextChunk);
     }
@@ -234,8 +247,13 @@ void Directory::findFiles(const String& pattern, List<String>& files)
       {
         /*
         if a* / **b / c
-        use a*b / c
-        foreach a* use * / **b / c
+          use a*b / c
+          foreach a*
+             use * / **b / c
+        // TODO:
+        if a / **b / c
+          use a / *b / c
+          use a / * / **b / c
         */
 
         const String& nextPattern = nextChunk->data;
@@ -245,15 +263,15 @@ void Directory::findFiles(const String& pattern, List<String>& files)
         handlePath(path, testPattern, nextChunk->getNext());
 
         Directory dir; String name; bool isDir;
-        if(dir.open(path, pattern))
-          while(dir.read(true, name, isDir))
+        if(dir.open(path, pattern, true))
+          while(dir.read(name, isDir))
             handleSubPath(path, name, isDir, "*", nextChunk);
       }
       else if(strpbrk(pattern.getData(), "*?") || nextChunk == 0)
       {
         Directory dir; String name; bool isDir;
-        if(dir.open(path, pattern))
-          while(dir.read(nextChunk != 0, name, isDir))
+        if(dir.open(path, pattern, nextChunk != 0 || dirsOnly))
+          while(dir.read(name, isDir))
             handleSubPath(path, name, isDir, nextChunk ? nextChunk->data : String(), nextChunk ? nextChunk->getNext() : 0);
       }
       else // not a pattern
@@ -264,6 +282,8 @@ void Directory::findFiles(const String& pattern, List<String>& files)
   if(!chunks.isEmpty())
   {
     FindFiles ff;
+    char lastChar = pattern.getData()[pattern.getLength() - 1];
+    ff.dirsOnly = lastChar == '/' || lastChar == '\\';
     ff.files = &files;
     ff.handlePath(String(), chunks.getFirst()->data, chunks.getFirst()->getNext());
   }

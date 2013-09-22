@@ -24,18 +24,18 @@ public:
   * Opens a directory for searching for files in the directory
   * @param dirpath The path to the directory to search in
   * @param pattern A search pattern like "*.inf"
+  * @param dirsOnly Search only for directories and ignore files
   * @return Whether the directory was opened successfully
   */
-  bool open(const String& dirpath, const String& pattern);
+  bool open(const String& dirpath, const String& pattern, bool dirsOnly);
 
   /**
   * Searches the next matching entry in the opened directory
-  * @param dirsOnly
   * @param path The path of the next matching entry
   * @param isDir Whether the next entry is a directory
   * @return Whether a matching entry was found
   */
-  bool read(bool dirsOnly, String& path, bool& isDir);
+  bool read(String& path, bool& isDir);
 
   static void findFiles(const String& pattern, List<String>& files);
 
@@ -48,7 +48,7 @@ public:
   static bool change(const String& dir);
 
 private:
-
+  bool dirsOnly;
 #ifdef _WIN32
   void* findFile; /**< Win32 FindFirstFile HANDLE */
   char ffd[320]; /**< Buffer for WIN32_FIND_DATA */
