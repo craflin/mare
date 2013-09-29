@@ -434,7 +434,7 @@ bool Namespace::resolveScript2(const String& name, Word*& word, Namespace*& resu
   return false;
 }
 
-void Namespace::addKey(const String& key, unsigned int wordFlags, Statement* value)
+void Namespace::addKey(const String& key, unsigned int wordFlags, Statement* value, Token::Id operation)
 {
   // evaluate variables
   String evaluatedKey = evaluateString(key);
@@ -445,7 +445,7 @@ void Namespace::addKey(const String& key, unsigned int wordFlags, Statement* val
     List<Word> words;
     Word::splitLines(evaluatedKey, words);
     for(const List<Word>::Node* i = words.getFirst(); i; i = i->getNext())
-      addKeyRaw(i->data, 0);
+      addKeyRaw(i->data, 0, operation);
     return;
   }
 
@@ -465,10 +465,10 @@ void Namespace::addKey(const String& key, unsigned int wordFlags, Statement* val
       List<String> files;
       Directory::findFiles(word, files);
       for(const List<String>::Node* i = files.getFirst(); i; i = i->getNext())
-        addKeyRaw(Word(i->data, 0), value);
+        addKeyRaw(Word(i->data, 0), value, operation);
     }
     else
-      addKeyRaw(word, value);
+      addKeyRaw(word, value, operation);
   }
 }
 
@@ -509,7 +509,7 @@ void Namespace::removeKey(const String& key)
   }
 }
 
-void Namespace::addKeyRaw(const Word& key, Statement* value)
+void Namespace::addKeyRaw(const Word& key, Statement* value, Token::Id operation)
 {
   ASSERT(!(flags & compiledFlag));
 
@@ -524,7 +524,28 @@ void Namespace::addKeyRaw(const Word& key, Statement* value)
   ASSERT(!key.isEmpty());
   Map<Word, Namespace*>::Node* node = variables.find(key);
   if(node)
-    node->data = value ? new Namespace(*this, this, engine, value, node->data, 0) : 0;
+  {
+    switch(operation)
+    {
+    case Token::plusAssignment:
+    case Token::minusAssignment:
+      if(value)
+      {
+        BinaryStatement* binaryStatement = new BinaryStatement(*this);
+        binaryStatement->operation = operation == Token::plusAssignment ? Token::plus : Token::minus;
+        binaryStatement->leftOperand = node->data->statement;
+        binaryStatement->rightOperand = value;
+        node->data->statement = binaryStatement;
+      }
+      break;
+    case Token::assignment:
+      node->data = value ? new Namespace(*this, this, engine, value, node->data, 0) : 0;
+      break;
+    default:
+      ASSERT(false);
+      break;
+    }
+  }
   else
     variables.append(key, value ? new Namespace(*this, this, engine, value, 0, 0) : 0);
 }

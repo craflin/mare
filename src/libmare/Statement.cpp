@@ -13,7 +13,7 @@ void BlockStatement::execute(Namespace& space)
 
 void AssignStatement::execute(Namespace& space)
 {
-  space.addKey(variable, flags, value);
+  space.addKey(variable, flags, value, operation);
 }
 
 void RemoveStatement::execute(Namespace& space)
@@ -26,12 +26,10 @@ void BinaryStatement::execute(Namespace& space)
   switch(operation)
   {
   case Token::plus:
-  case Token::plusAssignment:
     leftOperand->execute(space);
     rightOperand->execute(space);
     break;
   case Token::minus:
-  case Token::minusAssignment:
     {
       leftOperand->execute(space);
       Namespace* rightSpace = new Namespace(space.getEngine(), &space, &space.getEngine(), rightOperand, 0, 0);

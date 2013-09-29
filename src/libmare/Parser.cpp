@@ -369,21 +369,16 @@ Statement* Parser::readAssignment()
   {
     AssignStatement* statement = new AssignStatement(engine);
     readString(statement->variable);
-    if(currentToken.id == Token::plusAssignment || currentToken.id == Token::minusAssignment)
+    switch(currentToken.id)
     {
-      BinaryStatement* binaryStatement = new BinaryStatement(engine);
-      binaryStatement->operation = currentToken.id;
-      nextToken();
-      ReferenceStatement* refStatement = new ReferenceStatement(engine);
-      refStatement->variable = statement->variable;
-      binaryStatement->leftOperand = refStatement;
-      binaryStatement->rightOperand = readConcatination();
-      statement->value = binaryStatement;
-    }
-    else if(currentToken.id == Token::assignment)
-    {
+    case Token::plusAssignment:
+    case Token::minusAssignment:
+      statement->operation = currentToken.id;
+      // no break
+    case Token::assignment:
       nextToken();
       statement->value = readConcatination();
+      break;
     }
     return statement;
   }

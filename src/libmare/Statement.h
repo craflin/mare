@@ -30,8 +30,9 @@ private:
 class AssignStatement : public Statement
 {
 public:
-  AssignStatement(Scope& scope) : Statement(scope), flags(0), value(0) {}
+  AssignStatement(Scope& scope) : Statement(scope), operation(Token::assignment), flags(0), value(0) {}
 
+  Token::Id operation;
   String variable;
   unsigned int flags;
   Statement* value;

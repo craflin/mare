@@ -4,6 +4,7 @@
 #include "Tools/Map.h"
 #include "Tools/Scope.h"
 #include "Tools/Word.h"
+#include "Token.h"
 
 class Engine;
 class Statement;
@@ -25,8 +26,8 @@ public:
   String getFirstKey();
   inline Engine& getEngine() {return *engine;}
 
-  void addKey(const String& key, unsigned int flags, Statement* value);
-  void addKeyRaw(const Word& key, Statement* value);
+  void addKey(const String& key, unsigned int flags, Statement* value, Token::Id operation = Token::assignment);
+  void addKeyRaw(const Word& key, Statement* value, Token::Id operation = Token::assignment);
   void setKeyRaw(const Word& key);
   void removeAllKeys();
   void removeKey(const String& key);
