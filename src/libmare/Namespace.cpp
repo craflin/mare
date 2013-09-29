@@ -10,7 +10,7 @@
 #include "Statement.h"
 #include "Engine.h"
 
-String Namespace::evaluateString(const String& string)
+String Namespace::evaluateString(const String& string) const
 {
   /*
   string = { chunk }

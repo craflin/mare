@@ -60,7 +60,7 @@ private:
   Map<Word, Namespace*> variables;
 
   void compile();
-  String evaluateString(const String& string);
+  String evaluateString(const String& string) const;
 
   friend class Engine;
   friend class ReferenceStatement; // temporary hack
