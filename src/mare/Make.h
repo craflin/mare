@@ -63,9 +63,9 @@ private:
         List<String> libPaths;
         List<String> libs;
         
-        String cppCompiler;
-        String cCompiler;
-        String linker;
+        List<String> cppCompiler;
+        List<String> cCompiler;
+        List<String> linker;
         
         Map<String, void*> outputDirs;
         List<String> objects;

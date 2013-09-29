@@ -171,10 +171,10 @@ bool Make::readFile()
         engine.getKeys("includePaths", target.includePaths, true);
         engine.getKeys("libPaths", target.libPaths, true);
         engine.getKeys("libs", target.libs, true);
-        
-        target.cppCompiler = engine.getFirstKey("cppCompiler", true);
-        target.cCompiler = engine.getFirstKey("cCompiler", true);
-        target.linker = engine.getFirstKey("linker", true);
+
+        engine.getKeys("cppCompiler", target.cppCompiler, true);
+        engine.getKeys("cCompiler", target.cCompiler, true);
+        engine.getKeys("linker", target.linker, true);
 
         if(engine.enterKey("files"))
         {
@@ -469,9 +469,9 @@ bool Make::generateTargetMakefile(const Platform& platform, const Platform::Conf
     {
       fileWrite("ifeq ($(origin CXX),default)\n");
       if(!target.cppCompiler.isEmpty())
-        fileWrite(String("  CXX := ") + target.cppCompiler + "\n");
+        fileWrite(String("  CXX := ") + join(target.cppCompiler) + "\n");
       if(!target.linker.isEmpty())
-        fileWrite(String("  __CXXLINKER := ") + target.linker + "\n");
+        fileWrite(String("  __CXXLINKER := ") + join(target.linker) + "\n");
       else
         fileWrite("  __CXXLINKER := $(CXX)\n");
       fileWrite("else\n");
@@ -486,9 +486,9 @@ bool Make::generateTargetMakefile(const Platform& platform, const Platform::Conf
     {
       fileWrite("ifeq ($(origin CC),default)\n");
       if(!target.cCompiler.isEmpty())
-        fileWrite(String("  CC := ") + target.cCompiler + "\n");
+        fileWrite(String("  CC := ") + join(target.cCompiler) + "\n");
       if(!target.linker.isEmpty())
-        fileWrite(String("  __CCLINKER := ") + target.linker + "\n");
+        fileWrite(String("  __CCLINKER := ") + join(target.linker) + "\n");
       else
         fileWrite("  __CCLINKER := $(CC)\n");
       fileWrite("else\n");
@@ -502,7 +502,7 @@ bool Make::generateTargetMakefile(const Platform& platform, const Platform::Conf
     if(!target.linker.isEmpty())
     {
       fileWrite("ifeq ($(origin AR),default)\n");
-      fileWrite(String("  __ARLINKER := ") + target.linker + "\n");
+      fileWrite(String("  __ARLINKER := ") + join(target.linker) + "\n");
       fileWrite("endif\n");
     }
     else
