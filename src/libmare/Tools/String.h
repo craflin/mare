@@ -25,6 +25,7 @@ public:
   String& operator=(const String& other);
   inline String& operator+=(const String& other) {return append(other);}
   inline String operator+(const String& other) const {return String(*this).append(other);}
+  template <int N> String operator+(const char (&str)[N]) const {return String(*this).append(String(str));}
 
   bool operator==(const String& other) const;
   bool operator!=(const String& other) const;
@@ -58,6 +59,23 @@ public:
 
   String& lowercase();
   String& uppercase();
+
+  /**
+  * Hash function
+  * @return A 32 bit hash of the string
+  */
+  operator unsigned int() const
+  {
+    unsigned int len;
+    unsigned int hash = len = data->length;
+    hash *= 16807;
+    hash ^= data->str[0];
+    hash *= 16807;
+    hash ^= data->str[len >> 1];
+    hash *= 16807;
+    hash ^= data->str[len - (len != 0)];
+    return hash;
+  }
 
 private:
   class Data
