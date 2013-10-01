@@ -17,13 +17,14 @@
 #include "Mare.h"
 #include "Make.h"
 #include "Vcxproj.h"
+#include "Vcproj.h"
 #include "CodeLite.h"
 #include "CodeBlocks.h"
 #include "CMake.h"
 #include "NetBeans.h"
 
 static const char* VERSION   = "0.3";
-static const char* COPYRIGHT = "Copyright (C) 2011 Colin Graf";
+static const char* COPYRIGHT = "Copyright (C) 2011-2013 Colin Graf";
 
 static void errorHandler(void* userData, const String& file, int line, const String& message)
 {
@@ -67,6 +68,10 @@ static void showUsage(const char* executable)
   puts("    --vcxproj[=<version>]");
   puts("        Convert the marefile into a .sln and .vcxproj files for Visual Studio.");
   puts("        <version> can be set to 2010 or 2012.");
+  puts("");
+  puts("    --vcproj[=<version>]");
+  puts("        Convert the marefile into a .sln and .vcproj files for Visual Studio.");
+  puts("        <version> can be set to 2008.");
   puts("");
   puts("    --make");
   puts("        Try to translate the marefile into a Makefile. (experimental)");
@@ -153,6 +158,7 @@ int main(int argc, char* argv[])
   int jobs = 0;
   bool generateMake = false;
   int generateVcxproj = 0;
+  int generateVcproj = 0;
   bool generateCodeLite = false;
   bool generateCodeBlocks = false;
   bool generateCMake = false;
@@ -171,6 +177,7 @@ int main(int argc, char* argv[])
       {"ignore-dependencies", no_argument , 0, 0},
       {"make", no_argument , 0, 0},
       {"vcxproj", optional_argument , 0, 0},
+      {"vcproj", optional_argument , 0, 0},
       {"codelite", no_argument , 0, 0},
       {"codeblocks", no_argument , 0, 0},
       {"cmake", no_argument , 0, 0},
@@ -239,6 +246,17 @@ int main(int argc, char* argv[])
                 generateVcxproj = 2010;
               else if(strcmp(optarg, "2012") == 0)
                 generateVcxproj = 2012;
+              else // unknown version
+                ::showHelp(argv[0]);
+            }
+          }
+          else if(opt == "vcproj")
+          {
+            generateVcproj = 2008;
+            if(optarg)
+            {
+              if(strcmp(optarg, "2008") == 0)
+                generateVcproj = 2008;
               else // unknown version
                 ::showHelp(argv[0]);
             }
@@ -362,6 +380,15 @@ int main(int argc, char* argv[])
     {
       Vcxproj vcxprog(engine, generateVcxproj);
       if(!vcxprog.generate(userArgs))
+        return EXIT_FAILURE;
+      return EXIT_SUCCESS;
+    }
+
+    // generate vcproj mode?
+    if(generateVcproj)
+    {
+      Vcproj vcproj(engine, generateVcproj);
+      if(!vcproj.generate(userArgs))
         return EXIT_FAILURE;
       return EXIT_SUCCESS;
     }
