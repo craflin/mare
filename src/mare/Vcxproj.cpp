@@ -261,10 +261,7 @@ bool Vcxproj::readFile()
         engine.getKeys("libPaths", projectConfig.libPaths, true);
         engine.getKeys("libs", projectConfig.libs, true);
         engine.getKeys("dependencies", projectConfig.dependencies, false);
-        List<String> root;
-        engine.getKeys("root", root, true);
-        for(const List<String>::Node* i = root.getFirst(); i; i = i->getNext())
-          project.roots.append(i->data);
+        engine.getKeys("root", project.root, true);
 
         if(engine.enterKey("files"))
         {
@@ -469,6 +466,7 @@ bool Vcxproj::processData()
     {
       Project::File& file = i->data;
 
+      // for each file configuration
       for(Map<String, Project::File::Config>::Node* i = file.configs.getFirst(); i; i = i->getNext())
       {
         Project::File::Config& fileConfig = i->data;
@@ -1153,6 +1151,14 @@ bool Vcxproj::generateVcxprojFilter(Project& project)
   fileWrite("<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n");
   fileWrite("<Project ToolsVersion=\"4.0\" xmlns=\"http://schemas.microsoft.com/developer/msbuild/2003\">\r\n");
 
+  Map<String, void*> roots;
+  for(List<String>::Node* i = project.root.getFirst(); i; i = i->getNext())
+  {
+    String path = i->data;
+    path.subst("/", "\\");
+    roots.append(path);
+  }
+
   Map<String, String> filters;
   for(Map<String, Project::File>::Node* i = project.files.getFirst(); i; i = i->getNext())
   {
@@ -1187,7 +1193,7 @@ bool Vcxproj::generateVcxprojFilter(Project& project)
     {
       if(filterName == "." || File::getBasename(filterName) == "..")
         break;
-      const Map<String, void*>::Node* node = project.roots.find(filterName);
+      const Map<String, void*>::Node* node = roots.find(filterName);
       if(node)
       {
         root = node->key;

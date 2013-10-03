@@ -92,7 +92,7 @@ private:
     Map<String, Config> configs;
     Map<String, File> files;
     Map<String, void*> dependencies;
-    Map<String, void*> roots;
+    List<String> root;
 
     Project(const String& name, const String& guid) : name(name), guid(guid) {}
   };
