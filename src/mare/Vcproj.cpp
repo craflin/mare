@@ -899,6 +899,18 @@ bool Vcproj::generateVcproj(const Project& project)
   fileWrite("\t</Configurations>\r\n");
 
   fileWrite("\t<References>\r\n");
+  for(const Map<String, void*>::Node* i = project.dependencies.getFirst(); i; i = i->getNext())
+  {
+    const Map<String, Project>::Node* node = projects.find(i->key);
+    if(node)
+    {
+      const Project& project = node->data;
+      fileWrite("\t\t<ProjectReference\r\n");
+      fileWrite(String("\t\t\tReferencedProjectIdentifier=\"{") + project.guid + "}\"\r\n");
+      fileWrite(String("\t\t\tRelativePathToProject=\".\\") + project.name + ".vcproj\"\r\n");
+      fileWrite("\t\t/>\r\n");
+    }
+  }
   fileWrite("\t</References>\r\n");
 
   generateVcprojFiles(project);
