@@ -80,7 +80,13 @@ bool Directory::open(const String& dirpath, const String& pattern, bool dirsOnly
     searchPath.append('/');
   searchPath.append(pattern);
 
-  findFile = FindFirstFileEx(searchPath.getData(),  FindExInfoBasic,  (LPWIN32_FIND_DATA)ffd,  dirsOnly ? FindExSearchLimitToDirectories : FindExSearchNameMatch,  NULL, 0);
+  findFile = FindFirstFileEx(searchPath.getData(),
+#if _WIN32_WINNT > 0x0600
+	  FindExInfoBasic,
+#else
+	  FindExInfoStandard,
+#endif
+	  (LPWIN32_FIND_DATA)ffd, dirsOnly ? FindExSearchLimitToDirectories : FindExSearchNameMatch, NULL, 0);
   if(findFile == INVALID_HANDLE_VALUE)
     return false;
   bufferedEntry = true;
