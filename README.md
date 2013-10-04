@@ -427,6 +427,7 @@ A Marefile can be translated into project files for Visual Studio, CodeLite, Cod
     <td></td>
     <td>mare&nbsp;1)</td>
     <td>vcxproj</td>
+    <td>vcproj</td>
     <td>make</td>
     <td>codelite</td>
     <td>codeblocks</td>
@@ -440,13 +441,15 @@ A Marefile can be translated into project files for Visual Studio, CodeLite, Cod
     <td>works</td>
     <td>works</td>
     <td>works</td>
+    <td>works</td>
     <td></td>
-    <td>geht</td>
+    <td>works</td>
   </tr>
   <tr>
     <td>platforms</td>
     <td>works</td>
-    <td>?</td>
+    <td>works</td>
+    <td>works</td>
     <td>works</td>
     <td>?</td>
     <td>?</td>
@@ -455,6 +458,7 @@ A Marefile can be translated into project files for Visual Studio, CodeLite, Cod
   </tr>
   <tr>
     <td>{c,cpp}{Source,Application,DynamicLibrary,StaticLibrary}</td>
+    <td>works</td>
     <td>works</td>
     <td>works</td>
     <td>works</td>
@@ -467,6 +471,7 @@ A Marefile can be translated into project files for Visual Studio, CodeLite, Cod
     <td>{c,cpp}Compiler</td>
     <td>works</td>
     <td></td>
+    <td></td>
     <td>works</td>
     <td></td>
     <td></td>
@@ -476,6 +481,7 @@ A Marefile can be translated into project files for Visual Studio, CodeLite, Cod
   <tr>
     <td>linker</td>
     <td>works</td>
+    <td></td>
     <td></td>
     <td>works</td>
     <td></td>
@@ -488,10 +494,11 @@ A Marefile can be translated into project files for Visual Studio, CodeLite, Cod
     <td></td>
     <td>works</td>
     <td></td>
+    <td></td>
     <td>works</td>
     <td>works</td>
     <td></td>
-    <td>geht</td>
+    <td>works</td>
   </tr>
 </table>
 
