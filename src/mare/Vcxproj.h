@@ -50,14 +50,15 @@ private:
       List<String> inputs;
       List<String> dependencies;
       Map<String, void*> cAndCppFlags;
-      Map<String, String> cppOptions;
       Map<String, void*> linkFlags;
-      Map<String, String> linkOptions;
-      Map<String, String> vsOptions;
       List<String> defines;
       List<String> includePaths;
       List<String> libPaths;
       List<String> libs;
+
+      Map<String, String> cppOptions;
+      Map<String, String> linkOptions;
+      Map<String, String> vsOptions;
 
       Config(const String& name, const String& platform) : name(name), platform(platform) {}
     };
@@ -73,16 +74,21 @@ private:
         List<String> outputs;
         List<String> inputs;
         List<String> dependencies;
-        Map<String, void*> cAndCppFlags;
+        Map<String, void*> compilerFlags;
+
+        bool hasCompilerFlags;
+
         Map<String, String> cppOptions;
+
+        Config() : hasCompilerFlags(false) {}
       };
 
       String type;
       String filter;
       Map<String, Config> configs;
-      bool useDefaultSettings;
+      bool useProjectCompilerFlags;
 
-      File() : useDefaultSettings(true) {}
+      File() : useProjectCompilerFlags(true) {}
     };
 
     String name;
@@ -107,20 +113,28 @@ private:
     ProjectFilter(const String& guid) : guid(guid) {}
   };
 
-  class Option
+  class OptionGroup
   {
   public:
     String name;
-    String value;
     String unsetValue;
     String paramName;
 
-    Option() {}
+    OptionGroup(const String& name, const String& unsetValue = String(), const String& paramName = String()) : name(name), unsetValue(unsetValue), paramName(paramName) {}
+  };
 
-    Option(const String& name, const String& value, const String& unsetValue = String(), const String& paramName = String()) : name(name), value(value), unsetValue(unsetValue), paramName(paramName) {}
+  class Option
+  {
+  public:
+    OptionGroup* group;
+    String value;
+
+    Option() : group(0) {}
+
+    Option(OptionGroup* group, const String& value) : group(group), value(value) {}
 
     bool hasParam(const String& option) const;
-    static String getParam(const String& option);
+    static String getParamValue(const String& option);
   };
 
   class OptionMap : public Map<String, Option>
@@ -138,6 +152,8 @@ private:
   Map<String, Config> configs;
   Map<String, Project> projects;
   Map<String, ProjectFilter> projectFilters;
+
+  List<OptionGroup> knownOptionGroups;
   OptionMap knownCppOptions;
   Map<String, Option> knownLinkOptions;
   OptionMap knownVsOptions;

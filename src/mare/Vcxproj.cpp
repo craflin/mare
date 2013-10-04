@@ -15,76 +15,98 @@
 
 bool Vcxproj::generate(const Map<String, String>& userArgs)
 {
+
   // C/C++ general tab:
-  knownCppOptions.append("/Z7", Option("DebugInformationFormat", "OldStyle"));
-  knownCppOptions.append("/Zi", Option("DebugInformationFormat", "ProgramDatabase"));
-  knownCppOptions.append("/ZI", Option("DebugInformationFormat", "EditAndContinue"));
+  OptionGroup* group = &knownOptionGroups.append(OptionGroup("DebugInformationFormat", String())); // TODO: unsetValue
+  knownCppOptions.append("/Z7", Option(group, "OldStyle"));
+  knownCppOptions.append("/Zi", Option(group, "ProgramDatabase"));
+  knownCppOptions.append("/ZI", Option(group, "EditAndContinue"));
   // TODO: common language runtime support
   // TODO: suppress startup banner
-  knownCppOptions.append("/W0", Option("WarningLevel", "TurnOffAllWarnings"));
-  knownCppOptions.append("/W1", Option("WarningLevel", "Level1"));
-  knownCppOptions.append("/W2", Option("WarningLevel", "Level2"));
-  knownCppOptions.append("/W3", Option("WarningLevel", "Level3"));
-  knownCppOptions.append("/W4", Option("WarningLevel", "Level4"));
-  knownCppOptions.append("/Wall", Option("WarningLevel", "EnableAllWarnings"));
-  knownCppOptions.append("/WX", Option("TreatWarningAsError", "true"));
-  knownCppOptions.append("/WX-", Option("TreatWarningAsError", "false"));
-  knownCppOptions.append("/MP", Option("MultiProcessorCompilation", "true"));
+  group = &knownOptionGroups.append(OptionGroup("WarningLevel", String())); // TODO: unsetValue
+  knownCppOptions.append("/W0", Option(group, "TurnOffAllWarnings"));
+  knownCppOptions.append("/W1", Option(group, "Level1"));
+  knownCppOptions.append("/W2", Option(group, "Level2"));
+  knownCppOptions.append("/W3", Option(group, "Level3"));
+  knownCppOptions.append("/W4", Option(group, "Level4"));
+  knownCppOptions.append("/Wall", Option(group, "EnableAllWarnings"));
+  group = &knownOptionGroups.append(OptionGroup("TreatWarningAsError", String())); // TODO: unsetValue
+  knownCppOptions.append("/WX", Option(group, "true"));
+  knownCppOptions.append("/WX-", Option(group, "false"));
+  group = &knownOptionGroups.append(OptionGroup("MultiProcessorCompilation", String())); // TODO: unsetValue
+  knownCppOptions.append("/MP", Option(group, "true"));
   // TODO: use unicode for assembler listing
 
   // C/C++ optimization tab:
-  knownCppOptions.append("/O1", Option("Optimization", "MinSize"));
-  knownCppOptions.append("/O2", Option("Optimization", "MaxSpeed"));
-  knownCppOptions.append("/Od", Option("Optimization", "Disabled"));
-  knownCppOptions.append("/Ox", Option("Optimization", "Full"));
-  knownCppOptions.append("/Ob2", Option("InlineFunctionExpansion", "AnySuitable"));
-  knownCppOptions.append("/Ob1", Option("InlineFunctionExpansion", "OnlyExplicitInline"));
-  knownCppOptions.append("/Ob0", Option("InlineFunctionExpansion", "Disabled"));
-  knownCppOptions.append("/Oi", Option("IntrinsicFunctions", "true"));
-  knownCppOptions.append("/Os", Option("FavorSizeOrSpeed", "Size"));
-  knownCppOptions.append("/Ot", Option("FavorSizeOrSpeed", "Speed"));
-  knownCppOptions.append("/Oy", Option("OmitFramePointers", "true"));
-  knownCppOptions.append("/Oy-", Option("OmitFramePointers", "false"));
-  knownCppOptions.append("/GT", Option("EnableFiberSafeOptimizations", "true"));
-  knownCppOptions.append("/GL", Option("WholeProgramOptimization", "true"));
+  group = &knownOptionGroups.append(OptionGroup("Optimization", String())); // TODO: unsetValue
+  knownCppOptions.append("/O1", Option(group, "MinSize"));
+  knownCppOptions.append("/O2", Option(group, "MaxSpeed"));
+  knownCppOptions.append("/Od", Option(group, "Disabled"));
+  knownCppOptions.append("/Ox", Option(group, "Full"));
+  group = &knownOptionGroups.append(OptionGroup("InlineFunctionExpansion", String())); // TODO: unsetValue
+  knownCppOptions.append("/Ob2", Option(group, "AnySuitable"));
+  knownCppOptions.append("/Ob1", Option(group, "OnlyExplicitInline"));
+  knownCppOptions.append("/Ob0", Option(group, "Disabled"));
+  group = &knownOptionGroups.append(OptionGroup("IntrinsicFunctions", String())); // TODO: unsetValue
+  knownCppOptions.append("/Oi", Option(group, "true"));
+  group = &knownOptionGroups.append(OptionGroup("FavorSizeOrSpeed", String())); // TODO: unsetValue
+  knownCppOptions.append("/Os", Option(group, "Size"));
+  knownCppOptions.append("/Ot", Option(group, "Speed"));
+  group = &knownOptionGroups.append(OptionGroup("OmitFramePointers", String())); // TODO: unsetValue
+  knownCppOptions.append("/Oy", Option(group, "true"));
+  knownCppOptions.append("/Oy-", Option(group, "false"));
+  group = &knownOptionGroups.append(OptionGroup("EnableFiberSafeOptimizations", String())); // TODO: unsetValue
+  knownCppOptions.append("/GT", Option(group, "true"));
+  group = &knownOptionGroups.append(OptionGroup("WholeProgramOptimization", String())); // TODO: unsetValue
+  knownCppOptions.append("/GL", Option(group, "true"));
 
   // TODO: C/C++ Preprocessor tab
 
   // C/C++ code generation tab:
-  knownCppOptions.append("/GF", Option("StringPooling", "true"));
-  knownCppOptions.append("/Gm", Option("MinimalRebuild", "true"));
-  knownCppOptions.append("/Gm-", Option("MinimalRebuild", "false"));
+  group = &knownOptionGroups.append(OptionGroup("StringPooling", String())); // TODO: unsetValue
+  knownCppOptions.append("/GF", Option(group, "true"));
+  group = &knownOptionGroups.append(OptionGroup("MinimalRebuild", String())); // TODO: unsetValue
+  knownCppOptions.append("/Gm", Option(group, "true"));
+  knownCppOptions.append("/Gm-", Option(group, "false"));
   // TODO: C++ exceptions
   // TODO: smaller type checks
   // TODO: basic runtime checks
-  knownCppOptions.append("/MT", Option("RuntimeLibrary", "MultiThreaded"));
-  knownCppOptions.append("/MD", Option("RuntimeLibrary", "MultiThreadedDLL"));
-  knownCppOptions.append("/MTd", Option("RuntimeLibrary", "MultiThreadedDebug"));
-  knownCppOptions.append("/MDd", Option("RuntimeLibrary", "MultiThreadedDebugDLL"));
-  knownCppOptions.append("/GS", Option("BufferSecurityCheck", "true"));
-  knownCppOptions.append("/GS-", Option("BufferSecurityCheck", "false"));
-  knownCppOptions.append("/Gy", Option("FunctionLevelLinking", "true"));
-  knownCppOptions.append("/Gy-", Option("FunctionLevelLinking", "false"));
-  knownCppOptions.append("/arch:SSE", Option("EnableEnhancedInstructionSet", "StreamingSIMDExtensions"));
-  knownCppOptions.append("/arch:SSE2", Option("EnableEnhancedInstructionSet", "StreamingSIMDExtensions2"));
-  knownCppOptions.append("/fp:precise", Option("FloatingPointModel", "Precise"));
-  knownCppOptions.append("/fp:strict", Option("FloatingPointModel", "Strict"));
-  knownCppOptions.append("/fp:fast", Option("FloatingPointModel", "Fast"));
+  group = &knownOptionGroups.append(OptionGroup("RuntimeLibrary", String())); // TODO: unsetValue
+  knownCppOptions.append("/MT", Option(group, "MultiThreaded"));
+  knownCppOptions.append("/MD", Option(group, "MultiThreadedDLL"));
+  knownCppOptions.append("/MTd", Option(group, "MultiThreadedDebug"));
+  knownCppOptions.append("/MDd", Option(group, "MultiThreadedDebugDLL"));
+  group = &knownOptionGroups.append(OptionGroup("BufferSecurityCheck", String())); // TODO: unsetValue
+  knownCppOptions.append("/GS", Option(group, "true"));
+  knownCppOptions.append("/GS-", Option(group, "false"));
+  group = &knownOptionGroups.append(OptionGroup("FunctionLevelLinking", String())); // TODO: unsetValue
+  knownCppOptions.append("/Gy", Option(group, "true"));
+  knownCppOptions.append("/Gy-", Option(group, "false"));
+  group = &knownOptionGroups.append(OptionGroup("EnableEnhancedInstructionSet", String())); // TODO: unsetValue
+  knownCppOptions.append("/arch:SSE", Option(group, "StreamingSIMDExtensions"));
+  knownCppOptions.append("/arch:SSE2", Option(group, "StreamingSIMDExtensions2"));
+  group = &knownOptionGroups.append(OptionGroup("FloatingPointModel", String())); // TODO: unsetValue
+  knownCppOptions.append("/fp:precise", Option(group, "Precise"));
+  knownCppOptions.append("/fp:strict", Option(group, "Strict"));
+  knownCppOptions.append("/fp:fast", Option(group, "Fast"));
   // TODO: floating point exceptions
   // TODO: create hotpatchable image
 
   // C/C++ language tab
   // TODO: disable language extensions
-  knownCppOptions.append("/Zc:wchar_t", Option("TreatWChar_tAsBuiltInType", "true"));
-  knownCppOptions.append("/Zc:wchar_t-", Option("TreatWChar_tAsBuiltInType", "false"));
+  group = &knownOptionGroups.append(OptionGroup("TreatWChar_tAsBuiltInType", String())); // TODO: unsetValue
+  knownCppOptions.append("/Zc:wchar_t", Option(group, "true"));
+  knownCppOptions.append("/Zc:wchar_t-", Option(group, "false"));
   // TODO: force conformance in for loop scope
   // TODO: enable rtti
   // TODO: openmp
 
   // precompiled header tab
-  knownCppOptions.append("/Yu", Option("PrecompiledHeader", "Use", "NotUsing", "PrecompiledHeaderFile"));
-  knownCppOptions.append("/Yc", Option("PrecompiledHeader", "Create", "NotUsing", "PrecompiledHeaderFile"));
-  knownCppOptions.append("/Fp", Option(String(), String(), String(), "PrecompiledHeaderOutputFile"));
+  group = &knownOptionGroups.append(OptionGroup("PrecompiledHeader", "NotUsing", "PrecompiledHeaderFile"));
+  knownCppOptions.append("/Yu", Option(group, "Use"));
+  knownCppOptions.append("/Yc", Option(group, "Create"));
+  group = &knownOptionGroups.append(OptionGroup(String(), String(), "PrecompiledHeaderOutputFile")); // TODO: unsetValue?
+  knownCppOptions.append("/Fp", Option(group, String()));
 
   // TODO: C/C++ output files tab?
   // TODO: C/C++ browse information tab?
@@ -97,30 +119,36 @@ bool Vcxproj::generate(const Map<String, String>& userArgs)
   // TODO: linker manifest file tab
 
   // linker debugging tab:
-  knownLinkOptions.append("/DEBUG", Option("GenerateDebugInformation", "true"));
+  group = &knownOptionGroups.append(OptionGroup("GenerateDebugInformation"));
+  knownLinkOptions.append("/DEBUG", Option(group, "true"));
   // TODO: more options?
 
   // linker system tab:
-  knownLinkOptions.append("/SUBSYSTEM:CONSOLE", Option("SubSystem", "Console"));
-  knownLinkOptions.append("/SUBSYSTEM:WINDOWS", Option("SubSystem", "Windows"));
+  group = &knownOptionGroups.append(OptionGroup("SubSystem"));
+  knownLinkOptions.append("/SUBSYSTEM:CONSOLE", Option(group, "Console"));
+  knownLinkOptions.append("/SUBSYSTEM:WINDOWS", Option(group, "Windows"));
   // TODO: more SubSystems
   // TODO: more system tab options?
 
   // linker optimization tab:
-  knownLinkOptions.append("/INCREMENTAL");
-  knownLinkOptions.append("/OPT:REF", Option("OptimizeReferences", "true"));
-  knownLinkOptions.append("/OPT:NOREF", Option("OptimizeReferences", "false"));
-  knownLinkOptions.append("/OPT:ICF", Option("EnableCOMDATFolding", "true"));
-  knownLinkOptions.append("/OPT:NOICF", Option("EnableCOMDATFolding", "false"));
-  knownLinkOptions.append("/LTCG");
+  knownLinkOptions.append("/INCREMENTAL"); // TODO: ????
+  knownLinkOptions.append("/LTCG"); // TODO: ???
+  group = &knownOptionGroups.append(OptionGroup("OptimizeReferences"));
+  knownLinkOptions.append("/OPT:REF", Option(group, "true"));
+  knownLinkOptions.append("/OPT:NOREF", Option(group, "false"));
+  group = &knownOptionGroups.append(OptionGroup("EnableCOMDATFolding"));
+  knownLinkOptions.append("/OPT:ICF", Option(group, "true"));
+  knownLinkOptions.append("/OPT:NOICF", Option(group, "false"));
   // TODO: more LTCG options?
   // TODO: more options?
 
   // TODO: Manifest Tool tabs?
 
   // pseudo cppFlags with no actual compiler flag representation
-  knownVsOptions.append("/CharacterSet", Option("CharacterSet", String()));
-  knownVsOptions.append("/PlatformToolset", Option("PlatformToolset", String()));
+  group = &knownOptionGroups.append(OptionGroup("CharacterSet"));
+  knownVsOptions.append("/CharacterSet", Option(group, String()));
+  group = &knownOptionGroups.append(OptionGroup("PlatformToolset"));
+  knownVsOptions.append("/PlatformToolset", Option(group, String()));
 
   //
   engine.addDefaultKey("tool", "vcxproj");
@@ -282,11 +310,21 @@ bool Vcxproj::readFile()
             engine.getKeys("output", fileConfig.outputs, false);
             engine.getKeys("input", fileConfig.inputs, false);
             engine.getKeys("dependencies", fileConfig.dependencies, false);
-            List<String> cAndCppFlags;
-            engine.getKeys("cppFlags", cAndCppFlags, false);
-            engine.getKeys("cFlags", cAndCppFlags, false);
-            for(const List<String>::Node* i = cAndCppFlags.getFirst(); i; i = i->getNext())
-              fileConfig.cAndCppFlags.append(i->data, 0);
+            List<String> cppFlags, cFlags;
+            bool hasCppFlags = engine.getKeys("cppFlags", cppFlags, false);
+            bool hasCFlags = engine.getKeys("cFlags", cFlags, false);
+            if(hasCppFlags || hasCFlags)
+            {
+              if(!hasCppFlags)
+                engine.getKeys("cppFlags", cppFlags, true);
+              if(!hasCFlags)
+                engine.getKeys("cFlags", cFlags, true);
+              fileConfig.hasCompilerFlags = true;
+              for(const List<String>::Node* i = cppFlags.getFirst(); i; i = i->getNext())
+                fileConfig.compilerFlags.append(i->data, 0);
+              for(const List<String>::Node* i = cFlags.getFirst(); i; i = i->getNext())
+                fileConfig.compilerFlags.append(i->data, 0);
+            }
             engine.leaveKey(); // VERIFY(engine.enterKey(i->data));
             engine.leaveKey();
           }
@@ -393,71 +431,73 @@ bool Vcxproj::processData()
       {
         List<String> additionalOptions;
         for(const Map<String, void*>::Node* i = projectConfig.cAndCppFlags.getFirst(); i; i = i->getNext())
-          if(!knownCppOptions.find(i->key) && !knownVsOptions.find(i->key))
-            additionalOptions.append(i->key);
-        if(!additionalOptions.isEmpty())
-          projectConfig.cppOptions.append("AdditionalOptions", join(additionalOptions, ' ') + " %(AdditionalOptions)");
-
-        for(const Map<String, void*>::Node* i = projectConfig.cAndCppFlags.getFirst(); i; i = i->getNext())
         {
           const Map<String, Option>::Node* node = knownCppOptions.find(i->key);
           if(node)
           {
+            if(!node->data.group)
+              continue;
             const Option& option = node->data;
-            if(!option.name.isEmpty())
-              if(projectConfig.cppOptions.find(option.name))
-              {
-                // TODO: warning or error
-              }
-              else
-                projectConfig.cppOptions.append(option.name, option.value);
+            const OptionGroup& optionGroup = *option.group;
+            if(projectConfig.cppOptions.find(optionGroup.name))
+            {
+              // TODO: warning or error
+            }
+            else
+              projectConfig.cppOptions.append(optionGroup.name, option.value);
             if(option.hasParam(i->key))
-              if(projectConfig.cppOptions.find(option.paramName))
+            {
+              if(projectConfig.cppOptions.find(optionGroup.paramName))
               {
                 // TODO: warning or error
               }
               else
-                projectConfig.cppOptions.append(option.paramName, Option::getParam(i->key));
+                projectConfig.cppOptions.append(optionGroup.paramName, Option::getParamValue(i->key));
+            }
+            continue;
           }
-          else
+          node = knownVsOptions.find(i->key);
+          if(node)
           {
-            node = knownVsOptions.find(i->key);
-            if(node)
-              projectConfig.vsOptions.append(node->data.name, Option::getParam(i->key));
+            projectConfig.vsOptions.append(node->data.group->name, Option::getParamValue(i->key));
+            continue;
           }
+          additionalOptions.append(i->key);
         }
+        if(!additionalOptions.isEmpty())
+          projectConfig.cppOptions.append("AdditionalOptions", join(additionalOptions, ' ') + " %(AdditionalOptions)");
       }
 
       // prepare link option list
       {
         List<String> additionalOptions;
         for(const Map<String, void*>::Node* i = projectConfig.linkFlags.getFirst(); i; i = i->getNext())
-          if(!knownLinkOptions.find(i->key) && !knownVsOptions.find(i->key))
-            additionalOptions.append(i->key);
-        if(!additionalOptions.isEmpty())
-          projectConfig.linkOptions.append("AdditionalOptions", join(additionalOptions, ' ') + " %(AdditionalOptions)");
-
-        for(const Map<String, void*>::Node* i = projectConfig.linkFlags.getFirst(); i; i = i->getNext())
         {
           const Map<String, Option>::Node* node = knownLinkOptions.find(i->key);
           if(node)
           {
+            if(!node->data.group)
+              continue;
             const Option& option = node->data;
-            if(!option.name.isEmpty())
-              if(projectConfig.linkOptions.find(option.name))
-              {
-                // TODO: warning or error
-              }
-              else
-                projectConfig.linkOptions.append(option.name, option.value);
+            const OptionGroup& optionGroup = *option.group;
+            if(projectConfig.linkOptions.find(optionGroup.name))
+            {
+              // TODO: warning or error
+            }
+            else
+              projectConfig.linkOptions.append(optionGroup.name, option.value);
+            continue;
           }
-          else
+          node = knownVsOptions.find(i->key);
+          if(node)
           {
-            node = knownVsOptions.find(i->key);
-            if(node)
-              projectConfig.vsOptions.append(node->data.name, Option::getParam(i->key));
+            projectConfig.vsOptions.append(node->data.group->name, Option::getParamValue(i->key));
+            continue;
           }
+          additionalOptions.append(i->key);
         }
+        if(!additionalOptions.isEmpty())
+          projectConfig.linkOptions.append("AdditionalOptions", join(additionalOptions, ' ') + " %(AdditionalOptions)");
       }
     }
 
@@ -498,60 +538,78 @@ bool Vcxproj::processData()
             project.dependencies.append(i->data);
 
         // prepare cpp option list
+        if(fileConfig.hasCompilerFlags)
         {
-          List<String> additionalOptions;
-          for(const Map<String, void*>::Node* i = fileConfig.cAndCppFlags.getFirst(); i; i = i->getNext())
-            if(!projectConfig.cAndCppFlags.find(i->key) && !knownCppOptions.find(i->key) && !knownVsOptions.find(i->key))
-              additionalOptions.append(i->key);
-          if(!additionalOptions.isEmpty())
-            fileConfig.cppOptions.append("AdditionalOptions", join(additionalOptions, ' ') + " %(AdditionalOptions)");
-
-          for(const Map<String, void*>::Node* i = fileConfig.cAndCppFlags.getFirst(); i; i = i->getNext())
+          List<String> additionalOptionsToAdd;
+          List<String> additionalOptionsToRemove;
+          for(const Map<String, void*>::Node* i = fileConfig.compilerFlags.getFirst(); i; i = i->getNext())
             if(!projectConfig.cAndCppFlags.find(i->key))
             {
               const Map<String, Option>::Node* node = knownCppOptions.find(i->key);
               if(node)
               {
+                if(!node->data.group)
+                  continue;
                 const Option& option = node->data;
-                if(!option.name.isEmpty())
-                  if(fileConfig.cppOptions.find(option.name))
-                  {
-                    // TODO: warning or error
-                  }
-                  else
-                    fileConfig.cppOptions.append(option.name, option.value);
+                const OptionGroup& optionGroup = *option.group;
+                if(fileConfig.cppOptions.find(optionGroup.name))
+                {
+                  // TODO: warning or error
+                }
+                else
+                  fileConfig.cppOptions.append(optionGroup.name, option.value);
                 if(option.hasParam(i->key))
-                  if(fileConfig.cppOptions.find(option.paramName))
+                  if(fileConfig.cppOptions.find(optionGroup.paramName))
                   {
                     // TODO: warning or error
                   }
                   else
-                    fileConfig.cppOptions.append(option.paramName, Option::getParam(i->key));
+                    fileConfig.cppOptions.append(optionGroup.paramName, Option::getParamValue(i->key));
+                continue;
               }
+              if(knownVsOptions.find(i->key))
+                continue; // ignore
+              additionalOptionsToAdd.append(i->key);
+            }
+          for(const Map<String, void*>::Node* i = projectConfig.cAndCppFlags.getFirst(); i; i = i->getNext())
+            if(!fileConfig.compilerFlags.find(i->key))
+            {
+              const Map<String, Option>::Node* node = knownCppOptions.find(i->key);
+              if(node)
+              {
+                if(!node->data.group)
+                  continue;
+                const Option& option = node->data;
+                const OptionGroup& optionGroup = *option.group;
+                if(!optionGroup.unsetValue.isEmpty() && !fileConfig.cppOptions.find(optionGroup.name))
+                  fileConfig.cppOptions.append(optionGroup.name, optionGroup.unsetValue);
+                continue;
+              }
+              if(knownVsOptions.find(i->key))
+                continue; // ignore
+              additionalOptionsToRemove.append(i->key);
             }
 
-          if(!fileConfig.cAndCppFlags.isEmpty())
-            for(const Map<String, void*>::Node* i = projectConfig.cAndCppFlags.getFirst(); i; i = i->getNext())
-              if(!fileConfig.cAndCppFlags.find(i->key))
-              {
-                const Map<String, Option>::Node* node = knownCppOptions.find(i->key);
-                if(node)
-                {
-                    const Option& option = node->data;
-                    if(!option.unsetValue.isEmpty() && !fileConfig.cppOptions.find(i->key))
-                      fileConfig.cppOptions.append(option.name, option.unsetValue);
-                }
-              }
+          if(!additionalOptionsToRemove.isEmpty())
+          { // overwrite project additional options list
+            additionalOptionsToAdd.clear();
+            for(const Map<String, void*>::Node* i = fileConfig.compilerFlags.getFirst(); i; i = i->getNext())
+              if(!knownCppOptions.find(i->key) && !knownVsOptions.find(i->key))
+                additionalOptionsToAdd.append(i->key);
+            if(!additionalOptionsToAdd.isEmpty())
+              fileConfig.cppOptions.append("AdditionalOptions", join(additionalOptionsToAdd, ' '));
+          }
+          else if(!additionalOptionsToAdd.isEmpty()) // just add the new options
+            fileConfig.cppOptions.append("AdditionalOptions", join(additionalOptionsToAdd, ' ') + " %(AdditionalOptions)");
 
           if(!fileConfig.cppOptions.isEmpty())
-            file.useDefaultSettings = false;
+            file.useProjectCompilerFlags = false;
         }
-
       }
 
       //
       if(file.configs.getSize() < project.configs.getSize())
-        file.useDefaultSettings = false;
+        file.useProjectCompilerFlags = false;
     }
 
     // set special file type for header files
@@ -1093,7 +1151,7 @@ bool Vcxproj::generateVcxproj(Project& project)
     }
     else
     {
-      if(file.useDefaultSettings)
+      if(file.useProjectCompilerFlags)
         fileWrite(String("    <") + file.type + " Include=\"" + path + "\" />\r\n");
       else
       {
@@ -1108,7 +1166,7 @@ bool Vcxproj::generateVcxproj(Project& project)
           {
             const Project::File::Config& fileConfig = node->data;
             for(const Map<String, String>::Node* i = fileConfig.cppOptions.getFirst(); i; i = i->getNext())
-              fileWrite(String("      <") + i->key + ">" + i->data + "</" + i->key + ">\r\n");
+              fileWrite(String("      <") + i->key + " Condition=\"'$(Configuration)|$(Platform)'=='" + configKey + "'\">" + i->data + "</" + i->key + ">\r\n");
           }
         }
         fileWrite(String("    </") + file.type + ">\r\n");
@@ -1444,10 +1502,10 @@ Map<String, Vcxproj::Option>::Node* Vcxproj::OptionMap::find(const String& flag)
 
 bool Vcxproj::Option::hasParam(const String& flag) const
 {
-  return !paramName.isEmpty() && strchr(flag.getData(), '"');
+  return group && !group->paramName.isEmpty() && strchr(flag.getData(), '"');
 }
 
-String Vcxproj::Option::getParam(const String& flag)
+String Vcxproj::Option::getParamValue(const String& flag)
 {
   const char* a = strpbrk(flag.getData(), "\"=");
   if(!a)

@@ -95,13 +95,15 @@ void Engine::appendKeys(String& output)
   return currentSpace->appendKeys(output);
 }
 
-void Engine::getKeys(const String& key, List<String>& keys, bool allowInheritance)
+bool Engine::getKeys(const String& key, List<String>& keys, bool allowInheritance)
 {
   if(enterKey(key, allowInheritance))
   {
     currentSpace->getKeys(keys);
     leaveKey();
+    return true;
   }
+  return false;
 }
 
 String Engine::getFirstKey()
@@ -125,13 +127,15 @@ void Engine::getText(List<String>& text)
   currentSpace->getText(text);
 }
 
-void Engine::getText(const String& key, List<String>& text, bool allowInheritance)
+bool Engine::getText(const String& key, List<String>& text, bool allowInheritance)
 {
   if(enterKey(key, allowInheritance))
   {
     currentSpace->getText(text);
     leaveKey();
+    return true;
   }
+  return false;
 }
 
 void Engine::addDefaultKey(const String& key)

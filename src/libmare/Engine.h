@@ -33,11 +33,11 @@ public:
   bool leaveKey();
   
   void getKeys(List<String>& keys);
-  void getKeys(const String& key, List<String>& keys, bool allowInheritance = true);
+  bool getKeys(const String& key, List<String>& keys, bool allowInheritance = true);
   String getFirstKey();
   String getFirstKey(const String& key, bool allowInheritance = true);
   void getText(List<String>& text);
-  void getText(const String& key, List<String>& text, bool allowInheritance = true);
+  bool getText(const String& key, List<String>& text, bool allowInheritance = true);
 
   void addDefaultKey(const String& key);
   void addDefaultKey(const String& key, const String& value);
