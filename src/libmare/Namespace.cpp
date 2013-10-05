@@ -522,32 +522,34 @@ void Namespace::addKeyRaw(const Word& key, Statement* value, Token::Id operation
 
   //
   ASSERT(!key.isEmpty());
-  Map<Word, Namespace*>::Node* node = variables.find(key);
-  if(node)
+  switch(operation)
   {
-    switch(operation)
+  case Token::plusAssignment:
+  case Token::minusAssignment:
+    if(value)
     {
-    case Token::plusAssignment:
-    case Token::minusAssignment:
-      if(value)
-      {
-        BinaryStatement* binaryStatement = new BinaryStatement(*this);
-        binaryStatement->operation = operation == Token::plusAssignment ? Token::plus : Token::minus;
-        binaryStatement->leftOperand = node->data->statement;
-        binaryStatement->rightOperand = value;
-        node->data->statement = binaryStatement;
-      }
-      break;
-    case Token::assignment:
-      node->data = value ? new Namespace(*this, this, engine, value, node->data, 0) : 0;
-      break;
-    default:
-      ASSERT(false);
-      break;
+      BinaryStatement* binaryStatement = new BinaryStatement(*this);
+      binaryStatement->operation = operation == Token::plusAssignment ? Token::plus : Token::minus;
+      ReferenceStatement* referenceStatement = new ReferenceStatement(*this);
+      referenceStatement->variable = key;
+      binaryStatement->leftOperand = referenceStatement;
+      binaryStatement->rightOperand = value;
+      value = binaryStatement;
     }
+    // no break
+  case Token::assignment:
+    {
+      Map<Word, Namespace*>::Node* node = variables.find(key);
+      if(node)
+        node->data = value ? new Namespace(*this, this, engine, value, node->data, 0) : 0;
+      else
+        variables.append(key, value ? new Namespace(*this, this, engine, value, 0, 0) : 0);
+    }
+    break;
+  default:
+    ASSERT(false);
+    break;
   }
-  else
-    variables.append(key, value ? new Namespace(*this, this, engine, value, 0, 0) : 0);
 }
 
 void Namespace::removeKeyRaw(const String& key)
