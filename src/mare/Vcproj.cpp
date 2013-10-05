@@ -30,35 +30,54 @@ bool Vcproj::generate(const Map<String, String>& userArgs)
   engine.addDefaultKey("linkFlags", "$(if $(Debug),/INCREMENTAL /DEBUG,/OPT:REF /OPT:ICF)");
   {
     Map<String, String> cSource;
-    cSource.append("command", "__clCompile");
-    engine.addDefaultKey("cppSource", cSource);
+    cSource.append("command", "__cSource");
     engine.addDefaultKey("cSource", cSource);
   }
   {
+    Map<String, String> cppSource;
+    cppSource.append("command", "__cppSource");
+    engine.addDefaultKey("cppSource", cppSource);
+  }
+  {
     Map<String, String> rcSource;
-    rcSource.append("command", "__rcCompile");
+    rcSource.append("command", "__rcSource");
     engine.addDefaultKey("rcSource", rcSource);
   }
   {
     Map<String, String> cApplication;
-    cApplication.append("command", "__Application");
+    cApplication.append("command", "__cApplication");
     cApplication.append("output", "$(buildDir)/$(target).exe");
-    engine.addDefaultKey("cppApplication", cApplication);
     engine.addDefaultKey("cApplication", cApplication);
   }
   {
+    Map<String, String> cppApplication;
+    cppApplication.append("command", "__cppApplication");
+    cppApplication.append("output", "$(buildDir)/$(target).exe");
+    engine.addDefaultKey("cppApplication", cppApplication);
+  }
+  {
     Map<String, String> cDynamicLibrary;
-    cDynamicLibrary.append("command", "__DynamicLibrary");
+    cDynamicLibrary.append("command", "__cDynamicLibrary");
     cDynamicLibrary.append("output", "$(buildDir)/$(patsubst lib%,%,$(target)).dll");
-    engine.addDefaultKey("cppDynamicLibrary", cDynamicLibrary);
     engine.addDefaultKey("cDynamicLibrary", cDynamicLibrary);
   }
   {
+    Map<String, String> cppDynamicLibrary;
+    cppDynamicLibrary.append("command", "__cppDynamicLibrary");
+    cppDynamicLibrary.append("output", "$(buildDir)/$(patsubst lib%,%,$(target)).dll");
+    engine.addDefaultKey("cppDynamicLibrary", cppDynamicLibrary);
+  }
+  {
     Map<String, String> cStaticLibrary;
-    cStaticLibrary.append("command", "__StaticLibrary");
+    cStaticLibrary.append("command", "__cStaticLibrary");
     cStaticLibrary.append("output", "$(buildDir)/$(patsubst lib%,%,$(target)).lib");
-    engine.addDefaultKey("cppStaticLibrary", cStaticLibrary);
     engine.addDefaultKey("cStaticLibrary", cStaticLibrary);
+  }
+  {
+    Map<String, String> cppStaticLibrary;
+    cppStaticLibrary.append("command", "__cppStaticLibrary");
+    cppStaticLibrary.append("output", "$(buildDir)/$(patsubst lib%,%,$(target)).lib");
+    engine.addDefaultKey("cppStaticLibrary", cppStaticLibrary);
   }
 
   // add user arguments
@@ -142,11 +161,8 @@ bool Vcproj::readFile()
         engine.getKeys("output", projectConfig.outputs, false);
         engine.getKeys("input", projectConfig.inputs, false);
 
-        List<String> cAndCppFlags;
-        engine.getKeys("cppFlags", cAndCppFlags, true);
-        engine.getKeys("cFlags", cAndCppFlags, true);
-        for(const List<String>::Node* i = cAndCppFlags.getFirst(); i; i = i->getNext())
-          projectConfig.cAndCppFlags.append(i->data, 0);
+        engine.getKeys("cppFlags", projectConfig.cppFlags, true);
+        engine.getKeys("cFlags", projectConfig.cFlags, true);
         List<String> linkFlags;
         engine.getKeys("linkFlags", linkFlags, true);
         for(const List<String>::Node* i = linkFlags.getFirst(); i; i = i->getNext())
@@ -169,6 +185,8 @@ bool Vcproj::readFile()
             Project::File& file = node ? node->data : project.files.append(i->data);
             Project::File::Config& fileConfig = file.configs.append(configKey);
 
+            file.path = i->data;
+
             engine.enterUnnamedKey();
             engine.addDefaultKey("file", i->data);
             VERIFY(engine.enterKey(i->data));
@@ -178,11 +196,8 @@ bool Vcproj::readFile()
             engine.getKeys("output", fileConfig.outputs, false);
             engine.getKeys("input", fileConfig.inputs, false);
             engine.getKeys("dependencies", fileConfig.dependencies, false);
-            List<String> cAndCppFlags;
-            engine.getKeys("cppFlags", cAndCppFlags, false);
-            engine.getKeys("cFlags", cAndCppFlags, false);
-            for(const List<String>::Node* i = cAndCppFlags.getFirst(); i; i = i->getNext())
-              fileConfig.cAndCppFlags.append(i->data, 0);
+            fileConfig.hasCppFlags = engine.getKeys("cppFlags", fileConfig.cppFlags, false);
+            fileConfig.hasCFlags = engine.getKeys("cFlags", fileConfig.cFlags, false);
             engine.leaveKey(); // VERIFY(engine.enterKey(i->data));
             engine.leaveKey();
           }
@@ -254,9 +269,15 @@ bool Vcproj::processData()
           projectConfig.type = "Makefile";
           projectConfig.command.clear();
         }
-        else if(firstCommandWord == "__Application" || firstCommandWord == "__StaticLibrary" || firstCommandWord == "__DynamicLibrary")
+        else if(firstCommandWord == "__cppApplication" || firstCommandWord == "__cppStaticLibrary" || firstCommandWord == "__cppDynamicLibrary")
         {
-          projectConfig.type = firstCommandWord.substr(2);
+          projectConfig.type = firstCommandWord.substr(5);
+          projectConfig.command.clear();
+        }
+        else if(firstCommandWord == "__cApplication" || firstCommandWord == "__cStaticLibrary" || firstCommandWord == "__cDynamicLibrary")
+        {
+          projectConfig.language = Project::Config::C;
+          projectConfig.type = firstCommandWord.substr(3);
           projectConfig.command.clear();
         }
       }
@@ -287,32 +308,47 @@ bool Vcproj::processData()
       // prepare c/cpp option list
       {
         List<String> additionalOptions;
-        for(const Map<String, void*>::Node* i = projectConfig.cAndCppFlags.getFirst(); i; i = i->getNext())
-          if(!knownCppOptions.find(i->key))
-            additionalOptions.append(i->key);
-        if(!additionalOptions.isEmpty())
-          projectConfig.cppOptions.append("AdditionalOptions", join(additionalOptions, ' '));
-
-        if(!projectConfig.includePaths.isEmpty())
-          projectConfig.cppOptions.append("AdditionalIncludeDirectories", join(projectConfig.includePaths));
-        if(!projectConfig.defines.isEmpty())
-          projectConfig.cppOptions.append("PreprocessorDefinitions", join(projectConfig.defines));
-
-        for(const Map<String, void*>::Node* i = projectConfig.cAndCppFlags.getFirst(); i; i = i->getNext())
+        for(const List<String>::Node* i = projectConfig.language == Project::Config::C ? projectConfig.cFlags.getFirst() : projectConfig.cppFlags.getFirst(); i; i = i->getNext())
         {
-          const Map<String, Option>::Node* node = knownCppOptions.find(i->key);
+          projectConfig.compilerFlags.append(i->data);
+          const Map<String, Option>::Node* node = knownCppOptions.find(i->data);
           if(node)
           {
+            if(!node->data.group)
+              continue;
             const Option& option = node->data;
-            if(!option.name.isEmpty())
-              if(projectConfig.cppOptions.find(option.name))
+            const OptionGroup& optionGroup = *option.group;
+            if(projectConfig.cppOptions.find(optionGroup.name))
+            {
+              // TODO: warning or error
+            }
+            else
+              projectConfig.cppOptions.append(optionGroup.name, option.value);
+            if(option.hasParam(i->data))
+            {
+              if(projectConfig.cppOptions.find(optionGroup.paramName))
               {
                 // TODO: warning or error
               }
               else
-                projectConfig.cppOptions.append(option.name, option.value);
+                projectConfig.cppOptions.append(optionGroup.paramName, Option::getParamValue(i->data));
+            }
+            continue;
           }
+          node = knownVsOptions.find(i->data);
+          if(node)
+          {
+            projectConfig.vsOptions.append(node->data.group->name, Option::getParamValue(i->data));
+            continue;
+          }
+          additionalOptions.append(i->data);
         }
+        if(!projectConfig.includePaths.isEmpty())
+          projectConfig.cppOptions.append("AdditionalIncludeDirectories", join(projectConfig.includePaths));
+        if(!projectConfig.defines.isEmpty())
+          projectConfig.cppOptions.append("PreprocessorDefinitions", join(projectConfig.defines));
+        if(!additionalOptions.isEmpty())
+          projectConfig.cppOptions.append("AdditionalOptions", join(additionalOptions, ' '));
       }
 
       // prepare VCLibrarianTool option list
@@ -361,11 +397,30 @@ bool Vcproj::processData()
       {
         List<String> additionalOptions;
         for(const Map<String, void*>::Node* i = projectConfig.linkFlags.getFirst(); i; i = i->getNext())
-          if(!knownLinkOptions.find(i->key))
-            additionalOptions.append(i->key);
-        if(!additionalOptions.isEmpty())
-          projectConfig.linkOptions.append("AdditionalOptions", join(additionalOptions, ' '));
-
+        {
+          const Map<String, Option>::Node* node = knownLinkOptions.find(i->key);
+          if(node)
+          {
+            if(!node->data.group)
+              continue;
+            const Option& option = node->data;
+            const OptionGroup& optionGroup = *option.group;
+            if(projectConfig.linkOptions.find(optionGroup.name))
+            {
+              // TODO: warning or error
+            }
+            else
+              projectConfig.linkOptions.append(optionGroup.name, option.value);
+            continue;
+          }
+          node = knownVsOptions.find(i->key);
+          if(node)
+          {
+            projectConfig.vsOptions.append(node->data.group->name, Option::getParamValue(i->key));
+            continue;
+          }
+          additionalOptions.append(i->key);
+        }
         if(!projectConfig.libs.isEmpty())
           projectConfig.linkOptions.append("AdditionalDependencies", join(projectConfig.libs, ' ', ".lib"));
         if(!projectConfig.firstOutput.isEmpty())
@@ -376,22 +431,8 @@ bool Vcproj::processData()
         }
         if(!projectConfig.libPaths.isEmpty())
           projectConfig.linkOptions.append("AdditionalLibraryDirectories", join(projectConfig.libPaths));
-
-        for(const Map<String, void*>::Node* i = projectConfig.linkFlags.getFirst(); i; i = i->getNext())
-        {
-          const Map<String, Option>::Node* node = knownLinkOptions.find(i->key);
-          if(node)
-          {
-            const Option& option = node->data;
-            if(!option.name.isEmpty())
-              if(projectConfig.linkOptions.find(option.name))
-              {
-                // TODO: warning or error
-              }
-              else
-                projectConfig.linkOptions.append(option.name, option.value);
-          }
-        }
+        if(!additionalOptions.isEmpty())
+          projectConfig.linkOptions.append("AdditionalOptions", join(additionalOptions, ' '));
       }
     }
 
@@ -400,6 +441,7 @@ bool Vcproj::processData()
     {
       Project::File& file = i->data;
 
+      // for each file configuration
       for(Map<String, Project::File::Config>::Node* i = file.configs.getFirst(); i; i = i->getNext())
       {
         Project::File::Config& fileConfig = i->data;
@@ -408,8 +450,14 @@ bool Vcproj::processData()
         // determine file type
         String firstCommandWord = fileConfig.command.isEmpty() ? String() : Word::first(fileConfig.command.getFirst()->data);
         String type;
-        if(firstCommandWord == "__clCompile")
+        Project::Config::Language language = Project::Config::CPP;
+        if(firstCommandWord == "__cppSource")
           type = "ClCompile";
+        else if(firstCommandWord == "__cSource")
+        {
+          language = Project::Config::C;
+          type = "ClCompile";
+        }
         else if(firstCommandWord == "__rcCompile")
           type = "ResourceCompile";
         else if(!firstCommandWord.isEmpty())
@@ -431,55 +479,93 @@ bool Vcproj::processData()
             project.dependencies.append(i->data);
 
         // prepare cpp option list
+        List<String>* compilerFlags = 0;
+        switch(language)
         {
-          List<String> additionalOptions;
-          for(const Map<String, void*>::Node* i = fileConfig.cAndCppFlags.getFirst(); i; i = i->getNext())
-            if(!projectConfig.cAndCppFlags.find(i->key) && !knownCppOptions.find(i->key))
-              additionalOptions.append(i->key);
-          if(!additionalOptions.isEmpty())
-            fileConfig.cppOptions.append("AdditionalOptions", join(additionalOptions, ' '));
+        case Project::Config::C:
+          if(fileConfig.hasCFlags)
+            compilerFlags = &fileConfig.cFlags;
+          break;
+        default:
+          if(fileConfig.hasCppFlags)
+            compilerFlags = &fileConfig.cppFlags;
+          break;
+        }
+        if(!compilerFlags && language != projectConfig.language)
+          compilerFlags = language == Project::Config::C ? &projectConfig.cFlags : &projectConfig.cppFlags;
+        if(compilerFlags)
+        {
+          Map<String, void*> fileCompilerFlags;
+          for(const List<String>::Node* i = compilerFlags->getFirst(); i; i = i->getNext())
+            fileCompilerFlags.append(i->data);
 
-          for(const Map<String, void*>::Node* i = fileConfig.cAndCppFlags.getFirst(); i; i = i->getNext())
-            if(!projectConfig.cAndCppFlags.find(i->key))
+          List<String> additionalOptionsToAdd;
+          List<String> additionalOptionsToRemove;
+          for(const Map<String, void*>::Node* i = fileCompilerFlags.getFirst(); i; i = i->getNext())
+            if(!projectConfig.compilerFlags.find(i->key))
             {
               const Map<String, Option>::Node* node = knownCppOptions.find(i->key);
               if(node)
               {
+                if(!node->data.group)
+                  continue;
                 const Option& option = node->data;
-                if(!option.name.isEmpty())
-                  if(fileConfig.cppOptions.find(option.name))
+                const OptionGroup& optionGroup = *option.group;
+                if(fileConfig.cppOptions.find(optionGroup.name))
+                {
+                  // TODO: warning or error
+                }
+                else
+                  fileConfig.cppOptions.append(optionGroup.name, option.value);
+                if(option.hasParam(i->key))
+                  if(fileConfig.cppOptions.find(optionGroup.paramName))
                   {
                     // TODO: warning or error
                   }
                   else
-                    fileConfig.cppOptions.append(option.name, option.value);
+                    fileConfig.cppOptions.append(optionGroup.paramName, Option::getParamValue(i->key));
+                continue;
               }
+              if(knownVsOptions.find(i->key))
+                continue; // ignore
+              additionalOptionsToAdd.append(i->key);
+            }
+          for(const Map<String, void*>::Node* i = projectConfig.compilerFlags.getFirst(); i; i = i->getNext())
+            if(!fileCompilerFlags.find(i->key))
+            {
+              const Map<String, Option>::Node* node = knownCppOptions.find(i->key);
+              if(node)
+              {
+                if(!node->data.group)
+                  continue;
+                const Option& option = node->data;
+                const OptionGroup& optionGroup = *option.group;
+                if(!optionGroup.unsetValue.isEmpty() && !fileConfig.cppOptions.find(optionGroup.name))
+                  fileConfig.cppOptions.append(optionGroup.name, optionGroup.unsetValue);
+                continue;
+              }
+              if(knownVsOptions.find(i->key))
+                continue; // ignore
+              additionalOptionsToRemove.append(i->key);
             }
 
-            /*
-          if(!fileConfig.cAndCppFlags.isEmpty())
-            for(const Map<String, void*>::Node* i = projectConfig.cAndCppFlags.getFirst(); i; i = i->getNext())
-              if(!fileConfig.cAndCppFlags.find(i->key))
-              {
-                const Map<String, Option>::Node* node = knownCppOptions.find(i->key);
-                if(node)
-                {
-                    const Option& option = node->data;
-                    if(!option.unsetValue.isEmpty() && !fileConfig.cppOptions.find(i->key))
-                      fileConfig.cppOptions.append(option.name, option.unsetValue);
-                }
-              }
-              */
+          if(!additionalOptionsToRemove.isEmpty() || !additionalOptionsToAdd.isEmpty())
+          {
+            additionalOptionsToAdd.clear();
+            for(const Map<String, void*>::Node* i = fileCompilerFlags.getFirst(); i; i = i->getNext())
+              if(!knownCppOptions.find(i->key) && !knownVsOptions.find(i->key))
+                additionalOptionsToAdd.append(i->key);
+            fileConfig.cppOptions.append("AdditionalOptions", join(additionalOptionsToAdd, ' '));
+          }
 
           if(!fileConfig.cppOptions.isEmpty())
-            file.useDefaultSettings = false;
+            file.useProjectCompilerFlags = false;
         }
-
       }
 
       //
       if(file.configs.getSize() < project.configs.getSize())
-        file.useDefaultSettings = false;
+        file.useProjectCompilerFlags = false;
     }
 
     // set special file type for header files
@@ -929,10 +1015,10 @@ bool Vcproj::generateVcprojFiles(const Project& project)
   struct Filter
   {
     String name;
-    List<String> files;
+    List<const Project::File*> files;
     List<Filter*> filters;
 
-    void write(Vcproj& vc, const String& tabs = String())
+    void write(Vcproj& vc, const Project& project, const String& tabs = String())
     {
       for(List<Filter*>::Node* i = filters.getFirst(); i; i = i->getNext())
       {
@@ -940,16 +1026,41 @@ bool Vcproj::generateVcprojFiles(const Project& project)
         vc.fileWrite(tabs + "\t\t<Filter\r\n");
         vc.fileWrite(tabs + "\t\t\tName=\"" + filter.name + "\"\r\n");
         vc.fileWrite(tabs + "\t\t\t>\r\n");
-        filter.write(vc, tabs + "\t");
+        filter.write(vc, project, tabs + "\t");
         vc.fileWrite(tabs + "\t\t</Filter>\r\n");
       }
-      for(const List<String>::Node* i = files.getFirst(); i; i = i->getNext())
+      for(const List<const Project::File*>::Node* i = files.getFirst(); i; i = i->getNext())
       {
+        const Project::File& file = *i->data;
         vc.fileWrite(tabs + "\t\t<File\r\n");
-        String path = i->data;
+        String path = file.path;
         path.subst("/", "\\");
         vc.fileWrite(tabs + "\t\t\tRelativePath=\"" + path + "\"\r\n");
         vc.fileWrite(tabs + "\t\t\t>\r\n");
+        if(!file.useProjectCompilerFlags)
+          for(const Map<String, Project::Config>::Node* i = project.configs.getFirst(); i; i = i->getNext())
+          {
+            const String& configKey = i->key;
+            const Map<String, Project::File::Config>::Node* node = file.configs.find(configKey);
+
+            vc.fileWrite(tabs + "\t\t\t<FileConfiguration\r\n");
+            vc.fileWrite(tabs + "\t\t\t\tName=\"" + configKey + "\"\r\n");
+            if(!node)
+              vc.fileWrite(tabs + "\t\t\t\tExcludedFromBuild=\"true\"\r\n");
+            vc.fileWrite(tabs + "\t\t\t\t>\r\n");
+            if(node)
+            {
+              const Project::File::Config& fileConfig = node->data;
+
+              vc.fileWrite(tabs + "\t\t\t\t<Tool\r\n");
+              vc.fileWrite(tabs + "\t\t\t\t\tName=\"VCCLCompilerTool\"\r\n");
+                for(const Map<String, String>::Node* i = fileConfig.cppOptions.getFirst(); i; i = i->getNext())
+                  vc.fileWrite(String("\t\t\t\t") + i->key + "=\"" + i->data + "\"\r\n");
+              vc.fileWrite(tabs + "\t\t\t\t/>\r\n");
+            }
+            vc.fileWrite(tabs + "\t\t\t</FileConfiguration>\r\n");
+          }
+
         vc.fileWrite(tabs + "\t\t</File>\r\n");
       }
     }
@@ -969,7 +1080,6 @@ bool Vcproj::generateVcprojFiles(const Project& project)
   for(const Map<String, Project::File>::Node* i = project.files.getFirst(); i; i = i->getNext())
   {
     const Project::File& file = i->data;
-    const String& filePath = i->key;
 
     List<String> filtersToAdd;
     if(!file.filter.isEmpty()) // a user defined filter
@@ -1023,7 +1133,7 @@ bool Vcproj::generateVcprojFiles(const Project& project)
     }
 
     if(filtersToAdd.isEmpty())
-      root.files.append(filePath);
+      root.files.append(&file);
     else
     {
       Filter* parentFilter = &root;
@@ -1032,7 +1142,7 @@ bool Vcproj::generateVcprojFiles(const Project& project)
         Map<String, Filter>::Node* node = filters.find(i->data);
         Filter& filter = node ? node->data : filters.append(i->data);
         if(!i->getNext())
-          filter.files.append(filePath);
+          filter.files.append(&file);
         if(!node)
         {
           filter.name = File::getBasename(i->data);
@@ -1044,7 +1154,7 @@ bool Vcproj::generateVcprojFiles(const Project& project)
   }
 
   fileWrite("\t<Files>\r\n");
-  root.write(*this);
+  root.write(*this, project);
   fileWrite("\t</Files>\r\n");
   return true;
 }
@@ -1203,7 +1313,7 @@ String Vcproj::xmlEscape(const String& text)
 {
   const char* str = text.getData();
   for(; *str; ++str)
-    if(*str == '<' || *str == '>' || *str == '&')
+    if(*str == '"' || *str == '<' || *str == '>' || *str == '&')
       goto escape;
   return text;
 escape:
@@ -1219,4 +1329,38 @@ escape:
     default: result.append(*str); break;
     }
   return result;
+}
+
+Map<String, Vcproj::Option>::Node* Vcproj::OptionMap::find(const String& flag)
+{
+  const char* a = strpbrk(flag.getData(), "\"=");
+  if(a)
+  {
+    String optionName = flag.substr(0, a - flag.getData());
+    return Map<String, Vcproj::Option>::find(optionName);
+  }
+  return Map<String, Vcproj::Option>::find(flag);
+}
+
+bool Vcproj::Option::hasParam(const String& flag) const
+{
+  return group && !group->paramName.isEmpty() && strchr(flag.getData(), '"');
+}
+
+String Vcproj::Option::getParamValue(const String& flag)
+{
+  const char* a = strpbrk(flag.getData(), "\"=");
+  if(!a)
+    return String();
+  if(*a == '=')
+  {
+    ++a;
+    if(*a != '"')
+      return String(a, strlen(a));
+  }
+  ++a;
+  int len = strlen(a);
+  if(a[len - 1] == '"')
+    --len;
+  return flag.substr(a - flag.getData(), len);
 }

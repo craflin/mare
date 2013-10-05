@@ -35,6 +35,13 @@ private:
       String name; /**< The name of the configuration without the platform extension */
       String platform;
 
+      String type;
+      enum Language
+      {
+        CPP,
+        C,
+      } language;
+
       List<String> buildCommand; /**< For Makefile projects */
       List<String> reBuildCommand; /**< For Makefile projects */
       List<String> cleanCommand; /**< For Makefile projects */
@@ -42,14 +49,15 @@ private:
       List<String> preLinkCommand;
       List<String> postBuildCommand;
       String buildDir;
-      String type;
       List<String> command;
       List<String> message;
       String firstOutput;
       List<String> outputs;
       List<String> inputs;
       List<String> dependencies;
-      Map<String, void*> cAndCppFlags;
+      List<String> cppFlags;
+      List<String> cFlags;
+      Map<String, void*> compilerFlags;
       Map<String, void*> linkFlags;
       List<String> defines;
       List<String> includePaths;
@@ -61,7 +69,7 @@ private:
       Map<String, String> librarianOptions;
       Map<String, String> vsOptions;
 
-      Config(const String& name, const String& platform) : name(name), platform(platform) {}
+      Config(const String& name, const String& platform) : name(name), platform(platform), language(CPP) {}
     };
 
     class File
@@ -75,16 +83,21 @@ private:
         List<String> outputs;
         List<String> inputs;
         List<String> dependencies;
-        Map<String, void*> cAndCppFlags;
+        bool hasCppFlags;
+        List<String> cppFlags;
+        bool hasCFlags;
+        List<String> cFlags;
+
         Map<String, String> cppOptions;
       };
 
       String type;
+      String path;
       String filter;
       Map<String, Config> configs;
-      bool useDefaultSettings;
+      bool useProjectCompilerFlags;
 
-      File() : useDefaultSettings(true) {}
+      File() : useProjectCompilerFlags(true) {}
     };
 
     String name;
@@ -109,13 +122,34 @@ private:
     ProjectFilter(const String& guid) : guid(guid) {}
   };
 
-  class Option
+  class OptionGroup
   {
   public:
     String name;
+    String unsetValue;
+    String paramName;
+
+    OptionGroup(const String& name, const String& unsetValue = String(), const String& paramName = String()) : name(name), unsetValue(unsetValue), paramName(paramName) {}
+  };
+
+  class Option
+  {
+  public:
+    OptionGroup* group;
     String value;
 
-    Option(const String& name, const String& value) : name(name), value(value) {}
+    Option() : group(0) {}
+
+    Option(OptionGroup* group, const String& value) : group(group), value(value) {}
+
+    bool hasParam(const String& option) const;
+    static String getParamValue(const String& option);
+  };
+
+  class OptionMap : public Map<String, Option>
+  {
+  public:
+    Node* find(const String& key);
   };
 
   Engine& engine;
@@ -128,8 +162,10 @@ private:
   Map<String, Config> configs;
   Map<String, Project> projects;
   Map<String, ProjectFilter> projectFilters;
-  Map<String, Option> knownCppOptions;
+
+  OptionMap knownCppOptions;
   Map<String, Option> knownLinkOptions;
+  OptionMap knownVsOptions;
 
   String openedFile; /**< The file that is currently written */
 
