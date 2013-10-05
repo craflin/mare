@@ -162,35 +162,54 @@ bool Vcxproj::generate(const Map<String, String>& userArgs)
   engine.addDefaultKey("linkFlags", "$(if $(Debug),/INCREMENTAL /DEBUG,/OPT:REF /OPT:ICF)");
   {
     Map<String, String> cSource;
-    cSource.append("command", "__clCompile");
-    engine.addDefaultKey("cppSource", cSource);
+    cSource.append("command", "__cSource");
     engine.addDefaultKey("cSource", cSource);
   }
   {
+    Map<String, String> cppSource;
+    cppSource.append("command", "__cppSource");
+    engine.addDefaultKey("cppSource", cppSource);
+  }
+  {
     Map<String, String> rcSource;
-    rcSource.append("command", "__rcCompile");
+    rcSource.append("command", "__rcSource");
     engine.addDefaultKey("rcSource", rcSource);
   }
   {
     Map<String, String> cApplication;
-    cApplication.append("command", "__Application");
+    cApplication.append("command", "__cApplication");
     cApplication.append("output", "$(buildDir)/$(target).exe");
-    engine.addDefaultKey("cppApplication", cApplication);
     engine.addDefaultKey("cApplication", cApplication);
   }
   {
+    Map<String, String> cppApplication;
+    cppApplication.append("command", "__cppApplication");
+    cppApplication.append("output", "$(buildDir)/$(target).exe");
+    engine.addDefaultKey("cppApplication", cppApplication);
+  }
+  {
     Map<String, String> cDynamicLibrary;
-    cDynamicLibrary.append("command", "__DynamicLibrary");
+    cDynamicLibrary.append("command", "__cDynamicLibrary");
     cDynamicLibrary.append("output", "$(buildDir)/$(patsubst lib%,%,$(target)).dll");
-    engine.addDefaultKey("cppDynamicLibrary", cDynamicLibrary);
     engine.addDefaultKey("cDynamicLibrary", cDynamicLibrary);
   }
   {
+    Map<String, String> cppDynamicLibrary;
+    cppDynamicLibrary.append("command", "__cppDynamicLibrary");
+    cppDynamicLibrary.append("output", "$(buildDir)/$(patsubst lib%,%,$(target)).dll");
+    engine.addDefaultKey("cppDynamicLibrary", cppDynamicLibrary);
+  }
+  {
     Map<String, String> cStaticLibrary;
-    cStaticLibrary.append("command", "__StaticLibrary");
+    cStaticLibrary.append("command", "__cStaticLibrary");
     cStaticLibrary.append("output", "$(buildDir)/$(patsubst lib%,%,$(target)).lib");
-    engine.addDefaultKey("cppStaticLibrary", cStaticLibrary);
     engine.addDefaultKey("cStaticLibrary", cStaticLibrary);
+  }
+  {
+    Map<String, String> cppStaticLibrary;
+    cppStaticLibrary.append("command", "__cppStaticLibrary");
+    cppStaticLibrary.append("output", "$(buildDir)/$(patsubst lib%,%,$(target)).lib");
+    engine.addDefaultKey("cppStaticLibrary", cppStaticLibrary);
   }
 
   // add user arguments
@@ -274,11 +293,8 @@ bool Vcxproj::readFile()
         engine.getKeys("output", projectConfig.outputs, false);
         engine.getKeys("input", projectConfig.inputs, false);
 
-        List<String> cAndCppFlags;
-        engine.getKeys("cppFlags", cAndCppFlags, true);
-        engine.getKeys("cFlags", cAndCppFlags, true);
-        for(const List<String>::Node* i = cAndCppFlags.getFirst(); i; i = i->getNext())
-          projectConfig.cAndCppFlags.append(i->data, 0);
+        engine.getKeys("cppFlags", projectConfig.cppFlags, true);
+        engine.getKeys("cFlags", projectConfig.cFlags, true);
         List<String> linkFlags;
         engine.getKeys("linkFlags", linkFlags, true);
         for(const List<String>::Node* i = linkFlags.getFirst(); i; i = i->getNext())
@@ -310,21 +326,8 @@ bool Vcxproj::readFile()
             engine.getKeys("output", fileConfig.outputs, false);
             engine.getKeys("input", fileConfig.inputs, false);
             engine.getKeys("dependencies", fileConfig.dependencies, false);
-            List<String> cppFlags, cFlags;
-            bool hasCppFlags = engine.getKeys("cppFlags", cppFlags, false);
-            bool hasCFlags = engine.getKeys("cFlags", cFlags, false);
-            if(hasCppFlags || hasCFlags)
-            {
-              if(!hasCppFlags)
-                engine.getKeys("cppFlags", cppFlags, true);
-              if(!hasCFlags)
-                engine.getKeys("cFlags", cFlags, true);
-              fileConfig.hasCompilerFlags = true;
-              for(const List<String>::Node* i = cppFlags.getFirst(); i; i = i->getNext())
-                fileConfig.compilerFlags.append(i->data, 0);
-              for(const List<String>::Node* i = cFlags.getFirst(); i; i = i->getNext())
-                fileConfig.compilerFlags.append(i->data, 0);
-            }
+            fileConfig.hasCppFlags = engine.getKeys("cppFlags", fileConfig.cppFlags, false);
+            fileConfig.hasCFlags = engine.getKeys("cFlags", fileConfig.cFlags, false);
             engine.leaveKey(); // VERIFY(engine.enterKey(i->data));
             engine.leaveKey();
           }
@@ -410,9 +413,15 @@ bool Vcxproj::processData()
           projectConfig.type = "Makefile";
           projectConfig.command.clear();
         }
-        else if(firstCommandWord == "__Application" || firstCommandWord == "__StaticLibrary" || firstCommandWord == "__DynamicLibrary")
+        else if(firstCommandWord == "__cppApplication" || firstCommandWord == "__cppStaticLibrary" || firstCommandWord == "__cppDynamicLibrary")
         {
-          projectConfig.type = firstCommandWord.substr(2);
+          projectConfig.type = firstCommandWord.substr(5);
+          projectConfig.command.clear();
+        }
+        else if(firstCommandWord == "__cApplication" || firstCommandWord == "__cStaticLibrary" || firstCommandWord == "__cDynamicLibrary")
+        {
+          projectConfig.language = Project::Config::C;
+          projectConfig.type = firstCommandWord.substr(3);
           projectConfig.command.clear();
         }
       }
@@ -430,9 +439,10 @@ bool Vcxproj::processData()
       // prepare c/cpp option list
       {
         List<String> additionalOptions;
-        for(const Map<String, void*>::Node* i = projectConfig.cAndCppFlags.getFirst(); i; i = i->getNext())
+        for(const List<String>::Node* i = projectConfig.language == Project::Config::C ? projectConfig.cFlags.getFirst() : projectConfig.cppFlags.getFirst(); i; i = i->getNext())
         {
-          const Map<String, Option>::Node* node = knownCppOptions.find(i->key);
+          projectConfig.compilerFlags.append(i->data);
+          const Map<String, Option>::Node* node = knownCppOptions.find(i->data);
           if(node)
           {
             if(!node->data.group)
@@ -445,24 +455,24 @@ bool Vcxproj::processData()
             }
             else
               projectConfig.cppOptions.append(optionGroup.name, option.value);
-            if(option.hasParam(i->key))
+            if(option.hasParam(i->data))
             {
               if(projectConfig.cppOptions.find(optionGroup.paramName))
               {
                 // TODO: warning or error
               }
               else
-                projectConfig.cppOptions.append(optionGroup.paramName, Option::getParamValue(i->key));
+                projectConfig.cppOptions.append(optionGroup.paramName, Option::getParamValue(i->data));
             }
             continue;
           }
-          node = knownVsOptions.find(i->key);
+          node = knownVsOptions.find(i->data);
           if(node)
           {
-            projectConfig.vsOptions.append(node->data.group->name, Option::getParamValue(i->key));
+            projectConfig.vsOptions.append(node->data.group->name, Option::getParamValue(i->data));
             continue;
           }
-          additionalOptions.append(i->key);
+          additionalOptions.append(i->data);
         }
         if(!additionalOptions.isEmpty())
           projectConfig.cppOptions.append("AdditionalOptions", join(additionalOptions, ' ') + " %(AdditionalOptions)");
@@ -515,8 +525,14 @@ bool Vcxproj::processData()
         // determine file type
         String firstCommandWord = fileConfig.command.isEmpty() ? String() : Word::first(fileConfig.command.getFirst()->data);
         String type;
-        if(firstCommandWord == "__clCompile")
+        Project::Config::Language language = Project::Config::CPP;
+        if(firstCommandWord == "__cppSource")
           type = "ClCompile";
+        else if(firstCommandWord == "__cSource")
+        {
+          language = Project::Config::C;
+          type = "ClCompile";
+        }
         else if(firstCommandWord == "__rcCompile")
           type = "ResourceCompile";
         else if(!firstCommandWord.isEmpty())
@@ -538,12 +554,30 @@ bool Vcxproj::processData()
             project.dependencies.append(i->data);
 
         // prepare cpp option list
-        if(fileConfig.hasCompilerFlags)
+        List<String>* compilerFlags = 0;
+        switch(language)
         {
+        case Project::Config::C:
+          if(fileConfig.hasCFlags)
+            compilerFlags = &fileConfig.cFlags;
+          break;
+        default:
+          if(fileConfig.hasCppFlags)
+            compilerFlags = &fileConfig.cppFlags;
+          break;
+        }
+        if(!compilerFlags && language != projectConfig.language)
+          compilerFlags = language == Project::Config::C ? &projectConfig.cFlags : &projectConfig.cppFlags;
+        if(compilerFlags)
+        {
+          Map<String, void*> fileCompilerFlags;
+          for(const List<String>::Node* i = compilerFlags->getFirst(); i; i = i->getNext())
+            fileCompilerFlags.append(i->data);
+
           List<String> additionalOptionsToAdd;
           List<String> additionalOptionsToRemove;
-          for(const Map<String, void*>::Node* i = fileConfig.compilerFlags.getFirst(); i; i = i->getNext())
-            if(!projectConfig.cAndCppFlags.find(i->key))
+          for(const Map<String, void*>::Node* i = fileCompilerFlags.getFirst(); i; i = i->getNext())
+            if(!projectConfig.compilerFlags.find(i->key))
             {
               const Map<String, Option>::Node* node = knownCppOptions.find(i->key);
               if(node)
@@ -571,8 +605,8 @@ bool Vcxproj::processData()
                 continue; // ignore
               additionalOptionsToAdd.append(i->key);
             }
-          for(const Map<String, void*>::Node* i = projectConfig.cAndCppFlags.getFirst(); i; i = i->getNext())
-            if(!fileConfig.compilerFlags.find(i->key))
+          for(const Map<String, void*>::Node* i = projectConfig.compilerFlags.getFirst(); i; i = i->getNext())
+            if(!fileCompilerFlags.find(i->key))
             {
               const Map<String, Option>::Node* node = knownCppOptions.find(i->key);
               if(node)
@@ -593,11 +627,10 @@ bool Vcxproj::processData()
           if(!additionalOptionsToRemove.isEmpty())
           { // overwrite project additional options list
             additionalOptionsToAdd.clear();
-            for(const Map<String, void*>::Node* i = fileConfig.compilerFlags.getFirst(); i; i = i->getNext())
+            for(const Map<String, void*>::Node* i = fileCompilerFlags.getFirst(); i; i = i->getNext())
               if(!knownCppOptions.find(i->key) && !knownVsOptions.find(i->key))
                 additionalOptionsToAdd.append(i->key);
-            if(!additionalOptionsToAdd.isEmpty())
-              fileConfig.cppOptions.append("AdditionalOptions", join(additionalOptionsToAdd, ' '));
+            fileConfig.cppOptions.append("AdditionalOptions", join(additionalOptionsToAdd, ' '));
           }
           else if(!additionalOptionsToAdd.isEmpty()) // just add the new options
             fileConfig.cppOptions.append("AdditionalOptions", join(additionalOptionsToAdd, ' ') + " %(AdditionalOptions)");

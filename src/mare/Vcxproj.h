@@ -35,6 +35,13 @@ private:
       String name; /**< The name of the configuration without the platform extension */
       String platform;
 
+      String type;
+      enum Language
+      {
+        CPP,
+        C,
+      } language;
+
       List<String> buildCommand; /**< For Makefile projects */
       List<String> reBuildCommand; /**< For Makefile projects */
       List<String> cleanCommand; /**< For Makefile projects */
@@ -42,14 +49,15 @@ private:
       List<String> preLinkCommand;
       List<String> postBuildCommand;
       String buildDir;
-      String type;
       List<String> command;
       List<String> message;
       String firstOutput;
       List<String> outputs;
       List<String> inputs;
       List<String> dependencies;
-      Map<String, void*> cAndCppFlags;
+      List<String> cppFlags;
+      List<String> cFlags;
+      Map<String, void*> compilerFlags;
       Map<String, void*> linkFlags;
       List<String> defines;
       List<String> includePaths;
@@ -60,7 +68,7 @@ private:
       Map<String, String> linkOptions;
       Map<String, String> vsOptions;
 
-      Config(const String& name, const String& platform) : name(name), platform(platform) {}
+      Config(const String& name, const String& platform) : name(name), platform(platform), language(CPP) {}
     };
 
     class File
@@ -74,13 +82,12 @@ private:
         List<String> outputs;
         List<String> inputs;
         List<String> dependencies;
-        Map<String, void*> compilerFlags;
-
-        bool hasCompilerFlags;
+        bool hasCppFlags;
+        List<String> cppFlags;
+        bool hasCFlags;
+        List<String> cFlags;
 
         Map<String, String> cppOptions;
-
-        Config() : hasCompilerFlags(false) {}
       };
 
       String type;
