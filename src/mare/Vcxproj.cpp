@@ -533,7 +533,7 @@ bool Vcxproj::processData()
           language = Project::Config::C;
           type = "ClCompile";
         }
-        else if(firstCommandWord == "__rcCompile")
+        else if(firstCommandWord == "__rcSource")
           type = "ResourceCompile";
         else if(!firstCommandWord.isEmpty())
           type = "CustomBuild";
