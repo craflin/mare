@@ -163,6 +163,7 @@ private:
   Map<String, Project> projects;
   Map<String, ProjectFilter> projectFilters;
 
+  List<OptionGroup> knownOptionGroups;
   OptionMap knownCppOptions;
   Map<String, Option> knownLinkOptions;
   OptionMap knownVsOptions;

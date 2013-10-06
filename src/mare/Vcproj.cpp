@@ -15,8 +15,9 @@
 
 bool Vcproj::generate(const Map<String, String>& userArgs)
 {
-  //knownCppOptions.append("/Z7", Option("DebugInformationFormat", "OldStyle"));
-  //knownLinkOptions.append("/DEBUG", Option("GenerateDebugInformation", "true"));
+  OptionGroup* group = &knownOptionGroups.append(OptionGroup("UsePrecompiledHeader", "0", "PrecompiledHeaderThrough"));
+  knownCppOptions.append("/Yc", Option(group, "1"));
+  knownCppOptions.append("/Yu", Option(group, "2"));
 
   //
   engine.addDefaultKey("tool", "vcxproj");
@@ -1046,7 +1047,7 @@ bool Vcproj::generateVcprojFiles(const Project& project)
             vc.fileWrite(tabs + "\t\t\t<FileConfiguration\r\n");
             vc.fileWrite(tabs + "\t\t\t\tName=\"" + configKey + "\"\r\n");
             if(!node)
-              vc.fileWrite(tabs + "\t\t\t\tExcludedFromBuild=\"true\"\r\n");
+              vc.fileWrite(tabs + "\t\t\t\t\tExcludedFromBuild=\"true\"\r\n");
             vc.fileWrite(tabs + "\t\t\t\t>\r\n");
             if(node)
             {
@@ -1055,7 +1056,7 @@ bool Vcproj::generateVcprojFiles(const Project& project)
               vc.fileWrite(tabs + "\t\t\t\t<Tool\r\n");
               vc.fileWrite(tabs + "\t\t\t\t\tName=\"VCCLCompilerTool\"\r\n");
                 for(const Map<String, String>::Node* i = fileConfig.cppOptions.getFirst(); i; i = i->getNext())
-                  vc.fileWrite(String("\t\t\t\t") + i->key + "=\"" + i->data + "\"\r\n");
+                  vc.fileWrite(String("\t\t\t\t\t") + i->key + "=\"" + i->data + "\"\r\n");
               vc.fileWrite(tabs + "\t\t\t\t/>\r\n");
             }
             vc.fileWrite(tabs + "\t\t\t</FileConfiguration>\r\n");
