@@ -20,8 +20,8 @@ bool Vcproj::generate(const Map<String, String>& userArgs)
   knownCppOptions.append("/Yu", Option(group, "2"));
 
   //
-  engine.addDefaultKey("tool", "vcxproj");
-  engine.addDefaultKey("vcxproj", "vcxproj");
+  engine.addDefaultKey("tool", "vcproj");
+  engine.addDefaultKey("vcproj", "vcproj");
   engine.addDefaultKey("host", "Win32");
   engine.addDefaultKey("platforms", "Win32");
   engine.addDefaultKey("configurations", "Debug Release");
