@@ -19,6 +19,12 @@ bool Vcproj::generate(const Map<String, String>& userArgs)
   knownCppOptions.append("/Yc", Option(group, "1"));
   knownCppOptions.append("/Yu", Option(group, "2"));
 
+  group = &knownOptionGroups.append(OptionGroup("RuntimeLibrary"));
+  knownCppOptions.append("/MT", Option(group, "0"));
+  knownCppOptions.append("/MTd", Option(group, "1"));
+  knownCppOptions.append("/MD", Option(group, "2"));
+  knownCppOptions.append("/MDD", Option(group, "3"));
+
   //
   engine.addDefaultKey("tool", "vcproj");
   engine.addDefaultKey("vcproj", "vcproj");
