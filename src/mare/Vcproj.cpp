@@ -25,6 +25,73 @@ bool Vcproj::generate(const Map<String, String>& userArgs)
   knownCppOptions.append("/MD", Option(group, "2"));
   knownCppOptions.append("/MDD", Option(group, "3"));
 
+  group = &knownOptionGroups.append(OptionGroup("WarningLevel"));
+  knownCppOptions.append("/W0", Option(group, "0"));
+  knownCppOptions.append("/W1", Option(group, "1"));
+  knownCppOptions.append("/W2", Option(group, "2"));
+  knownCppOptions.append("/W3", Option(group, "3"));
+  knownCppOptions.append("/W4", Option(group, "4"));
+
+  // Optimization tab
+  group = &knownOptionGroups.append(OptionGroup("Optimization", "4"));
+  knownCppOptions.append("/Od", Option(group, "0"));
+  knownCppOptions.append("/O1", Option(group, "1"));
+  knownCppOptions.append("/O2", Option(group, "2"));
+  knownCppOptions.append("/Ox", Option(group, "3"));
+  group = &knownOptionGroups.append(OptionGroup("InlineFunctionExpansion", "0"));
+  knownCppOptions.append("/Ob1", Option(group, "1"));
+  knownCppOptions.append("/Ob2", Option(group, "2"));
+  group = &knownOptionGroups.append(OptionGroup("EnableIntrinsicFunctions", "false"));
+  knownCppOptions.append("/Oi", Option(group, "true"));
+  group = &knownOptionGroups.append(OptionGroup("FavorSizeOrSpeed", "0"));
+  knownCppOptions.append("/Ot", Option(group, "1"));
+  knownCppOptions.append("/Os", Option(group, "2"));
+  group = &knownOptionGroups.append(OptionGroup("OmitFramePointers", "false"));
+  knownCppOptions.append("/Oy", Option(group, "true"));
+  group = &knownOptionGroups.append(OptionGroup("EnableFiberSafeOptimizations", "false"));
+  knownCppOptions.append("/GT", Option(group, "true"));
+  group = &knownOptionGroups.append(OptionGroup("WholeProgramOptimization", "false"));
+  knownCppOptions.append("/GL", Option(group, "true"));
+
+  
+  // linker debug tab
+  group = &knownOptionGroups.append(OptionGroup("GenerateDebugInformation", "false"));
+  knownLinkOptions.append("/DEBUG", Option(group, "true"));
+  // TODO: /PDB:name ProgramDatabaseFile="dasdsa"
+  // TODO: /PDBSTRIPPED:file StripPrivateSymbols="stoppedSymbols"
+  group = &knownOptionGroups.append(OptionGroup("GenerateMapFile", "false"));
+  knownLinkOptions.append("/MAP", Option(group, "true"));
+  // TODO: /MAP:filename MapFileName="mapfilename"
+  group = &knownOptionGroups.append(OptionGroup("MapExports", "false"));
+  knownLinkOptions.append("/MAPINFO:EXPORTS", Option(group, "true"));
+  group = &knownOptionGroups.append(OptionGroup("AssemblyDebug", "0"));
+  knownLinkOptions.append("/ASSEMBLYDEBUG", Option(group, "1"));
+  knownLinkOptions.append("/ASSEMBLYDEBUG:DISABLE", Option(group, "2"));
+
+  // linker general tab
+  // TODO: more options
+  group = &knownOptionGroups.append(OptionGroup("LinkIncremental", "0"));
+  knownLinkOptions.append("/INCREMENTAL:NO", Option(group, "1"));
+  knownLinkOptions.append("/INCREMENTAL", Option(group, "2"));
+  // TODO: more options
+
+  // optimization tab
+  group = &knownOptionGroups.append(OptionGroup("OptimizeReferences", "0"));
+  knownLinkOptions.append("/OPT:NOREF", Option(group, "1"));
+  knownLinkOptions.append("/OPT:REF", Option(group, "2"));
+  group = &knownOptionGroups.append(OptionGroup("EnableCOMDATFolding", "0"));
+  knownLinkOptions.append("/OPT:NOICF", Option(group, "1"));
+  knownLinkOptions.append("/OPT:ICF", Option(group, "2"));
+  group = &knownOptionGroups.append(OptionGroup("OptimizeForWindows98", "0"));
+  knownLinkOptions.append("/OPT:NOWIN98", Option(group, "1"));
+  knownLinkOptions.append("/OPT:WIN98", Option(group, "2"));
+  // TODO: /ORDER:[file] FunctionOrder="functionorder"
+  group = &knownOptionGroups.append(OptionGroup("LinkTimeCodeGeneration", "0"));
+  knownLinkOptions.append("/LTCG", Option(group, "1"));
+  knownLinkOptions.append("/LTCG:PGINSTRUMENT", Option(group, "2"));
+  knownLinkOptions.append("/LTCG:PGOPTIMIZE", Option(group, "3"));
+  knownLinkOptions.append("/LTCG:PGUPDATE", Option(group, "4"));
+
   //
   engine.addDefaultKey("tool", "vcproj");
   engine.addDefaultKey("vcproj", "vcproj");
