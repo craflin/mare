@@ -313,7 +313,7 @@ loopStart:
             star = true;
             str = s, pat = p;
             do { ++pat; } while (*pat == '%');
-            if (!*++pat) return true;
+            if (!*pat) return true;
             goto loopStart;
           default:
             if (*s != *p) goto starCheck;
