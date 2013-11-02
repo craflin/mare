@@ -303,7 +303,8 @@ public:
           }
           goto build;
         }
-        if(writeTime >/*=*/ minWriteTime)
+        if(writeTime > minWriteTime) // Do not rebuild if both files have the same write time. This will prevent mare from (e.g.) relinking output files on systems (e.g. windows)
+                                     // with a timestamp resolutions of a second when compiling and linking can be done in less than a second.
         {
           if(builder->showDebug)
             printf("debug: Applying rule for \"%s\" since the input file \"%s\" is newer than output file \"%s\"\n", name.getData(), file.getData(), minOutputFile.getData());
