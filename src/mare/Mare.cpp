@@ -438,7 +438,7 @@ public:
 
   RuleSet() : activeRules(0), finishedRules(0) {}
 
-  void resolveDependencies()
+  void resolveDependencies(bool activateDependencies)
   {
     // generate outputToRule map
     Map<String, Rule*> outputToRule;
@@ -481,7 +481,7 @@ public:
             rule.inputs.append(j->data);
 
           // activate dependency
-          if(!node->data.active)
+          if(activateDependencies && !node->data.active)
           {
             node->data.active = true;
             activeTargets.append(&node->data);
@@ -499,6 +499,9 @@ public:
               //printf("warning: Rule for \"%s\" depends on itself\n", rule.name.getData());
               continue;
             }
+
+            if(!dependency->target->active && !activateDependencies)
+              continue;
 
             // activate target?
             if(!dependency->target->active)
@@ -646,8 +649,7 @@ bool Mare::buildTargets(const String& platform, const String& configuration)
         engine.enterUnnamedKey();
         engine.addDefaultKey("file", i->data);
         VERIFY(engine.enterKey(i->data));
-        if(!ignoreDependencies)
-          engine.getKeys("dependencies", rule.dependencies, false);
+        engine.getKeys("dependencies", rule.dependencies, false);
         engine.getKeys("input", rule.inputs, false);
         engine.getKeys("output", rule.outputs, false);
         engine.getText("command", rule.command, false);
@@ -664,8 +666,7 @@ bool Mare::buildTargets(const String& platform, const String& configuration)
     rule.target = &target;
     rule.name = i->data;
     target.rule = &rule;
-    if(!ignoreDependencies)
-      engine.getKeys("dependencies", rule.dependencies, false);
+    engine.getKeys("dependencies", rule.dependencies, false);
     engine.getKeys("input", rule.inputs, false);
     engine.getKeys("output", rule.outputs, false);
     engine.getText("command", rule.command, false);
@@ -677,7 +678,7 @@ bool Mare::buildTargets(const String& platform, const String& configuration)
     engine.leaveKey();
   }
 
-  ruleSet.resolveDependencies();
+  ruleSet.resolveDependencies(!ignoreDependencies);
   return ruleSet.build(engine, jobs <= 0 ? (Process::getProcessorCount() - jobs) : jobs, clean, rebuild, showDebug);
 }
 
