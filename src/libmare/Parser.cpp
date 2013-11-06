@@ -379,6 +379,8 @@ Statement* Parser::readAssignment()
       nextToken();
       statement->value = readConcatination();
       break;
+    default:
+      break;
     }
     return statement;
   }
