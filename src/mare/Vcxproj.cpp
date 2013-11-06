@@ -593,12 +593,14 @@ bool Vcxproj::processData()
                 else
                   fileConfig.cppOptions.append(optionGroup.name, option.value);
                 if(option.hasParam(i->key))
+                {
                   if(fileConfig.cppOptions.find(optionGroup.paramName))
                   {
                     // TODO: warning or error
                   }
                   else
                     fileConfig.cppOptions.append(optionGroup.paramName, Option::getParamValue(i->key));
+                }
                 continue;
               }
               if(knownVsOptions.find(i->key))
