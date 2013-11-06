@@ -152,6 +152,16 @@ private:
     Node* find(const String& key);
   };
 
+  class Filter
+  {
+  public:
+    String name;
+    List<const Project::File*> files;
+    List<Filter*> filters;
+
+    void write(Vcproj& vc, const Project& project, const String& tabs = String());
+  };
+  
   Engine& engine;
   int version; /**< Version of the vcxproj file format e.g. 2010 */
 

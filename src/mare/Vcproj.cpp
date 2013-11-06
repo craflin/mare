@@ -592,12 +592,14 @@ bool Vcproj::processData()
                 else
                   fileConfig.cppOptions.append(optionGroup.name, option.value);
                 if(option.hasParam(i->key))
+                {
                   if(fileConfig.cppOptions.find(optionGroup.paramName))
                   {
                     // TODO: warning or error
                   }
                   else
                     fileConfig.cppOptions.append(optionGroup.paramName, Option::getParamValue(i->key));
+                }
                 continue;
               }
               if(knownVsOptions.find(i->key))
@@ -1084,62 +1086,55 @@ bool Vcproj::generateVcproj(const Project& project)
   return true;
 }
 
+void Vcproj::Filter::write(Vcproj& vc, const Project& project, const String& tabs)
+{
+  for(List<Filter*>::Node* i = filters.getFirst(); i; i = i->getNext())
+  {
+    Filter& filter = *i->data;
+    vc.fileWrite(tabs + "\t\t<Filter\r\n");
+    vc.fileWrite(tabs + "\t\t\tName=\"" + filter.name + "\"\r\n");
+    vc.fileWrite(tabs + "\t\t\t>\r\n");
+    filter.write(vc, project, tabs + "\t");
+    vc.fileWrite(tabs + "\t\t</Filter>\r\n");
+  }
+  for(const List<const Project::File*>::Node* i = files.getFirst(); i; i = i->getNext())
+  {
+    const Project::File& file = *i->data;
+    vc.fileWrite(tabs + "\t\t<File\r\n");
+    String path = file.path;
+    path.subst("/", "\\");
+    vc.fileWrite(tabs + "\t\t\tRelativePath=\"" + path + "\"\r\n");
+    vc.fileWrite(tabs + "\t\t\t>\r\n");
+    if(!file.useProjectCompilerFlags)
+      for(const Map<String, Project::Config>::Node* i = project.configs.getFirst(); i; i = i->getNext())
+      {
+        const String& configKey = i->key;
+        const Map<String, Project::File::Config>::Node* node = file.configs.find(configKey);
+
+        vc.fileWrite(tabs + "\t\t\t<FileConfiguration\r\n");
+        vc.fileWrite(tabs + "\t\t\t\tName=\"" + configKey + "\"\r\n");
+        if(!node)
+          vc.fileWrite(tabs + "\t\t\t\t\tExcludedFromBuild=\"true\"\r\n");
+        vc.fileWrite(tabs + "\t\t\t\t>\r\n");
+        if(node)
+        {
+          const Project::File::Config& fileConfig = node->data;
+
+          vc.fileWrite(tabs + "\t\t\t\t<Tool\r\n");
+          vc.fileWrite(tabs + "\t\t\t\t\tName=\"VCCLCompilerTool\"\r\n");
+            for(const Map<String, String>::Node* i = fileConfig.cppOptions.getFirst(); i; i = i->getNext())
+              vc.fileWrite(String("\t\t\t\t\t") + i->key + "=\"" + i->data + "\"\r\n");
+          vc.fileWrite(tabs + "\t\t\t\t/>\r\n");
+        }
+        vc.fileWrite(tabs + "\t\t\t</FileConfiguration>\r\n");
+      }
+
+    vc.fileWrite(tabs + "\t\t</File>\r\n");
+  }
+}
+
 bool Vcproj::generateVcprojFiles(const Project& project)
 {
-  struct Filter
-  {
-    String name;
-    List<const Project::File*> files;
-    List<Filter*> filters;
-
-    void write(Vcproj& vc, const Project& project, const String& tabs = String())
-    {
-      for(List<Filter*>::Node* i = filters.getFirst(); i; i = i->getNext())
-      {
-        Filter& filter = *i->data;
-        vc.fileWrite(tabs + "\t\t<Filter\r\n");
-        vc.fileWrite(tabs + "\t\t\tName=\"" + filter.name + "\"\r\n");
-        vc.fileWrite(tabs + "\t\t\t>\r\n");
-        filter.write(vc, project, tabs + "\t");
-        vc.fileWrite(tabs + "\t\t</Filter>\r\n");
-      }
-      for(const List<const Project::File*>::Node* i = files.getFirst(); i; i = i->getNext())
-      {
-        const Project::File& file = *i->data;
-        vc.fileWrite(tabs + "\t\t<File\r\n");
-        String path = file.path;
-        path.subst("/", "\\");
-        vc.fileWrite(tabs + "\t\t\tRelativePath=\"" + path + "\"\r\n");
-        vc.fileWrite(tabs + "\t\t\t>\r\n");
-        if(!file.useProjectCompilerFlags)
-          for(const Map<String, Project::Config>::Node* i = project.configs.getFirst(); i; i = i->getNext())
-          {
-            const String& configKey = i->key;
-            const Map<String, Project::File::Config>::Node* node = file.configs.find(configKey);
-
-            vc.fileWrite(tabs + "\t\t\t<FileConfiguration\r\n");
-            vc.fileWrite(tabs + "\t\t\t\tName=\"" + configKey + "\"\r\n");
-            if(!node)
-              vc.fileWrite(tabs + "\t\t\t\t\tExcludedFromBuild=\"true\"\r\n");
-            vc.fileWrite(tabs + "\t\t\t\t>\r\n");
-            if(node)
-            {
-              const Project::File::Config& fileConfig = node->data;
-
-              vc.fileWrite(tabs + "\t\t\t\t<Tool\r\n");
-              vc.fileWrite(tabs + "\t\t\t\t\tName=\"VCCLCompilerTool\"\r\n");
-                for(const Map<String, String>::Node* i = fileConfig.cppOptions.getFirst(); i; i = i->getNext())
-                  vc.fileWrite(String("\t\t\t\t\t") + i->key + "=\"" + i->data + "\"\r\n");
-              vc.fileWrite(tabs + "\t\t\t\t/>\r\n");
-            }
-            vc.fileWrite(tabs + "\t\t\t</FileConfiguration>\r\n");
-          }
-
-        vc.fileWrite(tabs + "\t\t</File>\r\n");
-      }
-    }
-  };
-
   Map<String, void*> rootPaths;
   for(const List<String>::Node* i = project.root.getFirst(); i; i = i->getNext())
   {
