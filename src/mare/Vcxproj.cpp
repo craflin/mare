@@ -809,8 +809,13 @@ bool Vcxproj::generateSln()
 
   // header
   fileWrite("﻿\r\n");
-  fileWrite("Microsoft Visual Studio Solution File, Format Version 11.00\r\n");
-  if(version == 2012)
+  if(version == 2013)
+	fileWrite("Microsoft Visual Studio Solution File, Format Version 12.00\r\n");
+  else
+	fileWrite("Microsoft Visual Studio Solution File, Format Version 11.00\r\n");
+  if(version == 2013)
+    fileWrite("# Visual Studio 2013\r\n");
+  else if(version == 2012)
     fileWrite("# Visual Studio 2012\r\n");
   else
     fileWrite("# Visual Studio 2010\r\n");
@@ -909,7 +914,10 @@ bool Vcxproj::generateVcxproj(Project& project)
   fileOpen(project.name + ".vcxproj");
 
   fileWrite("<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n");
-  fileWrite("<Project DefaultTargets=\"Build\" ToolsVersion=\"4.0\" xmlns=\"http://schemas.microsoft.com/developer/msbuild/2003\">\r\n");
+  if(version == 2013)
+	fileWrite("<Project DefaultTargets=\"Build\" ToolsVersion=\"12.0\" xmlns=\"http://schemas.microsoft.com/developer/msbuild/2003\">\r\n");
+  else
+	fileWrite("<Project DefaultTargets=\"Build\" ToolsVersion=\"4.0\" xmlns=\"http://schemas.microsoft.com/developer/msbuild/2003\">\r\n");
 
   // write configuration list
   fileWrite("  <ItemGroup Label=\"ProjectConfigurations\">\r\n");
@@ -946,7 +954,9 @@ bool Vcxproj::generateVcxproj(Project& project)
       fileWrite("    <UseDebugLibraries>false</UseDebugLibraries>\r\n");
     if(config.vsOptions.find("PlatformToolset"))
       fileWrite(String("    <PlatformToolset>") + config.vsOptions.lookup("PlatformToolset") + "</PlatformToolset>\r\n");
-    else if(version == 2012)
+    else if(version == 2013)
+      fileWrite("    <PlatformToolset>v120</PlatformToolset>\r\n");
+	else if(version == 2012)
       fileWrite("    <PlatformToolset>v110</PlatformToolset>\r\n");
     if(config.linkFlags.find("/LTCG"))
       fileWrite("    <WholeProgramOptimization>true</WholeProgramOptimization>\r\n");
