@@ -158,7 +158,7 @@ bool Vcxproj::generate(const Map<String, String>& userArgs)
   engine.addDefaultKey("configurations", "Debug Release");
   engine.addDefaultKey("targets"); // an empty target list exists per default
   engine.addDefaultKey("buildDir", "$(configuration)");
-  engine.addDefaultKey("cppFlags", "/W3 $(if $(Debug),,/O2 /Oy)");
+  engine.addDefaultKey("cppFlags", "/W3 $(if $(Debug),/Od,/O2 /Oy)");
   engine.addDefaultKey("linkFlags", "$(if $(Debug),/INCREMENTAL /DEBUG,/OPT:REF /OPT:ICF)");
   {
     Map<String, String> cSource;
@@ -477,6 +477,12 @@ bool Vcxproj::processData()
         if(!additionalOptions.isEmpty())
           projectConfig.cppOptions.append("AdditionalOptions", join(additionalOptions, ' ') + " %(AdditionalOptions)");
       }
+      { // We do not have to set /Od because of "<UseDebugLibraries>true</UseDebugLibraries>".
+        Map<String, String>::Node* node = projectConfig.cppOptions.find("Optimization");
+        if (node && node->data == "Disabled")
+          projectConfig.cppOptions.remove(node);
+      }
+      
 
       // prepare link option list
       {
@@ -948,9 +954,14 @@ bool Vcxproj::generateVcxproj(Project& project)
     fileWrite(String("  <PropertyGroup Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\" Label=\"Configuration\">\r\n");
     fileWrite(String("    <ConfigurationType>") + config.type + "</ConfigurationType>\r\n");
 
-    if(config.name == "Debug")
-      fileWrite("    <UseDebugLibraries>true</UseDebugLibraries>\r\n"); // i have no idea what this option does and how to change it in the project settings in visual studio
-    else                                                                // appearantly it changes some compiler/linker default values?
+    //if(config.name == "Debug")
+    if(config.compilerFlags.find("/Od"))
+    {
+      fileWrite("    <UseDebugLibraries>true</UseDebugLibraries>\r\n"); // This options changes some default compiler/linker settings, but I have no idea how it can be set up in the visual studio project settings.
+                                                                        // Let's asume a configuration "uses debug libraries" whenever the resulting code should not be optimized (/Od).
+
+    }
+    else
       fileWrite("    <UseDebugLibraries>false</UseDebugLibraries>\r\n");
     if(config.vsOptions.find("PlatformToolset"))
       fileWrite(String("    <PlatformToolset>") + config.vsOptions.lookup("PlatformToolset") + "</PlatformToolset>\r\n");
