@@ -23,7 +23,7 @@ bool Vcproj::generate(const Map<String, String>& userArgs)
   knownCppOptions.append("/MT", Option(group, "0"));
   knownCppOptions.append("/MTd", Option(group, "1"));
   knownCppOptions.append("/MD", Option(group, "2"));
-  knownCppOptions.append("/MDD", Option(group, "3"));
+  knownCppOptions.append("/MDd", Option(group, "3"));
 
   group = &knownOptionGroups.append(OptionGroup("WarningLevel"));
   knownCppOptions.append("/W0", Option(group, "0"));
