@@ -215,7 +215,7 @@ bool Vcproj::readFile()
         }
 
         Map<String, Project>::Node* node = projects.find(i->data);
-        Project& project = node ? node->data : projects.append(i->data, Project(i->data, createSomethingLikeGUID(i->data)));
+        Project& project = node ? node->data : projects.append(i->data, Project(i->data));
         Project::Config& projectConfig = project.configs.append(configKey, Project::Config(config.name, config.platform));
 
         if(project.displayName.isEmpty())
@@ -299,6 +299,11 @@ bool Vcproj::processData()
   for(Map<String, Project>::Node* i = projects.getFirst(); i; i = i->getNext())
   {
     Project& project = i->data;
+
+    // get display name and guid
+    if(project.displayName.isEmpty())
+        project.displayName = i->key;
+    project.guid = createSomethingLikeGUID(i->key + project.displayName);
 
     // project dir?
     if(!project.projectFile.isEmpty())
@@ -817,7 +822,7 @@ bool Vcproj::generateSln()
   // project list
   for(const Map<String, Project>::Node* i = projects.getFirst(); i; i = i->getNext())
   {
-    fileWrite(String("Project(\"{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}\") = \"") + i->key + "\", \"" + i->data.projectFile + "\", \"{" + i->data.guid + "}\"\r\n");
+    fileWrite(String("Project(\"{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}\") = \"") + i->data.displayName + "\", \"" + i->data.projectFile + "\", \"{" + i->data.guid + "}\"\r\n");
     fileWrite("EndProject\r\n");
   }
 
@@ -910,9 +915,9 @@ bool Vcproj::generateVcproj(const Project& project)
   fileWrite(String("<VisualStudioProject\r\n"
             "\tProjectType=\"Visual C++\"\r\n"
             "\tVersion=\"9,00\"\r\n"
-            "\tName=\"") + (project.displayName.isEmpty() ? project.name : project.displayName) + "\"\r\n"
+            "\tName=\"") + project.displayName + "\"\r\n"
             "\tProjectGUID=\"{" + project.guid + "}\"\r\n"
-            "\tRootNamespace=\"" + project.name + "\"\r\n"
+            "\tRootNamespace=\"" + project.displayName + "\"\r\n"
             "\tKeyword=\"Win32Proj\"\r\n"
             "\tTargetFrameworkVersion=\"196613\"\r\n"
             "\t>\r\n");

@@ -111,7 +111,7 @@ private:
     Map<String, void*> dependencies;
     List<String> root;
 
-    Project(const String& name, const String& guid) : name(name), guid(guid) {}
+    Project(const String& name) : name(name) {}
   };
 
   class ProjectFilter
