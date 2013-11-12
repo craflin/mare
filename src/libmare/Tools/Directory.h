@@ -47,6 +47,8 @@ public:
 
   static bool change(const String& dir);
 
+  static String getCurrent();
+
 private:
   bool dirsOnly;
 #ifdef _WIN32

@@ -223,6 +223,33 @@ String File::simplifyPath(const String& path)
   return result;
 }
 
+String File::relativePath(const String& from, const String& to)
+{
+  String simFrom = simplifyPath(from);
+  String simTo = simplifyPath(to);
+  if(simFrom == simTo)
+    return String(".");
+  simFrom.append('/');
+  if(strncmp(simTo.getData(), simFrom.getData(), simFrom.getLength()) == 0)
+    return String(simTo.getData() + simFrom.getLength(), simTo.getLength() - simFrom.getLength());
+  String result("../");
+  while(simFrom.getLength() > 0)
+  {
+    simFrom.setLength(simFrom.getLength() - 1);
+    const char* newEnd = strrchr(simFrom.getData(), '/');
+    if(!newEnd)
+      break;
+    simFrom.setLength((newEnd - simFrom.getData()) + 1);
+    if(strncmp(simTo.getData(), simFrom.getData(), simFrom.getLength()) == 0)
+    {
+      result.append(String(simTo.getData() + simFrom.getLength(), simTo.getLength() - simFrom.getLength()));
+      return result;
+    }
+    result.append("../");
+  }
+  return String();
+}
+
 bool File::isPathAbsolute(const String& path)
 {
   const char* data = path.getData();

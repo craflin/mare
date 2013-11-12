@@ -405,3 +405,17 @@ bool Directory::change(const String& dir)
   return chdir(dir.getData()) == 0;
 #endif
 }
+
+String Directory::getCurrent()
+{
+#ifdef _WIN32
+  TCHAR buffer[MAX_PATH];
+  DWORD len = GetCurrentDirectory(MAX_PATH, buffer);
+  return String(buffer, len);
+#else
+  char buffer[PATH_MAX];
+  if(!getcwd(buffer, PATH_MAX))
+    return String();
+  return String(buffer, strlen(buffer));
+#endif
+}

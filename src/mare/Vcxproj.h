@@ -100,6 +100,8 @@ private:
 
     String name;
     String displayName;
+    String projectFile;
+    String projectDir;
     String guid;
     String filter;
     Map<String, Config> configs;
@@ -181,8 +183,10 @@ private:
   void fileWrite(const String& data);
   void fileClose();
 
+  static String relativePath(const String& projectDir, const String& path);
   static String createSomethingLikeGUID(const String& name);
   static String join(const List<String>& items, char sep = ';', const String& suffix = String());
+  static String joinPaths(const String& projectDir, const List<String>& paths);
   static String joinCommands(const List<String>& commands);
   static String xmlEscape(const String& text);
 };

@@ -6,6 +6,7 @@
 
 #include "Tools/Word.h"
 #include "Tools/File.h"
+#include "Tools/Directory.h"
 #include "Tools/md5.h"
 #include "Tools/Assert.h"
 #include "Tools/Error.h"
@@ -279,6 +280,8 @@ bool Vcxproj::readFile()
           project.displayName = engine.getFirstKey("name", false);
         if(project.filter.isEmpty())
           project.filter = engine.getFirstKey("folder", false);
+        if(project.projectFile.isEmpty())
+          project.projectFile = engine.getFirstKey("projectFile", false);
 
         engine.getText("buildCommand", projectConfig.buildCommand, false);
         engine.getText("reBuildCommand", projectConfig.reBuildCommand, false);
@@ -352,6 +355,16 @@ bool Vcxproj::processData()
   for(Map<String, Project>::Node* i = projects.getFirst(); i; i = i->getNext())
   {
     Project& project = i->data;
+
+    // project dir?
+    if(!project.projectFile.isEmpty())
+    {
+      project.projectDir = File::getDirname(project.projectFile);
+      if(project.projectDir == ".")
+        project.projectDir = String();
+    }
+    else
+      project.projectFile = project.name + ".vcxproj";
 
     // handle project filter (solution explorer folder)
     if(!project.filter.isEmpty())
@@ -829,7 +842,7 @@ bool Vcxproj::generateSln()
   // project list
   for(const Map<String, Project>::Node* i = projects.getFirst(); i; i = i->getNext())
   {
-    fileWrite(String("Project(\"{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}\") = \"") + i->key + "\", \"" + i->key + ".vcxproj\", \"{" + i->data.guid + "}\"\r\n");
+    fileWrite(String("Project(\"{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}\") = \"") + i->key + "\", \"" + i->data.projectFile + "\", \"{" + i->data.guid + "}\"\r\n");
     fileWrite("EndProject\r\n");
   }
 
@@ -917,7 +930,9 @@ bool Vcxproj::generateVcxprojs()
 
 bool Vcxproj::generateVcxproj(Project& project)
 {
-  fileOpen(project.name + ".vcxproj");
+  if(!project.projectDir.isEmpty())
+    Directory::create(project.projectDir);
+  fileOpen(project.projectFile);
 
   fileWrite("<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n");
   if(version == 2013)
@@ -999,14 +1014,12 @@ bool Vcxproj::generateVcxproj(Project& project)
 
     if(!config.firstOutput.isEmpty())
     {
-      String path = File::getDirname(config.firstOutput);
-      path.subst("/", "\\");
+      String path = relativePath(project.projectDir, File::getDirname(config.firstOutput));
       fileWrite(String("    <OutDir Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">" + path + "\\</OutDir>\r\n");
     }
     if(!config.buildDir.isEmpty())
     {
-      String path = config.buildDir;
-      path.subst("/", "\\");
+      String path = relativePath(project.projectDir, config.buildDir);
       if(config.firstOutput.isEmpty())
         fileWrite(String("    <OutDir Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">" + path + "\\</OutDir>\r\n");
       fileWrite(String("    <IntDir Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">" + path + "\\</IntDir>\r\n");
@@ -1017,15 +1030,14 @@ bool Vcxproj::generateVcxproj(Project& project)
       fileWrite(String("    <NMakeReBuildCommandLine Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">" + joinCommands(config.reBuildCommand) + "</NMakeReBuildCommandLine>\r\n");
       fileWrite(String("    <NMakeCleanCommandLine Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">" + joinCommands(config.cleanCommand) + "</NMakeCleanCommandLine>\r\n");
       if(!config.outputs.isEmpty())
-        fileWrite(String("    <NMakeOutput Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">" + join(config.outputs) + "</NMakeOutput>\r\n");
+        fileWrite(String("    <NMakeOutput Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">" + joinPaths(project.projectDir, config.outputs) + "</NMakeOutput>\r\n");
 
       fileWrite(String("    <NMakePreprocessorDefinitions Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">" + join(config.defines) + ";$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>\r\n");
-      fileWrite(String("    <NMakeIncludeSearchPath Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">" + join(config.includePaths) + ";$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>\r\n");
-      /*
-      fileWrite(String("    <NMakeForcedIncludes Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">$(NMakeForcedIncludes)</NMakeForcedIncludes>\r\n");
-      fileWrite(String("    <NMakeAssemblySearchPath Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">$(NMakeAssemblySearchPath)</NMakeAssemblySearchPath>\r\n");
-      fileWrite(String("    <NMakeForcedUsingAssemblies Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">$(NMakeForcedUsingAssemblies)</NMakeForcedUsingAssemblies>\r\n");
-      */
+      fileWrite(String("    <NMakeIncludeSearchPath Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">" + joinPaths(project.projectDir, config.includePaths) + ";$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>\r\n");
+
+      //fileWrite(String("    <NMakeForcedIncludes Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">$(NMakeForcedIncludes)</NMakeForcedIncludes>\r\n");
+      //fileWrite(String("    <NMakeAssemblySearchPath Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">$(NMakeAssemblySearchPath)</NMakeAssemblySearchPath>\r\n");
+      //fileWrite(String("    <NMakeForcedUsingAssemblies Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">$(NMakeForcedUsingAssemblies)</NMakeForcedUsingAssemblies>\r\n");
     }
     else
     {
@@ -1098,7 +1110,7 @@ bool Vcxproj::generateVcxproj(Project& project)
         fileWrite(String("      <") + i->key + ">" + i->data + "</" + i->key + ">\r\n");
 
       if(!config.includePaths.isEmpty())
-        fileWrite(String("      <AdditionalIncludeDirectories>") + join(config.includePaths) + ";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>\r\n");
+        fileWrite(String("      <AdditionalIncludeDirectories>") + joinPaths(project.projectDir, config.includePaths) + ";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>\r\n");
       if(!config.defines.isEmpty())
         fileWrite(String("      <PreprocessorDefinitions>") + join(config.defines) + ";%(PreprocessorDefinitions)</PreprocessorDefinitions>\r\n");
       fileWrite("    </ClCompile>\r\n");
@@ -1121,7 +1133,7 @@ bool Vcxproj::generateVcxproj(Project& project)
       if(!config.libs.isEmpty())
         fileWrite(String("      <AdditionalDependencies>") + join(config.libs, ';', ".lib") + ";%(AdditionalDependencies)</AdditionalDependencies>\r\n");
       if(!config.libPaths.isEmpty())
-        fileWrite(String("      <AdditionalLibraryDirectories>") + join(config.libPaths) + ";%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>\r\n");
+        fileWrite(String("      <AdditionalLibraryDirectories>") + joinPaths(project.projectDir, config.libPaths) + ";%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>\r\n");
 
       fileWrite("    </Link>\r\n");
 
@@ -1161,8 +1173,7 @@ bool Vcxproj::generateVcxproj(Project& project)
   for(Map<String, Project::File>::Node* i = project.files.getFirst(); i; i = i->getNext())
   {
     Project::File& file = i->data;
-    String path = i->key;
-    path.subst("/", "\\");
+    String path = relativePath(project.projectDir, i->key);
 
     if(file.type == "CustomBuild")
     {
@@ -1191,10 +1202,10 @@ bool Vcxproj::generateVcxproj(Project& project)
           }
 
           if(!additionalInputs.isEmpty())
-            fileWrite(String("      <AdditionalInputs Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">" + join(additionalInputs) + ";%(AdditionalInputs)</AdditionalInputs>\r\n");
+            fileWrite(String("      <AdditionalInputs Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">" + joinPaths(project.projectDir, additionalInputs) + ";%(AdditionalInputs)</AdditionalInputs>\r\n");
 
           if(!config.outputs.isEmpty())
-            fileWrite(String("      <Outputs Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">" + join(config.outputs) + ";%(Outputs)</Outputs>\r\n");
+            fileWrite(String("      <Outputs Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">" + joinPaths(project.projectDir, config.outputs) + ";%(Outputs)</Outputs>\r\n");
           else
           {
             // TODO: warning or error
@@ -1240,10 +1251,11 @@ bool Vcxproj::generateVcxproj(Project& project)
       const Map<String, Project>::Node* node = projects.find(i->key);
       if(node)
       {
-        const Project& project = node->data;
-        fileWrite(String("    <ProjectReference Include=\"") + project.name + ".vcxproj\">\r\n");
-        fileWrite(String("      <Project>{") + project.guid + "}</Project>\r\n");
-        //fileWrite("      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>\r\n");
+        const Project& depProject = node->data;
+        String path = relativePath(project.projectDir, depProject.projectFile);
+        fileWrite(String("    <ProjectReference Include=\"") + path + "\">\r\n");
+        fileWrite(String("      <Project>{") + depProject.guid + "}</Project>\r\n");
+        fileWrite("      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>\r\n");
         fileWrite("    </ProjectReference>\r\n");
       }
     }
@@ -1253,7 +1265,8 @@ bool Vcxproj::generateVcxproj(Project& project)
   fileWrite("  <Import Project=\"$(VCTargetsPath)\\Microsoft.Cpp.targets\" />\r\n");
   fileWrite("  <ImportGroup Label=\"ExtensionTargets\">\r\n");
   fileWrite("  </ImportGroup>\r\n");
-  fileWrite("</Project>\r\n");
+  //fileWrite("</Project>\r\n");
+  fileWrite("</Project>");
 
   fileClose();
   return true;
@@ -1261,7 +1274,7 @@ bool Vcxproj::generateVcxproj(Project& project)
 
 bool Vcxproj::generateVcxprojFilter(Project& project)
 {
-  fileOpen(project.name + ".vcxproj.filters");
+  fileOpen(project.projectFile + ".filters");
   fileWrite("<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n");
   fileWrite("<Project ToolsVersion=\"4.0\" xmlns=\"http://schemas.microsoft.com/developer/msbuild/2003\">\r\n");
 
@@ -1353,8 +1366,7 @@ bool Vcxproj::generateVcxprojFilter(Project& project)
   for(const Map<String, Project::File>::Node* i = project.files.getFirst(); i; i = i->getNext())
   {
     const Project::File& file = i->data;
-    String path = i->key;
-    path.subst("/", "\\");
+    String path = relativePath(project.projectDir, i->key);
     if(file.filter.isEmpty())
       fileWrite(String("    <") + file.type + " Include=\"" + path + "\" />\r\n");
     else
@@ -1441,6 +1453,20 @@ String Vcxproj::createSomethingLikeGUID(const String& name)
   return result;
 }
 
+String Vcxproj::relativePath(const String& projectDir, const String& path)
+{
+  String result;
+  if(!projectDir.isEmpty())
+  {
+    String cwd = Directory::getCurrent() + "/";
+    result = File::relativePath(cwd + projectDir, cwd + path);
+  }
+  else
+    result = path;
+  result.subst("/", "\\");
+  return result;
+}
+
 String Vcxproj::join(const List<String>& items, char sep, const String& suffix)
 {
   String result;
@@ -1475,6 +1501,24 @@ String Vcxproj::join(const List<String>& items, char sep, const String& suffix)
     }
   }
   return result;
+}
+
+String Vcxproj::joinPaths(const String& projectDir, const List<String>& paths)
+{
+  if(projectDir.isEmpty())
+    return join(paths, ';');
+  else
+  {
+    List<String> relPaths;
+    for(const List<String>::Node* i = paths.getFirst(); i; i = i->getNext())
+    {
+      if(i->data.getData()[0] == '$')
+        relPaths.append(i->data);
+      else
+        relPaths.append(relativePath(projectDir, i->data));
+    }
+    return join(relPaths, ';');
+  }
 }
 
 String Vcxproj::joinCommands(const List<String>& commands)
