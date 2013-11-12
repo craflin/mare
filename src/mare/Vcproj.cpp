@@ -6,6 +6,7 @@
 
 #include "Tools/Word.h"
 #include "Tools/File.h"
+#include "Tools/Directory.h"
 #include "Tools/md5.h"
 #include "Tools/Assert.h"
 #include "Tools/Error.h"
@@ -221,6 +222,8 @@ bool Vcproj::readFile()
           project.displayName = engine.getFirstKey("name", false);
         if(project.filter.isEmpty())
           project.filter = engine.getFirstKey("folder", false);
+        if(project.projectFile.isEmpty())
+          project.projectFile = engine.getFirstKey("projectFile", false);
 
         engine.getText("buildCommand", projectConfig.buildCommand, false);
         engine.getText("reBuildCommand", projectConfig.reBuildCommand, false);
@@ -296,6 +299,16 @@ bool Vcproj::processData()
   for(Map<String, Project>::Node* i = projects.getFirst(); i; i = i->getNext())
   {
     Project& project = i->data;
+
+    // project dir?
+    if(!project.projectFile.isEmpty())
+    {
+      project.projectDir = File::getDirname(project.projectFile);
+      if(project.projectDir == ".")
+        project.projectDir = String();
+    }
+    else
+      project.projectFile = project.name + ".vcproj";
 
     // handle project filter (solution explorer folder)
     if(!project.filter.isEmpty())
@@ -440,11 +453,7 @@ bool Vcproj::processData()
         if(!projectConfig.libs.isEmpty())
           projectConfig.librarianOptions.append("AdditionalDependencies", join(projectConfig.libs, ' ', ".lib"));
         if(!projectConfig.firstOutput.isEmpty())
-        {
-          String path = projectConfig.firstOutput;
-          path.subst("/", "\\");
-          projectConfig.librarianOptions.append("OutputFile", path);
-        }
+          projectConfig.librarianOptions.append("OutputFile", relativePath(project.projectDir, projectConfig.firstOutput));
         if(!projectConfig.libPaths.isEmpty())
           projectConfig.librarianOptions.append("AdditionalLibraryDirectories", join(projectConfig.libPaths));
         /*
@@ -498,11 +507,7 @@ bool Vcproj::processData()
         if(!projectConfig.libs.isEmpty())
           projectConfig.linkOptions.append("AdditionalDependencies", join(projectConfig.libs, ' ', ".lib"));
         if(!projectConfig.firstOutput.isEmpty())
-        {
-          String path = projectConfig.firstOutput;
-          path.subst("/", "\\");
-          projectConfig.linkOptions.append("OutputFile", path);
-        }
+          projectConfig.linkOptions.append("OutputFile", relativePath(project.projectDir, projectConfig.firstOutput));
         if(!projectConfig.libPaths.isEmpty())
           projectConfig.linkOptions.append("AdditionalLibraryDirectories", join(projectConfig.libPaths));
         if(!additionalOptions.isEmpty())
@@ -812,7 +817,7 @@ bool Vcproj::generateSln()
   // project list
   for(const Map<String, Project>::Node* i = projects.getFirst(); i; i = i->getNext())
   {
-    fileWrite(String("Project(\"{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}\") = \"") + i->key + "\", \"" + i->key + ".vcproj\", \"{" + i->data.guid + "}\"\r\n");
+    fileWrite(String("Project(\"{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}\") = \"") + i->key + "\", \"" + i->data.projectFile + "\", \"{" + i->data.guid + "}\"\r\n");
     fileWrite("EndProject\r\n");
   }
 
@@ -897,7 +902,9 @@ bool Vcproj::generateVcprojs()
 
 bool Vcproj::generateVcproj(const Project& project)
 {
-  fileOpen(project.name + ".vcproj");
+  if(!project.projectDir.isEmpty())
+    Directory::create(project.projectDir);
+  fileOpen(project.projectFile);
 
   fileWrite("<?xml version=\"1.0\" encoding=\"Windows-1252\"?>\r\n");
   fileWrite(String("<VisualStudioProject\r\n"
@@ -930,14 +937,12 @@ bool Vcproj::generateVcproj(const Project& project)
     fileWrite(String("\t\t\tName=\"") + i->key + "\"\r\n");
     if(!config.firstOutput.isEmpty())
     {
-      String path = File::getDirname(config.firstOutput);
-      path.subst("/", "\\");
+      String path = relativePath(project.projectDir, File::getDirname(config.firstOutput));
       fileWrite(String("\t\t\tOutputDirectory=\"") + path + "\"\r\n");
     }
     if(!config.buildDir.isEmpty())
     {
-      String path = config.buildDir;
-      path.subst("/", "\\");
+      String path = relativePath(project.projectDir, config.buildDir);
       if(config.firstOutput.isEmpty())
         fileWrite(String("\t\t\tOutputDirectory=\"") + path + "\"\r\n");
       fileWrite(String("\t\t\tIntermediateDirectory=\"") + path + "\"\r\n");
@@ -956,7 +961,7 @@ bool Vcproj::generateVcproj(const Project& project)
       fileWrite(String("\t\t\t") + i->key + "=\"" + i->data + "\"\r\n");
     fileWrite("\t\t\t>\r\n");
     if(config.type == "Makefile")
-    {
+    { // TODO:
       fileWrite("\t\t\t<Tool\r\n");
       fileWrite("\t\t\t\tName=\"VCNMakeTool\"\r\n");
       fileWrite("\t\t\t\tBuildCommandLine=\"\"\r\n");
@@ -1066,10 +1071,10 @@ bool Vcproj::generateVcproj(const Project& project)
     const Map<String, Project>::Node* node = projects.find(i->key);
     if(node)
     {
-      const Project& project = node->data;
+      const Project& depProject = node->data;
       fileWrite("\t\t<ProjectReference\r\n");
-      fileWrite(String("\t\t\tReferencedProjectIdentifier=\"{") + project.guid + "}\"\r\n");
-      fileWrite(String("\t\t\tRelativePathToProject=\".\\") + project.name + ".vcproj\"\r\n");
+      fileWrite(String("\t\t\tReferencedProjectIdentifier=\"{") + depProject.guid + "}\"\r\n");
+      fileWrite(String("\t\t\tRelativePathToProject=\".\\") + relativePath(project.projectDir, depProject.projectFile) + "\"\r\n");
       fileWrite("\t\t/>\r\n");
     }
   }
@@ -1101,8 +1106,7 @@ void Vcproj::Filter::write(Vcproj& vc, const Project& project, const String& tab
   {
     const Project::File& file = *i->data;
     vc.fileWrite(tabs + "\t\t<File\r\n");
-    String path = file.path;
-    path.subst("/", "\\");
+    String path = relativePath(project.projectDir, file.path);
     vc.fileWrite(tabs + "\t\t\tRelativePath=\"" + path + "\"\r\n");
     vc.fileWrite(tabs + "\t\t\t>\r\n");
     if(!file.useProjectCompilerFlags)
@@ -1295,6 +1299,20 @@ String Vcproj::createSomethingLikeGUID(const String& name)
   return result;
 }
 
+String Vcproj::relativePath(const String& projectDir, const String& path)
+{
+  String result;
+  if(!projectDir.isEmpty())
+  {
+    String cwd = Directory::getCurrent() + "/";
+    result = File::relativePath(cwd + projectDir, cwd + path);
+  }
+  else
+    result = path;
+  result.subst("/", "\\");
+  return result;
+}
+
 String Vcproj::join(const List<String>& items, char sep, const String& suffix)
 {
   String result;
@@ -1329,6 +1347,24 @@ String Vcproj::join(const List<String>& items, char sep, const String& suffix)
     }
   }
   return result;
+}
+
+String Vcproj::joinPaths(const String& projectDir, const List<String>& paths)
+{
+  if(projectDir.isEmpty())
+    return join(paths, ';');
+  else
+  {
+    List<String> relPaths;
+    for(const List<String>::Node* i = paths.getFirst(); i; i = i->getNext())
+    {
+      if(i->data.getData()[0] == '$')
+        relPaths.append(i->data);
+      else
+        relPaths.append(relativePath(projectDir, i->data));
+    }
+    return join(relPaths, ';');
+  }
 }
 
 String Vcproj::joinCommands(const List<String>& commands)

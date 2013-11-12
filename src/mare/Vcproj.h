@@ -102,6 +102,8 @@ private:
 
     String name;
     String displayName;
+    String projectDir;
+    String projectFile;
     String guid;
     String filter;
     Map<String, Config> configs;
@@ -195,7 +197,9 @@ private:
   void fileClose();
 
   static String createSomethingLikeGUID(const String& name);
+  static String relativePath(const String& projectDir, const String& path);
   static String join(const List<String>& items, char sep = ';', const String& suffix = String());
+  static String joinPaths(const String& projectDir, const List<String>& paths);
   static String joinCommands(const List<String>& commands);
   static String xmlEscape(const String& text);
 };
