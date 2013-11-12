@@ -273,7 +273,7 @@ bool Vcxproj::readFile()
         }
 
         Map<String, Project>::Node* node = projects.find(i->data);
-        Project& project = node ? node->data : projects.append(i->data, Project(i->data, createSomethingLikeGUID(i->data)));
+        Project& project = node ? node->data : projects.append(i->data, Project(i->data));
         Project::Config& projectConfig = project.configs.append(configKey, Project::Config(config.name, config.platform));
 
         if(project.displayName.isEmpty())
@@ -355,6 +355,11 @@ bool Vcxproj::processData()
   for(Map<String, Project>::Node* i = projects.getFirst(); i; i = i->getNext())
   {
     Project& project = i->data;
+
+    // get display name and guid
+    if(project.displayName.isEmpty())
+        project.displayName = i->key;
+    project.guid = createSomethingLikeGUID(i->key + project.displayName);
 
     // project dir?
     if(!project.projectFile.isEmpty())
@@ -842,7 +847,7 @@ bool Vcxproj::generateSln()
   // project list
   for(const Map<String, Project>::Node* i = projects.getFirst(); i; i = i->getNext())
   {
-    fileWrite(String("Project(\"{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}\") = \"") + i->key + "\", \"" + i->data.projectFile + "\", \"{" + i->data.guid + "}\"\r\n");
+    fileWrite(String("Project(\"{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}\") = \"") + i->data.displayName + "\", \"" + i->data.projectFile + "\", \"{" + i->data.guid + "}\"\r\n");
     fileWrite("EndProject\r\n");
   }
 
@@ -954,10 +959,9 @@ bool Vcxproj::generateVcxproj(Project& project)
 
   // write project name
   fileWrite("  <PropertyGroup Label=\"Globals\">\r\n");
-  if(!project.displayName.isEmpty())
-    fileWrite(String("    <ProjectName>") + project.displayName + "</ProjectName>\r\n");
+  fileWrite(String("    <ProjectName>") + project.displayName + "</ProjectName>\r\n");
   fileWrite(String("    <ProjectGuid>{") + project.guid + "}</ProjectGuid>\r\n");
-  fileWrite(String("    <RootNamespace>") + project.name + "</RootNamespace>\r\n");
+  fileWrite(String("    <RootNamespace>") + project.displayName + "</RootNamespace>\r\n");
   fileWrite("  </PropertyGroup>\r\n");
 
   // write general configuration
