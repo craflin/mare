@@ -153,7 +153,7 @@ bool Vcxproj::generate(const Map<String, String>& userArgs)
 
   //
   engine.addDefaultKey("tool", "vcxproj");
-  engine.addDefaultKey("vcxproj", "vcxproj");
+  engine.addDefaultKey("vcxproj", String().format(128, "%d", version));
   engine.addDefaultKey("host", "Win32");
   engine.addDefaultKey("platforms", "Win32");
   engine.addDefaultKey("configurations", "Debug Release");
