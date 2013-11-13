@@ -436,7 +436,7 @@ bool Vcproj::processData()
           additionalOptions.append(i->data);
         }
         if(!projectConfig.includePaths.isEmpty())
-          projectConfig.cppOptions.append("AdditionalIncludeDirectories", join(projectConfig.includePaths));
+          projectConfig.cppOptions.append("AdditionalIncludeDirectories", joinPaths(project.projectDir, projectConfig.includePaths));
         if(!projectConfig.defines.isEmpty())
           projectConfig.cppOptions.append("PreprocessorDefinitions", join(projectConfig.defines));
         if(!additionalOptions.isEmpty())
@@ -460,7 +460,7 @@ bool Vcproj::processData()
         if(!projectConfig.firstOutput.isEmpty())
           projectConfig.librarianOptions.append("OutputFile", relativePath(project.projectDir, projectConfig.firstOutput));
         if(!projectConfig.libPaths.isEmpty())
-          projectConfig.librarianOptions.append("AdditionalLibraryDirectories", join(projectConfig.libPaths));
+          projectConfig.librarianOptions.append("AdditionalLibraryDirectories", joinPaths(project.projectDir, projectConfig.libPaths));
         /*
         for(const Map<String, void*>::Node* i = projectConfig.linkFlags.getFirst(); i; i = i->getNext())
         {
@@ -514,7 +514,7 @@ bool Vcproj::processData()
         if(!projectConfig.firstOutput.isEmpty())
           projectConfig.linkOptions.append("OutputFile", relativePath(project.projectDir, projectConfig.firstOutput));
         if(!projectConfig.libPaths.isEmpty())
-          projectConfig.linkOptions.append("AdditionalLibraryDirectories", join(projectConfig.libPaths));
+          projectConfig.linkOptions.append("AdditionalLibraryDirectories", joinPaths(project.projectDir, projectConfig.libPaths));
         if(!additionalOptions.isEmpty())
           projectConfig.linkOptions.append("AdditionalOptions", join(additionalOptions, ' '));
       }
