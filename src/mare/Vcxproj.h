@@ -158,6 +158,8 @@ private:
   File file;
 
   String solutionName;
+  String solutionFile;
+  String solutionDir;
   Map<String, Config> configs;
   Map<String, Project> projects;
   Map<String, ProjectFilter> projectFilters;

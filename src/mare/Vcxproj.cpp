@@ -239,6 +239,7 @@ bool Vcxproj::readFile()
   // get some global keys
   engine.enterRootKey();
   solutionName = engine.getFirstKey("name");
+  solutionFile = engine.getFirstKey("solutionFile");
   List<String> allPlatforms, allConfigurations, allTargets;
   engine.getKeys("platforms", allPlatforms);
   engine.getKeys("configurations", allConfigurations);
@@ -828,8 +829,20 @@ bool Vcxproj::generateSln()
   if(solutionName.isEmpty() && !projects.isEmpty())
     solutionName = projects.getFirst()->data.name;
 
+  // solution dir?
+  if(!solutionFile.isEmpty())
+  {
+    solutionFile = File::getDirname(solutionFile);
+    if(solutionFile == ".")
+      solutionFile = String();
+  }
+  else
+    solutionFile = solutionName + ".sln";
+
   // open output file
-  fileOpen(solutionName + ".sln");
+  if(!solutionDir.isEmpty())
+    Directory::create(solutionDir);
+  fileOpen(solutionFile);
 
   // header
   fileWrite("﻿\r\n");
@@ -847,7 +860,7 @@ bool Vcxproj::generateSln()
   // project list
   for(const Map<String, Project>::Node* i = projects.getFirst(); i; i = i->getNext())
   {
-    fileWrite(String("Project(\"{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}\") = \"") + i->data.displayName + "\", \"" + i->data.projectFile + "\", \"{" + i->data.guid + "}\"\r\n");
+    fileWrite(String("Project(\"{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}\") = \"") + i->data.displayName + "\", \"" + relativePath(solutionDir, i->data.projectFile) + "\", \"{" + i->data.guid + "}\"\r\n");
     fileWrite("EndProject\r\n");
   }
 
