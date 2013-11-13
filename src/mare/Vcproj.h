@@ -170,6 +170,8 @@ private:
   File file;
 
   String solutionName;
+  String solutionFile;
+  String solutionDir;
   List<String> platforms;
   Map<String, Config> configs;
   Map<String, Project> projects;
