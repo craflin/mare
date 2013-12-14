@@ -376,7 +376,7 @@ bool Vcxproj::processData()
     if(!project.filter.isEmpty())
     {
       List<String> filtersToAdd;
-      String filterName = project.filter;
+      String filterName = File::simplifyPath(project.filter);
       filterName.subst("/", "\\");
       for(;;)
       {
@@ -1298,7 +1298,7 @@ bool Vcxproj::generateVcxprojFilter(Project& project)
   Map<String, void*> roots;
   for(List<String>::Node* i = project.root.getFirst(); i; i = i->getNext())
   {
-    String path = i->data;
+    String path = File::simplifyPath(i->data);
     path.subst("/", "\\");
     roots.append(path);
   }
@@ -1311,6 +1311,7 @@ bool Vcxproj::generateVcxprojFilter(Project& project)
     if(!file.filter.isEmpty()) // a user defined filter
     {
       List<String> filtersToAdd;
+      file.filter = File::simplifyPath(file.filter);
       file.filter.subst("/", "\\");
       String filterName = file.filter;
       for(;;)
@@ -1331,7 +1332,7 @@ bool Vcxproj::generateVcxprojFilter(Project& project)
     // create a filter based on the file system hierarchy
     List<String> filtersToAdd;
     String root;
-    String filterName = File::getDirname(i->key);
+    String filterName = File::getDirname(File::simplifyPath(i->key));
     filterName.subst("/", "\\");
     for(;;)
     {
@@ -1479,7 +1480,7 @@ String Vcxproj::relativePath(const String& projectDir, const String& path)
     result = File::relativePath(cwd + projectDir, cwd + path);
   }
   else
-    result = path;
+    result = File::simplifyPath(path);
   result.subst("/", "\\");
   return result;
 }
