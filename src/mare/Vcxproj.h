@@ -64,6 +64,8 @@ private:
       List<String> libPaths;
       List<String> libs;
 
+      Map<String, int> outputBasenames;
+
       Map<String, String> cppOptions;
       Map<String, String> linkOptions;
       Map<String, String> vsOptions;

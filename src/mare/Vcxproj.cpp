@@ -539,6 +539,7 @@ bool Vcxproj::processData()
     // for each file
     for(Map<String, Project::File>::Node* i = project.files.getFirst(); i; i = i->getNext())
     {
+      const String& fileName = i->key;
       Project::File& file = i->data;
 
       // for each file configuration
@@ -570,7 +571,21 @@ bool Vcxproj::processData()
             // TODO: warning or error?
           }
           else
+          {
             file.type = type;
+            String basename = File::getBasename(fileName);
+            Map<String, int>::Node* node = projectConfig.outputBasenames.find(basename);
+            if (node)
+            {
+              int num = ++(node->data);
+              String newExtension;
+              newExtension.format(200, "(%d).obj", num);
+              file.useProjectCompilerFlags = false;
+              fileConfig.cppOptions.append("ObjectFileName", String("$(IntDir)") + File::getWithoutExtension(basename) + newExtension);
+            }
+            else
+              projectConfig.outputBasenames.append(basename, 1);
+          }
         }
 
         // add dependencies of the file to project's dependencies
