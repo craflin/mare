@@ -40,7 +40,7 @@ bool Vcxproj::generate(const Map<String, String>& userArgs)
 
   // C/C++ optimization tab:
   group = &knownOptionGroups.append(OptionGroup("Optimization", String())); // TODO: unsetValue
-  knownCppOptions.append("/O1", Option(group, "MinSize"));
+  knownCppOptions.append("/O1", Option(group, "MinSpace"));
   knownCppOptions.append("/O2", Option(group, "MaxSpeed"));
   knownCppOptions.append("/Od", Option(group, "Disabled"));
   knownCppOptions.append("/Ox", Option(group, "Full"));
