@@ -150,6 +150,8 @@ bool Vcxproj::generate(const Map<String, String>& userArgs)
   knownVsOptions.append("/CharacterSet", Option(group, String()));
   group = &knownOptionGroups.append(OptionGroup("PlatformToolset"));
   knownVsOptions.append("/PlatformToolset", Option(group, String()));
+  group = &knownOptionGroups.append(OptionGroup("UseDebugLibraries"));
+  knownVsOptions.append("/UseDebugLibraries", Option(group, String()));
 
   //
   engine.addDefaultKey("tool", "vcxproj");
@@ -159,8 +161,8 @@ bool Vcxproj::generate(const Map<String, String>& userArgs)
   engine.addDefaultKey("configurations", "Debug Release");
   engine.addDefaultKey("targets"); // an empty target list exists per default
   engine.addDefaultKey("buildDir", "$(configuration)");
-  engine.addDefaultKey("cppFlags", "/W3 $(if $(Debug),/Od,/O2 /Oy)");
-  engine.addDefaultKey("cFlags", "/W3 $(if $(Debug),/Od,/O2 /Oy)");
+  engine.addDefaultKey("cppFlags", "/W3 $(if $(Debug),/UseDebugLibraries,/O2 /Oy)");
+  engine.addDefaultKey("cFlags", "/W3 $(if $(Debug),/UseDebugLibraries,/O2 /Oy)");
   engine.addDefaultKey("linkFlags", "$(if $(Debug),/INCREMENTAL /DEBUG,/OPT:REF /OPT:ICF)");
   {
     Map<String, String> cSource;
@@ -422,6 +424,11 @@ bool Vcxproj::processData()
         if(!projectConfig.vsOptions.find("CharacterSet"))
           projectConfig.vsOptions.append("CharacterSet", "MultiByte");
       }
+      if(defines.find("_DEBUG"))
+      {
+        if(!projectConfig.vsOptions.find("UseDebugLibraries"))
+          projectConfig.vsOptions.append("UseDebugLibraries", "true");
+      }
 
       // determine project type
       projectConfig.type = "Utility";
@@ -497,6 +504,7 @@ bool Vcxproj::processData()
         if(!additionalOptions.isEmpty())
           projectConfig.cppOptions.append("AdditionalOptions", join(additionalOptions, ' ') + " %(AdditionalOptions)");
       }
+      if(projectConfig.vsOptions.find("UseDebugLibraries"))
       { // We do not have to set /Od because of "<UseDebugLibraries>true</UseDebugLibraries>".
         Map<String, String>::Node* node = projectConfig.cppOptions.find("Optimization");
         if (node && node->data == "Disabled")
@@ -1003,10 +1011,10 @@ bool Vcxproj::generateVcxproj(Project& project)
     fileWrite(String("    <ConfigurationType>") + config.type + "</ConfigurationType>\r\n");
 
     //if(config.name == "Debug")
-    if(config.compilerFlags.find("/Od"))
+    if(config.vsOptions.find("UseDebugLibraries"))
     {
       fileWrite("    <UseDebugLibraries>true</UseDebugLibraries>\r\n"); // This options changes some default compiler/linker settings, but I have no idea how it can be set up in the visual studio project settings.
-                                                                        // Let's asume a configuration "uses debug libraries" whenever the resulting code should not be optimized (/Od).
+                                                                        // Let's asume a configuration "uses debug libraries" when _DEBUG is set.
 
     }
     else
