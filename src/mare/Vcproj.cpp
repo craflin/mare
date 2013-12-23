@@ -102,6 +102,7 @@ bool Vcproj::generate(const Map<String, String>& userArgs)
   engine.addDefaultKey("targets"); // an empty target list exists per default
   engine.addDefaultKey("buildDir", "$(configuration)");
   engine.addDefaultKey("cppFlags", "/W3 $(if $(Debug),/Od /ZI,/O2 /Oy)");
+  engine.addDefaultKey("cFlags", "/W3 $(if $(Debug),/Od /ZI,/O2 /Oy)");
   engine.addDefaultKey("linkFlags", "$(if $(Debug),/INCREMENTAL /DEBUG,/OPT:REF /OPT:ICF)");
   {
     Map<String, String> cSource;
