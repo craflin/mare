@@ -7,7 +7,7 @@
 #include "Tools/Error.h"
 #include "Statement.h"
 
-Parser::Parser(Engine& engine) : engine(engine), readBufferPos(0), readBufferEnd(0), currentLine(1), currentChar(0) {}
+Parser::Parser(Engine& engine) : engine(engine), readBufferPos(0), readBufferEnd(0), currentLine(1), currentChar(' ') {}
 
 Statement* Parser::parse(const String& file, Engine::ErrorHandler errorHandler, void* userData)
 {
@@ -36,12 +36,12 @@ void Parser::nextChar()
 {
   if(readBufferPos == readBufferEnd)
   {
-    if(currentChar == -1)
+    if(currentChar == '\0')
       return;
     int i = file.read(readBuffer, sizeof(readBuffer));
     if(i <= 0)
     {
-      currentChar = -1;
+      currentChar = '\0';
       return;
     }
     else
@@ -61,7 +61,7 @@ void Parser::nextToken()
     nextChar();
     switch(c)
     {
-    case -1: currentToken.id = Token::eof; return;
+    case '\0': currentToken.id = Token::eof; return;
     case '(': currentToken.id = Token::leftParenthesis; return;
     case ')': currentToken.id = Token::rightParenthesis; return;
     case '{': currentToken.id = Token::leftBrace; return;
@@ -158,7 +158,7 @@ void Parser::nextToken()
         for(;;)
         {
           nextChar();
-          if(currentChar == -1)
+          if(currentChar == '\0')
             goto handleNextChar;
           if(currentChar == '*')
           {
@@ -175,7 +175,7 @@ void Parser::nextToken()
         for(;;)
         {
           nextChar();
-          if(currentChar == -1 || currentChar == '\r' || currentChar == '\n')
+          if(currentChar == '\0' || currentChar == '\r' || currentChar == '\n')
             goto handleNextChar;
         }
 
@@ -203,7 +203,7 @@ void Parser::nextToken()
           if(currentChar == '\\')
           {
             nextChar();
-            if(currentChar == -1)
+            if(currentChar == '\0')
               goto handleNextChar;
             static const char backslashChars[] = "rnt\"\\";
             static const char backslashTranslation[] = "\r\n\t\"\\";
@@ -219,7 +219,7 @@ void Parser::nextToken()
           else
             value.append(currentChar);
           nextChar();
-          if(currentChar == -1)
+          if(currentChar == '\0')
             goto handleNextChar;
         }
         nextChar(); // skip closing "
