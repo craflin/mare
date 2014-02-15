@@ -42,7 +42,7 @@ Compiling Mare
 
 ### Windows
 
-Git and Visual Studio 2010 (or newer) are required to compile Mare on Windows (e.g. Windows Xp, Windows 7). https://github.com/craflin/mare.git has the be cloned into a working directory. The directory "VS2010" of the working copy will then contain the project files for Visual Studio that can be used to compile the program. The resulting binary file (mare.exe) can be found in the directory "Debug" or "Release" depending on the configuration that was used to compile the program.
+Compiling Mare on Windows requires Git and Visual Studio 2010 (or newer, e.g Visual Studio 2013 Express). You should start off with cloning https://github.com/craflin/mare.git to create your working copy of the source tree. Once your working copy is ready, navigate to its root directory and call "generate.bat --vcxproj=2010" (or 2012, or 2013). This will create an unoptimized build of Mare (Debug/mare.exe) and generate project files for Visual Studio of the given version. The project files can be opened in Visual Studio to create a build with optimized (Release) code.
 
 ### GNU/Linux
 
