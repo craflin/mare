@@ -46,16 +46,16 @@ Compiling Mare on Windows requires Git and Visual Studio 2010 (or newer, e.g Vis
 
 ### GNU/Linux
 
-Git, a compiler compatible with g++ and Make are required to compile Mare on GNU/Linux (or another GNU/Linux-like operating system). Mare can then be cloned and compiled with:
+Compiling Mare on GNU/Linux (or another GNU/Linux-like operating system) requires Git, a bash like shell and a g++ compatible compiler. Mare can be cloned and compiled with:
 
 ```
 $ cd /your/working/directory
 $ git clone https://github.com/craflin/mare.git mare
 $ cd mare
-$ make
+$ ./generate
 ```
 
-The generated executable (mare) will be located in the directory "Debug". It can be used to compile Mare without debug symbols:
+The generated executable (mare) will be located in the directory "Debug". It can be used to create an optimized build of Mare without debug symbols:
 
 ```
 $ cd /your/working/directory/mare
