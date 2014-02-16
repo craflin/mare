@@ -1,0 +1,61 @@
+#!/bin/sh
+
+
+MARE_BUILD_DIR="Debug"
+MARE_OUTPUT_DIR="Debug"
+MARE_SOURCE_DIR="src"
+MARE_SOURCE_FILES="mare/CMake.cpp mare/CodeBlocks.cpp mare/CodeLite.cpp mare/Main.cpp mare/Make.cpp mare/Mare.cpp mare/NetBeans.cpp mare/Vcproj.cpp mare/Vcxproj.cpp mare/Tools/md5.cpp libmare/Engine.cpp libmare/Namespace.cpp libmare/Parser.cpp libmare/Statement.cpp libmare/Tools/Directory.cpp libmare/Tools/Error.cpp libmare/Tools/File.cpp libmare/Tools/Process.cpp libmare/Tools/Scope.cpp libmare/Tools/String.cpp libmare/Tools/Word.cpp"
+
+
+[ -z "$CXX" ] && CXX=g++
+
+
+getArgs()
+{
+  while [ ! -z "$1" ]; do
+    case $1 in
+      --buildDir=*)
+        MARE_BUILD_DIR="${1#--buildDir=}"
+        ;;
+      --outputDir=*)
+        MARE_OUTPUT_DIR="${1#--outputDir=}"
+        ;;
+      --sourceDir=*)
+        MARE_SOURCE_DIR="${1#--sourceDir=}"
+        ;;
+      *)
+        echo "Usage: $0 [--buildDir=<dir>] [--outputDir=<dir>] [--sourceDir=<dir>]"
+        exit 1
+        ;;
+    esac
+    shift
+  done
+}
+
+build()
+{
+  if [ ! -f "$MARE_SOURCE_DIR/mare/Main.cpp" ]; then
+    echo "error: Could not find source files."
+    exit 1
+  fi
+  mkdir -p "$MARE_BUILD_DIR"
+  mkdir -p "$MARE_OUTPUT_DIR"
+  rm -f "$MARE_OUTPUT_DIR/mare"
+  MARE_OBJECTS=
+  for file in $MARE_SOURCE_FILES; do
+    OBJECT="$MARE_BUILD_DIR/$(basename ${file%.cpp}).o"
+    MARE_OBJECTS="$MARE_OBJECTS $OBJECT"
+    echo "$file"
+    $CXX -Wall -g -I"$MARE_SOURCE_DIR/libmare" -o "$OBJECT" -c "$MARE_SOURCE_DIR/$file"
+  done
+  echo "Linking $MARE_OUTPUT_DIR/mare..."
+  $CXX -o "$MARE_OUTPUT_DIR/mare" $MARE_OBJECTS
+}
+
+
+getArgs $@ || exit 1
+build || exit 1
+
+
+
+
