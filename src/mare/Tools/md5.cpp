@@ -146,7 +146,7 @@ void MD5::final(unsigned char digest[16])
     transform(ctx->buf, (uint32 *) ctx->in);
     byteReverse((unsigned char *) ctx->buf, 4);
     memcpy(digest, ctx->buf, 16);
-    memset(ctx, 0, sizeof(ctx));        /* In case it's sensitive */
+    memset(ctx, 0, sizeof(MD5));        /* In case it's sensitive */
 }
 
 
