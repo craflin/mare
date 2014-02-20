@@ -162,18 +162,14 @@ bool CodeLite::readFile()
         if(!projectConfig.buildCommand.isEmpty())
           projectConfig.customBuild = true;
 
-        /*
         engine.getKeys("cppFlags", projectConfig.cppFlags, true);
-        List<String> linkFlags;
-        engine.getKeys("linkFlags", linkFlags, true);
-        for(const List<String>::Node* i = linkFlags.getFirst(); i; i = i->getNext())
-          projectConfig.linkFlags.append(i->data, 0);
-        projectConfig.firstOutput = engine.getFirstKey("output", false);
+        engine.getKeys("cFlags", projectConfig.cFlags, true);
+        engine.getKeys("linkFlags", projectConfig.cppFlags, true);
         engine.getKeys("defines", projectConfig.defines, true);
         engine.getKeys("includePaths", projectConfig.includePaths, true);
         engine.getKeys("libPaths", projectConfig.libPaths, true);
         engine.getKeys("libs", projectConfig.libs, true);
-        */
+
         List<String> dependencies;
         engine.getKeys("dependencies", dependencies, false);
         for(const List<String>::Node* i = dependencies.getFirst(); i; i = i->getNext())
@@ -364,17 +360,24 @@ bool CodeLite::generateProject(Project& project)
     if(config.customBuild)
       fileWrite("      <Compiler Options=\"\" C_Options=\"\" Required=\"no\" PreCompiledHeader=\"\"/>\n");
     else
-    { // TODO
-      fileWrite("      <Compiler Options=\"-g\" C_Options=\"-g\" Required=\"yes\" PreCompiledHeader=\"\">\n");
-      fileWrite("        <IncludePath Value=\".\"/>\n");
+    {
+      fileWrite(String("      <Compiler Options=\"") + join(config.cppFlags, ' ') + "\" C_Options=\"" + join(config.cFlags, ' ') +  "\" Required=\"yes\" PreCompiledHeader=\"\">\n");
+      for(const List<String>::Node* i = config.includePaths.getFirst(); i; i = i->getNext())
+        fileWrite(String("        <IncludePath Value=\"") + xmlEscape(i->data) + "\"/>\n");
+      for(const List<String>::Node* i = config.defines.getFirst(); i; i = i->getNext())
+        fileWrite(String("        <Preprocessor Value=\"") + xmlEscape(i->data) + "\"/>\n");
       fileWrite("      </Compiler>\n");
     }
     if(config.customBuild)
       fileWrite("      <Linker Options=\"\" Required=\"no\"/>\n");
     else
     {
-      // TODO
-      fileWrite("      <Linker Options=\"\" Required=\"yes\"/>\n");
+      fileWrite(String("      <Linker Options=\"") + join(config.linkFlags, ' ') + "\" Required=\"yes\">\n");
+      for(const List<String>::Node* i = config.libPaths.getFirst(); i; i = i->getNext())
+        fileWrite(String("        <LibraryPath Value=\"") + xmlEscape(i->data) + "\"/>\n");
+      for(const List<String>::Node* i = config.libs.getFirst(); i; i = i->getNext())
+        fileWrite(String("        <Library Value=\"") + xmlEscape(i->data) + "\"/>\n");
+      fileWrite("      </Linker>\n");
     }
 
     // TODO

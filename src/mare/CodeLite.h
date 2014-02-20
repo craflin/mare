@@ -43,14 +43,16 @@ private:
       /*
       List<String> outputs;
       List<String> inputs;
+      */
       List<String> dependencies;
       List<String> cppFlags;
-      Map<String, void*> linkFlags;
+      List<String> cFlags;
+      List<String> linkFlags;
       List<String> defines;
       List<String> includePaths;
       List<String> libPaths;
       List<String> libs;
-      */
+
       Config(const String& name) : name(name), customBuild(false) {}
     };
 
