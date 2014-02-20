@@ -31,6 +31,9 @@ bool CodeLite::generate(const Map<String, String>& userArgs)
   engine.addDefaultKey("configurations", "Debug Release");
   engine.addDefaultKey("targets"); // an empty target list exists per default
   engine.addDefaultKey("buildDir", "$(configuration)");
+  engine.addDefaultKey("cFlags", "-Wall $(if $(Debug),-g,-Os -fomit-frame-pointer)");
+  engine.addDefaultKey("cppFlags", "-Wall $(if $(Debug),-g,-Os -fomit-frame-pointer)");
+  engine.addDefaultKey("linkFlags", "$(if $(Debug),,-s)");
 
   {
     Map<String, String> cApplication;
