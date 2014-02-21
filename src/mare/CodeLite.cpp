@@ -11,7 +11,7 @@
 
 #include "CodeLite.h"
 
-bool CodeLite::generate(const Map<String, String>& userArgs)
+void CodeLite::addDefaultKeys(Engine& engine)
 {
   engine.addDefaultKey("tool", "CodeLite");
   engine.addDefaultKey("CodeLite", "CodeLite");
@@ -36,198 +36,118 @@ bool CodeLite::generate(const Map<String, String>& userArgs)
   engine.addDefaultKey("linkFlags", "$(if $(Debug),,-s)");
 
   {
+    Map<String, String> cSource;
+    cSource.append("command", "__cSource");
+    engine.addDefaultKey("cSource", cSource);
+  }
+  {
+    Map<String, String> cppSource;
+    cppSource.append("command", "__cppSource");
+    engine.addDefaultKey("cppSource", cppSource);
+  }
+  {
+    Map<String, String> rcSource;
+    rcSource.append("command", "__rcSource");
+    engine.addDefaultKey("rcSource", rcSource);
+  }
+  {
     Map<String, String> cApplication;
-    cApplication.append("command", "__Application");
+    cApplication.append("command", "__cApplication");
     cApplication.append("output", "$(buildDir)/$(target)$(if $(Win32),.exe)");
-    engine.addDefaultKey("cppApplication", cApplication);
     engine.addDefaultKey("cApplication", cApplication);
   }
   {
+    Map<String, String> cppApplication;
+    cppApplication.append("command", "__cppApplication");
+    cppApplication.append("output", "$(buildDir)/$(target)$(if $(Win32),.exe)");
+    engine.addDefaultKey("cppApplication", cppApplication);
+  }
+  {
     Map<String, String> cDynamicLibrary;
-    cDynamicLibrary.append("command", "__DynamicLibrary");
+    cDynamicLibrary.append("command", "__cDynamicLibrary");
     cDynamicLibrary.append("output", "$(buildDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.dll,.so)");
-    engine.addDefaultKey("cppDynamicLibrary", cDynamicLibrary);
     engine.addDefaultKey("cDynamicLibrary", cDynamicLibrary);
   }
   {
+    Map<String, String> cppDynamicLibrary;
+    cppDynamicLibrary.append("command", "__cppDynamicLibrary");
+    cppDynamicLibrary.append("output", "$(buildDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.dll,.so)");
+    engine.addDefaultKey("cppDynamicLibrary", cppDynamicLibrary);
+  }
+  {
     Map<String, String> cStaticLibrary;
-    cStaticLibrary.append("command", "__StaticLibrary");
+    cStaticLibrary.append("command", "__cStaticLibrary");
     cStaticLibrary.append("output", "$(buildDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.lib,.a)");
-    engine.addDefaultKey("cppStaticLibrary", cStaticLibrary);
     engine.addDefaultKey("cStaticLibrary", cStaticLibrary);
   }
-
-  // add user arguments
-  for(const Map<String, String>::Node* i = userArgs.getFirst(); i; i = i->getNext())
-    engine.addCommandLineKey(i->key, i->data);
-
-  // step #1: read input file
-  if(!readFile())
-    return false;
-
-  // step #2: ...
-  if(!processData())
-    return false;
-
-  // step #3:  generate workspace and project files
-  if(!generateWorkspace())
-    return false;
-  if(!generateProjects())
-    return false;
-
-  return true;
+  {
+    Map<String, String> cppStaticLibrary;
+    cppStaticLibrary.append("command", "__cppStaticLibrary");
+    cppStaticLibrary.append("output", "$(buildDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.lib,.a)");
+    engine.addDefaultKey("cppStaticLibrary", cppStaticLibrary);
+  }
 }
 
-bool CodeLite::readFile()
+bool CodeLite::processData(const Data& data)
 {
-  // get some global keys
-  engine.enterRootKey();
-  workspaceName = engine.getFirstKey("name");
-  List<String> allPlatforms, allConfigurations, allTargets;
-  engine.getKeys("platforms", allPlatforms);
-  engine.getKeys("configurations", allConfigurations);
-  engine.getKeys("targets", allTargets);
-  engine.leaveKey();
-
-  // do something for each target in each configuration
-  for(const List<String>::Node* i = allPlatforms.getFirst(); i; i = 0) // just use the first platform since CodeLite does not really support multiple target platforms
+  // get configurations
+  for(const Map<String, Platform>::Node* i = data.platforms.getFirst(); i; i = i->getNext())
   {
-    const String& platform = i->data;
-    for(const List<String>::Node* i = allConfigurations.getFirst(); i; i = i->getNext())
+    const String& platformName = i->key;
+    const Platform& platform = i->data;
+    for(const Map<String, Configuration>::Node* i = platform.configurations.getFirst(); i; i = i->getNext())
     {
-      const String& configName = i->data;
-      configs.append(configName);
+      String configurationName = i->key;
+      if(data.platforms.getSize() > 1)
+        configurationName += String(" ") + platformName;
+      configurations.append(configurationName);
+    }
+  }
 
-      for(const List<String>::Node* i = allTargets.getFirst(); i; i = i->getNext())
+  // get projects
+  for(const Map<String, Platform>::Node* i = data.platforms.getFirst(); i; i = i->getNext())
+  {
+    const String& platformName = i->key;
+    const Platform& platform = i->data;
+    for(const Map<String, Configuration>::Node* i = platform.configurations.getFirst(); i; i = i->getNext())
+    {
+      String configurationName = i->key;
+      if(data.platforms.getSize() > 1)
+        configurationName += String(" ") + platformName;
+      const Configuration& configuration = i->data;
+      for(const Map<String, Target>::Node* i = configuration.targets.getFirst(); i; i = i->getNext())
       {
-        engine.enterUnnamedKey();
-        engine.addDefaultKey("platform", platform);
-        engine.addDefaultKey(platform, platform);
-        engine.addDefaultKey("configuration", configName);
-        engine.addDefaultKey(configName, configName);
-        engine.addDefaultKey("target", i->data);
-        //engine.addDefaultKey(i->data, i->data);
-        engine.enterRootKey();
-        VERIFY(engine.enterKey("targets"));
-        if(!engine.enterKey(i->data))
+        const String& targetName = i->key;
+        const Target& target = i->data;
+        Map<String, Project>::Node* node = projects.find(targetName);
+        Project& project = node ? node->data : projects.append(targetName);
+        Project::Configuration& projectConfig = project.configurations.append(configurationName);
+        projectConfig.target = &target;
+
+        for(const Map<String, File>::Node* i = target.files.getFirst(); i; i = i->getNext())
         {
-          engine.error(String().format(256, "cannot find target \"%s\"", i->data.getData()));
-          return false;
+          const String& fileName = i->key;
+          Map<String, Project::File>::Node* node = project.files.find(fileName);
+          Project::File& file = node ? node->data : project.files.append(fileName);
+          Project::File::Configuration& fileConfig = file.configurations.append(configurationName);
+          fileConfig.file = &i->data;
         }
-
-        Map<String, Project>::Node* node = projects.find(i->data);
-        Project& project = node ? node->data : projects.append(i->data, Project(i->data));
-        //bool isNewProject = node && true;
-
-        Project::Config& projectConfig = project.configs.append(configName, Project::Config(configName));
-
-        /*
-        if(isNewProject)
-        {
-          String filterName = engine.getFirstKey("folder", false);
-          if(!filterName.isEmpty())
-          {
-            Map<String, ProjectFilter>::Node* node = projectFilters.find(filterName);
-            ProjectFilter& filter = node ? node->data : projectFilters.append(filterName, ProjectFilter(createSomethingLikeGUID(filterName)));
-            filter.projects.append(project);
-          }
-        }
-        */
-
-        engine.getText("buildCommand", projectConfig.buildCommand, false);
-        engine.getText("reBuildCommand", projectConfig.reBuildCommand, false);
-        engine.getText("cleanCommand", projectConfig.cleanCommand, false);
-        projectConfig.buildDir = engine.getFirstKey("buildDir", true);
-
-        engine.getText("command", projectConfig.command, false);
-        projectConfig.firstOutput = engine.getFirstKey("output", false);
-
-        if(!projectConfig.command.isEmpty())
-        {
-          String firstCommand = projectConfig.command.getFirst()->data;
-          if(firstCommand == "__Custom" || firstCommand == "__Application" || firstCommand == "__StaticLibrary" || firstCommand == "__DynamicLibrary")
-          {
-            if(firstCommand == "__Custom")
-            {
-              projectConfig.customBuild = true;
-              firstCommand = (projectConfig.command.getSize() > 1) ? projectConfig.command.getFirst()->getNext()->data : String();
-            }
-
-            if(firstCommand == "__Application")
-              projectConfig.type = "Executable";
-            else if(firstCommand == "__StaticLibrary")
-              projectConfig.type = "Static Library";
-            else if(firstCommand == "__DynamicLibrary")
-              projectConfig.type = "Dynamic Library";
-            projectConfig.command.clear();
-          }
-        }
-        if(!projectConfig.buildCommand.isEmpty())
-          projectConfig.customBuild = true;
-
-        engine.getKeys("cppFlags", projectConfig.cppFlags, true);
-        engine.getKeys("cFlags", projectConfig.cFlags, true);
-        engine.getKeys("linkFlags", projectConfig.cppFlags, true);
-        engine.getKeys("defines", projectConfig.defines, true);
-        engine.getKeys("includePaths", projectConfig.includePaths, true);
-        engine.getKeys("libPaths", projectConfig.libPaths, true);
-        engine.getKeys("libs", projectConfig.libs, true);
-
-        List<String> dependencies;
-        engine.getKeys("dependencies", dependencies, false);
-        for(const List<String>::Node* i = dependencies.getFirst(); i; i = i->getNext())
-          if(!project.dependencies.find(i->data))
-            project.dependencies.append(i->data);
-        List<String> root;
-        engine.getKeys("root", root, true);
-        for(const List<String>::Node* i = root.getFirst(); i; i = i->getNext())
-          project.roots.append(i->data);
-        if(engine.enterKey("files"))
-        {
-          List<String> files;
-          engine.getKeys(files);
-          for(const List<String>::Node* i = files.getFirst(); i; i = i->getNext())
-          {
-            Map<String, Project::File>::Node* node = project.files.find(i->data);
-            Project::File& file = node ? node->data : project.files.append(i->data, Project::File(i->data));
-            engine.enterUnnamedKey();
-            engine.addDefaultKey("file", i->data);
-            VERIFY(engine.enterKey(i->data));
-            file.folder = engine.getFirstKey("folder", false);
-            engine.leaveKey(); // VERIFY(engine.enterKey(i->data));
-            engine.leaveKey();
-          }
-
-          engine.leaveKey();
-        }
-
-        engine.leaveKey();
-        engine.leaveKey();
-        engine.leaveKey();
-        engine.leaveKey();
       }
     }
   }
 
-  return true;
-}
-
-bool CodeLite::processData()
-{
-  return true;
-}
-
-bool CodeLite::generateWorkspace()
-{
   // remove projects not creating any output files
   for(Map<String, Project>::Node* i = projects.getFirst(), * nexti; i; i = nexti)
   {
     nexti = i->getNext();
     if(!i->data.files.isEmpty())
       continue;
-    for(const Map<String, Project::Config>::Node* j = i->data.configs.getFirst(); j; j = j->getNext())
-      if(!j->data.command.isEmpty() || !j->data.firstOutput.isEmpty() || !j->data.type.isEmpty())
+    for(const Map<String, Project::Configuration>::Node* j = i->data.configurations.getFirst(); j; j = j->getNext())
+    {
+      const Target& target = *j->data.target;
+      if(!target.command.isEmpty() || !target.output.isEmpty())
         goto next;
+    }
     projects.remove(i);
   next:;
   }
@@ -235,14 +155,97 @@ bool CodeLite::generateWorkspace()
   // avoid creating an empty and possibly nameless solution file
   if(projects.isEmpty())
   {
-    engine.error("cannot find any targets");
+    error("Could not find any targets.");
     return false;
   }
 
   // create solution file name
-  if(workspaceName.isEmpty() && !projects.isEmpty())
-    workspaceName = projects.getFirst()->data.name;
+  if(data.name.isEmpty())
+    workspaceName = projects.getFirst()->key;
+  else
+    workspaceName = data.name;
 
+  // generate file tree
+  for(Map<String, Project>::Node* i = projects.getFirst(); i; i = i->getNext())
+  {
+    Project& project = i->data;
+
+    // get root directories
+    for(Map<String, Project::Configuration>::Node* i = project.configurations.getFirst(); i; i = i->getNext())
+    {
+      const Project::Configuration& configuration = i->data;
+      const Target& target = *configuration.target;
+      for(const List<String>::Node* i = target.root.getFirst(); i; i = i->getNext())
+        project.roots.append(i->data);
+    }
+
+    // get folder of each file
+    for(Map<String, Project::File>::Node* i = project.files.getFirst(); i; i = i->getNext())
+    {
+      Project::File& file = i->data;
+      for(const Map<String, Project::File::Configuration>::Node* i = file.configurations.getFirst(); i; i = i->getNext())
+        if(!i->data.file->folder.isEmpty())
+        {
+          file.folder = i->data.file->folder;
+          break;
+        }
+    }
+
+    // create folders and add files to the folders
+    for(const Map<String, Project::File>::Node* i = project.files.getFirst(); i; i = i->getNext())
+    {
+      const String& file = i->key;
+      const String& folder = i->data.folder;
+      List<String> foldersToEnter;
+      String dirName = folder.isEmpty() ? ::File::getDirname(file) : folder;
+      for(;;)
+      {
+        if(dirName == ".")
+          break;
+        String dirBaseName = ::File::getBasename(dirName);
+        if(folder.isEmpty() && (dirBaseName == ".." || project.roots.find(dirName)))
+          break;
+        foldersToEnter.prepend(dirBaseName);
+        dirName = ::File::getDirname(dirName);
+      }
+      FileTreeNode* f = &project.fileTree;
+      for(const List<String>::Node* i = foldersToEnter.getFirst(); i; i = i->getNext())
+      {
+        Map<String, FileTreeNode*>::Node* node = f->folders.find(i->data);
+        f = node ? node->data : f->folders.append(i->data, new FileTreeNode());
+      }
+      f->files.append(file);
+    }
+  }
+
+/*
+  // determine project types
+  for(Map<String, Project>::Node* i = projects.getFirst(), * nexti; i; i = nexti)
+  {
+    Project& project = i->data;
+    for(Map<String, Project::Configuration>::Node* i = project.configurations.getFirst(); i; i = i->getNext())
+    {
+      Project::Configuration& configuration = i->data;
+
+    }
+  }
+  */
+
+  return true;
+}
+
+bool CodeLite::writeFiles()
+{
+  if(!writeWorkspace())
+    return false;
+  for(Map<String, Project>::Node* i = projects.getFirst(); i; i = i->getNext())
+    if(!writeProject(i->key, i->data))
+      return false;
+  return true;
+}
+
+bool CodeLite::writeWorkspace()
+{
   // open output file
   fileOpen(workspaceName + ".workspace");
 
@@ -251,19 +254,19 @@ bool CodeLite::generateWorkspace()
   fileWrite(String("<CodeLite_Workspace Name=\"") + workspaceName+ "\" Database=\"./" + workspaceName + ".tags\">\n");
   for(const Map<String, Project>::Node* i = projects.getFirst(); i; i = i->getNext())
   {
-    const Project& project = i->data;
-    fileWrite(String("  <Project Name=\"") + project.name + "\" Path=\"" + project.name + ".project\"" + (i == projects.getFirst() ? String(" Active=\"Yes\"") : String()) + "/>\n");
+    const String& projectName = i->key;
+    fileWrite(String("  <Project Name=\"") + projectName + "\" Path=\"" + projectName + ".project\"" + (i == projects.getFirst() ? String(" Active=\"Yes\"") : String()) + "/>\n");
   }
   fileWrite("  <BuildMatrix>\n");
-  for(const Map<String, void*>::Node* i = configs.getFirst(); i; i = i->getNext())
+  for(const List<String>::Node* i = configurations.getFirst(); i; i = i->getNext())
   {
-    const String& configName = i->key;
+    const String& configurationName = i->data;
 
-    fileWrite(String("    <WorkspaceConfiguration Name=\"") + configName + "\" Selected=\"yes\">\n");
+    fileWrite(String("    <WorkspaceConfiguration Name=\"") + configurationName + "\" Selected=\"yes\">\n");
     for(const Map<String, Project>::Node* i = projects.getFirst(); i; i = i->getNext())
     {
-      const Project& project = i->data;
-      fileWrite(String("      <Project Name=\"") + project.name + "\" ConfigName=\"" + configName + "\"/>\n");
+      const String& projectName = i->key;
+      fileWrite(String("      <Project Name=\"") + projectName + "\" ConfigName=\"" + configurationName + "\"/>\n");
     }
     fileWrite("    </WorkspaceConfiguration>\n");
   }
@@ -275,74 +278,32 @@ bool CodeLite::generateWorkspace()
   return true;
 }
 
-bool CodeLite::generateProjects()
+bool CodeLite::writeProject(const String& projectName, const Project& project)
 {
-  for(Map<String, Project>::Node* i = projects.getFirst(); i; i = i->getNext())
-    if(!generateProject(i->data))
-      return false;
-  return true;
-}
-
-bool CodeLite::generateProject(Project& project)
-{
-  fileOpen(project.name + ".project");
+  fileOpen(projectName + ".project");
 
   fileWrite("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
-  fileWrite(String("<CodeLite_Project Name=\"") + project.name + "\" InternalType=\"Console\">\n");
+  fileWrite(String("<CodeLite_Project Name=\"") + projectName + "\" InternalType=\"Console\">\n");
   fileWrite("  <Description/>\n");
 
-  class FileTree
+  class FileTreeWriter
   {
   public:
-    Map<String, void*> folders;
-    List<String> files;
-
-    FileTree()
+    static void write(const FileTreeNode& node, CodeLite& codeLite, const String& space)
     {
-      for(Map<String, void*>::Node* i = folders.getFirst(); i; i = i->getNext())
-        delete (FileTree*)i->data;
-    }
-
-    void addFile(Project& project, const String& file, const String& folder)
-    {
-      List<String> foldersToEnter;
-      String dirName = folder.isEmpty() ? File::getDirname(file) : folder;
-      for(;;)
-      {
-        if(dirName == ".")
-          break;
-        String dirBaseName = File::getBasename(dirName);
-        if(folder.isEmpty() && (dirBaseName == ".." || project.roots.find(dirName)))
-          break;
-        foldersToEnter.prepend(dirBaseName);
-        dirName = File::getDirname(dirName);
-      }
-      FileTree* f = this;
-      for(const List<String>::Node* i = foldersToEnter.getFirst(); i; i = i->getNext())
-      {
-        Map<String, void*>::Node* node = f->folders.find(i->data);
-        f = (FileTree*)(node ? node->data : f->folders.append(i->data, new FileTree()));
-      }
-      f->files.append(file);
-    }
-
-    void write(CodeLite& codeLite, const String& space) const
-    {
-      for(const Map<String, void*>::Node* i = folders.getFirst(); i; i = i->getNext())
+      for(const Map<String, FileTreeNode*>::Node* i = node.folders.getFirst(); i; i = i->getNext())
       {
         codeLite.fileWrite(space + "  <VirtualDirectory Name=\"" + i->key + "\">\n");
-        ((FileTree*)i->data)->write(codeLite, space + "  ");
+        write(*i->data, codeLite, space + "  ");
         codeLite.fileWrite(space + "  </VirtualDirectory>\n");
       }
-      for(const List<String>::Node* i = files.getFirst(); i; i = i->getNext())
+      for(const List<String>::Node* i = node.files.getFirst(); i; i = i->getNext())
         codeLite.fileWrite(space + "  <File Name=\"" + i->data + "\"/>\n");
+        // todo: exlcude from build?
     }
-  } fileTree;
+  };
 
-  for(Map<String, Project::File>::Node* i = project.files.getFirst(); i; i = i->getNext())
-    fileTree.addFile(project, i->key, i->data.folder);
-
-  fileTree.write(*this, String());
+  FileTreeWriter::write(project.fileTree, *this, String());
 
   fileWrite("  <Settings Type=\"Executable\">\n");
 
@@ -356,37 +317,58 @@ bool CodeLite::generateProject(Project& project)
   fileWrite("      <ResourceCompiler Options=\"\"/>\n");
   fileWrite("    </GlobalSettings>\n");
 
-  for(const Map<String, Project::Config>::Node* i = project.configs.getFirst(); i; i = i->getNext())
+  for(const Map<String, Project::Configuration>::Node* i = project.configurations.getFirst(); i; i = i->getNext())
   {
-    const Project::Config& config = i->data;
-    fileWrite(String("    <Configuration Name=\"") + config.name + "\" CompilerType=\"gnu g++\" DebuggerType=\"GNU gdb debugger\" Type=\"" + config.type + "\" BuildCmpWithGlobalSettings=\"append\" BuildLnkWithGlobalSettings=\"append\" BuildResWithGlobalSettings=\"append\">\n");
-    if(config.customBuild)
+    const String& configurationName = i->key;
+    const Project::Configuration& configuration = i->data;
+    const Target& target = *configuration.target;
+
+    String firstCommand;
+    if(!target.command.isEmpty())
+      firstCommand = target.command.getFirst()->data;
+    String type = "Executable";
+    if(firstCommand == "__cApplication" || firstCommand == "__cppApplication")
+      type = "Executable";
+    else if(firstCommand == "__cStaticLibrary" || firstCommand == "__cppStaticLibrary")
+      type = "Static Library";
+    else if(firstCommand == "__cDynamicLibrary" || firstCommand == "__cppDynamicLibrary")
+      type = "Dynamic Library";
+
+    bool customBuild = !configuration.target->buildCommand.isEmpty();
+
+    fileWrite(String("    <Configuration Name=\"") + configurationName + "\" CompilerType=\"gnu g++\" DebuggerType=\"GNU gdb debugger\" Type=\"" + type + "\" BuildCmpWithGlobalSettings=\"append\" BuildLnkWithGlobalSettings=\"append\" BuildResWithGlobalSettings=\"append\">\n");
+    if(customBuild)
       fileWrite("      <Compiler Options=\"\" C_Options=\"\" Required=\"no\" PreCompiledHeader=\"\"/>\n");
     else
     {
-      fileWrite(String("      <Compiler Options=\"") + join(config.cppFlags, ' ') + "\" C_Options=\"" + join(config.cFlags, ' ') +  "\" Required=\"yes\" PreCompiledHeader=\"\">\n");
-      for(const List<String>::Node* i = config.includePaths.getFirst(); i; i = i->getNext())
+      fileWrite(String("      <Compiler Options=\"") + join(target.cppFlags, ' ') + "\" C_Options=\"" + join(target.cFlags, ' ') +  "\" Required=\"yes\" PreCompiledHeader=\"\">\n");
+      for(const List<String>::Node* i = target.includePaths.getFirst(); i; i = i->getNext())
         fileWrite(String("        <IncludePath Value=\"") + xmlEscape(i->data) + "\"/>\n");
-      for(const List<String>::Node* i = config.defines.getFirst(); i; i = i->getNext())
+      for(const List<String>::Node* i = target.defines.getFirst(); i; i = i->getNext())
         fileWrite(String("        <Preprocessor Value=\"") + xmlEscape(i->data) + "\"/>\n");
       fileWrite("      </Compiler>\n");
     }
-    if(config.customBuild)
+    if(customBuild)
       fileWrite("      <Linker Options=\"\" Required=\"no\"/>\n");
     else
     {
-      fileWrite(String("      <Linker Options=\"") + join(config.linkFlags, ' ') + "\" Required=\"yes\">\n");
-      for(const List<String>::Node* i = config.libPaths.getFirst(); i; i = i->getNext())
+      fileWrite(String("      <Linker Options=\"") + join(target.linkFlags, ' ') + "\" Required=\"yes\">\n");
+      for(const List<String>::Node* i = target.libPaths.getFirst(); i; i = i->getNext())
         fileWrite(String("        <LibraryPath Value=\"") + xmlEscape(i->data) + "\"/>\n");
-      for(const List<String>::Node* i = config.libs.getFirst(); i; i = i->getNext())
+      for(const List<String>::Node* i = target.libs.getFirst(); i; i = i->getNext())
         fileWrite(String("        <Library Value=\"") + xmlEscape(i->data) + "\"/>\n");
       fileWrite("      </Linker>\n");
     }
 
-    // TODO
-    fileWrite("      <ResourceCompiler Options=\"\" Required=\"no\"/>\n");
+    if(customBuild)
+      fileWrite("      <ResourceCompiler Options=\"\" Required=\"no\"/>\n");
+    else
+      fileWrite("      <ResourceCompiler Options=\"\" Required=\"yes\"/>\n");
 
-    fileWrite(String("      <General OutputFile=\"") + config.firstOutput + "\" IntermediateDirectory=\"" + config.buildDir + "\" Command=\"./" + config.firstOutput + "\" CommandArguments=\"\" UseSeparateDebugArgs=\"no\" DebugArguments=\"\" WorkingDirectory=\".\" PauseExecWhenProcTerminates=\"yes\"/>\n");
+    String firstOutput;
+    if(!target.output.isEmpty())
+      firstOutput = target.output.getFirst()->data;
+    fileWrite(String("      <General OutputFile=\"") + firstOutput + "\" IntermediateDirectory=\"" + target.buildDir + "\" Command=\"./" + firstOutput + "\" CommandArguments=\"\" UseSeparateDebugArgs=\"no\" DebugArguments=\"\" WorkingDirectory=\".\" PauseExecWhenProcTerminates=\"yes\"/>\n");
 
     fileWrite("      <Environment EnvVarSetName=\"&lt;Use Defaults&gt;\" DbgSetName=\"&lt;Use Defaults&gt;\"/>\n");
     fileWrite("      <Debugger IsRemote=\"no\" RemoteHostName=\"\" RemoteHostPort=\"\" DebuggerPath=\"\">\n");
@@ -395,10 +377,10 @@ bool CodeLite::generateProject(Project& project)
     fileWrite("      </Debugger>\n");
     fileWrite("      <PreBuild/>\n");
     fileWrite("      <PostBuild/>\n");
-    fileWrite(String("      <CustomBuild Enabled=\"")+ (config.customBuild ? String("yes") : String("no")) + "\">\n");
-    fileWrite(String("        <RebuildCommand>") + joinCommands(config.reBuildCommand) + "</RebuildCommand>\n");
-    fileWrite(String("        <CleanCommand>") + joinCommands(config.cleanCommand) + "</CleanCommand>\n");
-    fileWrite(String("        <BuildCommand>") + joinCommands(config.buildCommand) + "</BuildCommand>\n");
+    fileWrite(String("      <CustomBuild Enabled=\"")+ (customBuild ? String("yes") : String("no")) + "\">\n");
+    fileWrite(String("        <RebuildCommand>") + joinCommands(target.reBuildCommand) + "</RebuildCommand>\n");
+    fileWrite(String("        <CleanCommand>") + joinCommands(target.cleanCommand) + "</CleanCommand>\n");
+    fileWrite(String("        <BuildCommand>") + joinCommands(target.buildCommand) + "</BuildCommand>\n");
     fileWrite("        <PreprocessFileCommand/>\n");
     fileWrite("        <SingleFileCommand/>\n");
     fileWrite("        <MakefileGenerationCommand/>\n");
@@ -407,20 +389,31 @@ bool CodeLite::generateProject(Project& project)
     fileWrite("      </CustomBuild>\n");
     fileWrite("      <AdditionalRules>\n");
     fileWrite("        <CustomPostBuild/>\n");
-    fileWrite("        <CustomPreBuild/>\n");
+    //fileWrite("        <CustomPreBuild/>\n");
+    fileWrite("        <CustomPreBuild>\n");
+    /*
+    foreach file with custom buildrules
+    print output file: input files
+      @command
+    */
+
+    fileWrite("</CustomPreBuild>\n");
     fileWrite("      </AdditionalRules>\n");
     fileWrite("    </Configuration>\n");
   }
 
   fileWrite("  </Settings>\n");
 
-  for(const Map<String, Project::Config>::Node* i = project.configs.getFirst(); i; i = i->getNext())
+  for(const Map<String, Project::Configuration>::Node* i = project.configurations.getFirst(); i; i = i->getNext())
   {
-    const Project::Config& config = i->data;
-    fileWrite(String("  <Dependencies Name=\"") + config.name + "\">\n");
-    for(const Map<String, void*>::Node* i = project.dependencies.getFirst(); i; i = i->getNext())
+    const String& configurationName = i->key;
+    const Project::Configuration& configuration = i->data;
+    const Target& target = *configuration.target;
+    fileWrite(String("  <Dependencies Name=\"") + configurationName + "\">\n");
+    for(const List<String>::Node* i = target.dependencies.getFirst(); i; i = i->getNext())
     {
-      fileWrite(String("    <Project Name=\"") + i->key + "\"/>\n");
+      // todo: check if dependency exists
+      fileWrite(String("    <Project Name=\"") + i->data + "\"/>\n");
     }
     fileWrite("  </Dependencies>\n");
   }
@@ -431,35 +424,6 @@ bool CodeLite::generateProject(Project& project)
   return true;
 }
 
-void CodeLite::fileOpen(const String& name)
-{
-  if(!file.open(name, File::writeFlag))
-  {
-    engine.error(Error::getString());
-    exit(EXIT_FAILURE);
-  }
-  openedFile = name;
-}
-
-void CodeLite::fileWrite(const String& data)
-{
-  if(!file.write(data))
-  {
-    engine.error(Error::getString());
-    exit(EXIT_FAILURE);
-  }
-}
-
-void CodeLite::fileClose()
-{
-  file.close();
-  if(!openedFile.isEmpty())
-  {
-    puts(openedFile.getData());
-    fflush(stdout);
-  }
-  openedFile.clear();
-}
 
 String CodeLite::join(const List<String>& items, char sep, const String& suffix)
 {

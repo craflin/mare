@@ -1,113 +1,68 @@
 
 #pragma once
 
-#include "Tools/Map.h"
-#include "Tools/List.h"
-#include "Tools/String.h"
-#include "Tools/File.h"
+#include "Generator.h"
 
-class Engine;
-
-class CodeLite
+class CodeLite : public Generator
 {
 public:
-
-  CodeLite(Engine& engine) : engine(engine) {}
-
-  bool generate(const Map<String, String>& userArgs);
+  CodeLite(Engine& engine) : Generator(engine) {}
 
 private:
+  class FileTreeNode
+  {
+  public:
+    Map<String, FileTreeNode*> folders;
+    List<String> files;
+
+    ~FileTreeNode()
+    {
+      for(Map<String, FileTreeNode*>::Node* i = folders.getFirst(); i; i = i->getNext())
+        delete i->data;
+    }
+  };
 
   class Project
   {
   public:
-    class Config
+    class Configuration
     {
     public:
-      String name; /**< The name of the configuration without the platform extension */
-
-      List<String> buildCommand; /**< For CustomBuild projects */
-      List<String> reBuildCommand; /**< For CustomBuild projects */
-      List<String> cleanCommand; /**< For CustomBuild projects */
-      /*
-      List<String> preBuildCommand;
-      List<String> preLinkCommand;
-      List<String> postBuildCommand;
-      */
-      String buildDir;
-      String type;
-      List<String> command;
-      //List<String> message;
-      String firstOutput;
-      bool customBuild;
-      /*
-      List<String> outputs;
-      List<String> inputs;
-      */
-      List<String> dependencies;
-      List<String> cppFlags;
-      List<String> cFlags;
-      List<String> linkFlags;
-      List<String> defines;
-      List<String> includePaths;
-      List<String> libPaths;
-      List<String> libs;
-
-      Config(const String& name) : name(name), customBuild(false) {}
+      const Target* target;
     };
 
     class File
     {
     public:
-      String name;
-      String folder;
+      class Configuration
+      {
+      public:
+        const Generator::File* file;
+      };
 
-      File(const String& name) : name(name) {}
+      Map<String, Configuration> configurations;
+      String folder;
     };
 
-    String name;
-    Map<String, Config> configs;
+    Map<String, Configuration> configurations;
     Map<String, File> files;
-    Map<String, void*> dependencies;
     Map<String, void*> roots;
-
-    Project(const String& name) : name(name) {}
+    FileTreeNode fileTree;
   };
-/*
-  class ProjectFilter
-  {
-  public:
-    String guid;
-    List<Project*> projects;
-
-    ProjectFilter(const String& guid) : guid(guid) {}
-  };
-*/
-  Engine& engine;
-
-  File file;
 
   String workspaceName;
-  Map<String, void*> configs;
+  List<String> configurations;
   Map<String, Project> projects;
-  //Map<String, ProjectFilter> projectFilters;
 
-  String openedFile; /**< The file that is currently written */
 
-  bool readFile();
+  virtual void addDefaultKeys(Engine& engine);
+  virtual bool processData(const Data& data);
+  virtual bool writeFiles();
 
-  bool processData();
-
-  bool generateWorkspace();
-  bool generateProjects();
-  bool generateProject(Project& project);
-
-  void fileOpen(const String& name);
-  void fileWrite(const String& data);
-  void fileClose();
+  bool writeWorkspace();
+  bool writeProject(const String& projectName, const Project& project);
 
   static String join(const List<String>& items, char sep = ';', const String& suffix = String());
   static String joinCommands(const List<String>& commands);
   static String xmlEscape(const String& text);
 };
-
