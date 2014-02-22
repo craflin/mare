@@ -9,11 +9,13 @@ public:
   CodeLite(Engine& engine) : Generator(engine) {}
 
 private:
+  class ProjectFile;
+
   class FileTreeNode
   {
   public:
     Map<String, FileTreeNode*> folders;
-    List<String> files;
+    Map<String, const ProjectFile*> files;
 
     ~FileTreeNode()
     {
@@ -22,30 +24,30 @@ private:
     }
   };
 
-  class Project
+  class ProjectConfiguration
+  {
+  public:
+    const Target* target;
+  };
+
+  class ProjectFile
   {
   public:
     class Configuration
     {
     public:
-      const Target* target;
-    };
-
-    class File
-    {
-    public:
-      class Configuration
-      {
-      public:
-        const Generator::File* file;
-      };
-
-      Map<String, Configuration> configurations;
-      String folder;
+      const File* file;
     };
 
     Map<String, Configuration> configurations;
-    Map<String, File> files;
+    String folder;
+  };
+
+  class Project
+  {
+  public:
+    Map<String, ProjectConfiguration> configurations;
+    Map<String, ProjectFile> files;
     Map<String, void*> roots;
     FileTreeNode fileTree;
   };

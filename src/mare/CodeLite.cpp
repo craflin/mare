@@ -121,15 +121,15 @@ bool CodeLite::processData(const Data& data)
         const Target& target = i->data;
         Map<String, Project>::Node* node = projects.find(targetName);
         Project& project = node ? node->data : projects.append(targetName);
-        Project::Configuration& projectConfig = project.configurations.append(configurationName);
+        ProjectConfiguration& projectConfig = project.configurations.append(configurationName);
         projectConfig.target = &target;
 
         for(const Map<String, File>::Node* i = target.files.getFirst(); i; i = i->getNext())
         {
           const String& fileName = i->key;
-          Map<String, Project::File>::Node* node = project.files.find(fileName);
-          Project::File& file = node ? node->data : project.files.append(fileName);
-          Project::File::Configuration& fileConfig = file.configurations.append(configurationName);
+          Map<String, ProjectFile>::Node* node = project.files.find(fileName);
+          ProjectFile& file = node ? node->data : project.files.append(fileName);
+          ProjectFile::Configuration& fileConfig = file.configurations.append(configurationName);
           fileConfig.file = &i->data;
         }
       }
@@ -142,7 +142,7 @@ bool CodeLite::processData(const Data& data)
     nexti = i->getNext();
     if(!i->data.files.isEmpty())
       continue;
-    for(const Map<String, Project::Configuration>::Node* j = i->data.configurations.getFirst(); j; j = j->getNext())
+    for(const Map<String, ProjectConfiguration>::Node* j = i->data.configurations.getFirst(); j; j = j->getNext())
     {
       const Target& target = *j->data.target;
       if(!target.command.isEmpty() || !target.output.isEmpty())
@@ -171,19 +171,19 @@ bool CodeLite::processData(const Data& data)
     Project& project = i->data;
 
     // get root directories
-    for(Map<String, Project::Configuration>::Node* i = project.configurations.getFirst(); i; i = i->getNext())
+    for(Map<String, ProjectConfiguration>::Node* i = project.configurations.getFirst(); i; i = i->getNext())
     {
-      const Project::Configuration& configuration = i->data;
+      const ProjectConfiguration& configuration = i->data;
       const Target& target = *configuration.target;
       for(const List<String>::Node* i = target.root.getFirst(); i; i = i->getNext())
         project.roots.append(i->data);
     }
 
     // get folder of each file
-    for(Map<String, Project::File>::Node* i = project.files.getFirst(); i; i = i->getNext())
+    for(Map<String, ProjectFile>::Node* i = project.files.getFirst(); i; i = i->getNext())
     {
-      Project::File& file = i->data;
-      for(const Map<String, Project::File::Configuration>::Node* i = file.configurations.getFirst(); i; i = i->getNext())
+      ProjectFile& file = i->data;
+      for(const Map<String, ProjectFile::Configuration>::Node* i = file.configurations.getFirst(); i; i = i->getNext())
         if(!i->data.file->folder.isEmpty())
         {
           file.folder = i->data.file->folder;
@@ -192,12 +192,13 @@ bool CodeLite::processData(const Data& data)
     }
 
     // create folders and add files to the folders
-    for(const Map<String, Project::File>::Node* i = project.files.getFirst(); i; i = i->getNext())
+    for(const Map<String, ProjectFile>::Node* i = project.files.getFirst(); i; i = i->getNext())
     {
-      const String& file = i->key;
+      const String& fileName = i->key;
+      const ProjectFile& file = i->data;
       const String& folder = i->data.folder;
       List<String> foldersToEnter;
-      String dirName = folder.isEmpty() ? ::File::getDirname(file) : folder;
+      String dirName = folder.isEmpty() ? ::File::getDirname(fileName) : folder;
       for(;;)
       {
         if(dirName == ".")
@@ -214,7 +215,7 @@ bool CodeLite::processData(const Data& data)
         Map<String, FileTreeNode*>::Node* node = f->folders.find(i->data);
         f = node ? node->data : f->folders.append(i->data, new FileTreeNode());
       }
-      f->files.append(file);
+      f->files.append(fileName, &file);
     }
   }
 
@@ -289,21 +290,53 @@ bool CodeLite::writeProject(const String& projectName, const Project& project)
   class FileTreeWriter
   {
   public:
-    static void write(const FileTreeNode& node, CodeLite& codeLite, const String& space)
+    static void write(const List<String>& configurations, const FileTreeNode& node, CodeLite& codeLite, const String& space)
     {
       for(const Map<String, FileTreeNode*>::Node* i = node.folders.getFirst(); i; i = i->getNext())
       {
         codeLite.fileWrite(space + "  <VirtualDirectory Name=\"" + i->key + "\">\n");
-        write(*i->data, codeLite, space + "  ");
+        write(configurations, *i->data, codeLite, space + "  ");
         codeLite.fileWrite(space + "  </VirtualDirectory>\n");
       }
-      for(const List<String>::Node* i = node.files.getFirst(); i; i = i->getNext())
-        codeLite.fileWrite(space + "  <File Name=\"" + i->data + "\"/>\n");
-        // todo: exlcude from build?
+
+      List<String> excludeConfigurations;
+      for(const Map<String, const ProjectFile*>::Node* i = node.files.getFirst(); i; i = i->getNext())
+      {
+        const String& fileName = i->key;
+        const ProjectFile& file = *i->data;
+        String fileExtension = ::File::getExtension(fileName);
+        fileExtension.lowercase();
+        excludeConfigurations.clear();
+        for(const List<String>::Node* i = configurations.getFirst(); i; i = i->getNext())
+        {
+          const Map<String, ProjectFile::Configuration>::Node* node = file.configurations.find(i->data);
+          if(!node)
+          {
+            excludeConfigurations.append(i->data);
+            continue;
+          }
+          const ProjectFile::Configuration& fileConfig = node->data;
+          String command;
+          if(!fileConfig.file->command.isEmpty())
+            command = fileConfig.file->command.getFirst()->data;
+          if(command == "__cSource" || command == "__cppSource" || command == "__rcSource")
+            continue;
+          if(fileExtension == "c" || fileExtension == "cc" || fileExtension == "cpp" || fileExtension == "cxx" || fileExtension == "rc")
+          {
+            excludeConfigurations.append(i->data);
+            continue;
+          }
+        }
+
+        if(excludeConfigurations.isEmpty())
+          codeLite.fileWrite(space + "  <File Name=\"" + fileName + "\"/>\n");
+        else
+          codeLite.fileWrite(space + "  <File Name=\"" + fileName + "\" ExcludeProjConfig=\"" + join(excludeConfigurations) + "\"/>\n");
+      }
     }
   };
 
-  FileTreeWriter::write(project.fileTree, *this, String());
+  FileTreeWriter::write(configurations, project.fileTree, *this, String());
 
   fileWrite("  <Settings Type=\"Executable\">\n");
 
@@ -317,10 +350,10 @@ bool CodeLite::writeProject(const String& projectName, const Project& project)
   fileWrite("      <ResourceCompiler Options=\"\"/>\n");
   fileWrite("    </GlobalSettings>\n");
 
-  for(const Map<String, Project::Configuration>::Node* i = project.configurations.getFirst(); i; i = i->getNext())
+  for(const Map<String, ProjectConfiguration>::Node* i = project.configurations.getFirst(); i; i = i->getNext())
   {
     const String& configurationName = i->key;
-    const Project::Configuration& configuration = i->data;
+    const ProjectConfiguration& configuration = i->data;
     const Target& target = *configuration.target;
 
     String firstCommand;
@@ -390,24 +423,39 @@ bool CodeLite::writeProject(const String& projectName, const Project& project)
     fileWrite("      <AdditionalRules>\n");
     fileWrite("        <CustomPostBuild/>\n");
     //fileWrite("        <CustomPreBuild/>\n");
-    fileWrite("        <CustomPreBuild>\n");
-    /*
-    foreach file with custom buildrules
-    print output file: input files
-      @command
-    */
 
-    fileWrite("</CustomPreBuild>\n");
+    String customPreBuildRules, customPreBuildDeps;
+    for(const Map<String, ProjectFile>::Node* i = project.files.getFirst(); i; i = i->getNext())
+    {
+      const ProjectFile& projectFile = i->data;
+      const Map<String, ProjectFile::Configuration>::Node* node = projectFile.configurations.find(configurationName);
+      if(!node)
+        continue;
+      const File& file = *node->data.file;
+      String firstCommand;
+      if(!file.command.isEmpty())
+        firstCommand = file.command.getFirst()->data;
+      if(firstCommand.isEmpty() || firstCommand == "__cSource" || firstCommand == "__cppSource" || firstCommand == "__rcSource")
+        continue;
+      if(file.output.isEmpty())
+        continue; // todo: warning?
+      const String& firstOutput = file.output.getFirst()->data;
+      customPreBuildDeps += firstOutput + " ";
+      customPreBuildRules  += firstOutput + ": " + join(file.input, ' ') + "\n";
+      customPreBuildRules  += String("\t") + joinCommands(file.command) + "\n";
+    }
+
+    fileWrite(String("        <CustomPreBuild>") + customPreBuildDeps + "\n" + customPreBuildRules + "</CustomPreBuild>\n");
     fileWrite("      </AdditionalRules>\n");
     fileWrite("    </Configuration>\n");
   }
 
   fileWrite("  </Settings>\n");
 
-  for(const Map<String, Project::Configuration>::Node* i = project.configurations.getFirst(); i; i = i->getNext())
+  for(const Map<String, ProjectConfiguration>::Node* i = project.configurations.getFirst(); i; i = i->getNext())
   {
     const String& configurationName = i->key;
-    const Project::Configuration& configuration = i->data;
+    const ProjectConfiguration& configuration = i->data;
     const Target& target = *configuration.target;
     fileWrite(String("  <Dependencies Name=\"") + configurationName + "\">\n");
     for(const List<String>::Node* i = target.dependencies.getFirst(); i; i = i->getNext())
