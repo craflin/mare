@@ -816,9 +816,9 @@ bool Vcproj::generateSln()
   // solution dir?
   if(!solutionFile.isEmpty())
   {
-    solutionFile = File::getDirname(solutionFile);
-    if(solutionFile == ".")
-      solutionFile = String();
+    solutionDir = File::getDirname(solutionFile);
+    if (solutionDir == ".")
+        solutionDir = String();
   }
   else
     solutionFile = solutionName + ".sln";
