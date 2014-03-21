@@ -553,6 +553,7 @@ bool Vcproj::processData()
         {
           if(!file.type.isEmpty() && file.type != type)
           { // the file type must be consistent over with the other configurations
+            // TODO: really? why? I guess this true for vcxproj but not for vcproj.
             // TODO: warning or error?
           }
           else
@@ -1128,7 +1129,7 @@ void Vcproj::Filter::write(Vcproj& vc, const Project& project, const String& tab
     String path = relativePath(project.projectDir, file.path);
     vc.fileWrite(tabs + "\t\t\tRelativePath=\"" + path + "\"\r\n");
     vc.fileWrite(tabs + "\t\t\t>\r\n");
-    if(!file.useProjectCompilerFlags)
+    if(!file.useProjectCompilerFlags || file.type == "CustomBuild")
       for(const Map<String, Project::Config>::Node* i = project.configs.getFirst(); i; i = i->getNext())
       {
         const String& configKey = i->key;
@@ -1143,11 +1144,35 @@ void Vcproj::Filter::write(Vcproj& vc, const Project& project, const String& tab
         {
           const Project::File::Config& fileConfig = node->data;
 
-          vc.fileWrite(tabs + "\t\t\t\t<Tool\r\n");
-          vc.fileWrite(tabs + "\t\t\t\t\tName=\"VCCLCompilerTool\"\r\n");
-            for(const Map<String, String>::Node* i = fileConfig.cppOptions.getFirst(); i; i = i->getNext())
-              vc.fileWrite(String("\t\t\t\t\t") + i->key + "=\"" + i->data + "\"\r\n");
-          vc.fileWrite(tabs + "\t\t\t\t/>\r\n");
+          if(file.type == "CustomBuild")
+          {
+            List<String> additionalInputs;
+            {
+              for(const List<String>::Node* i = fileConfig.inputs.getFirst(); i; i = i->getNext())
+                if(i->data != file.path)
+                  additionalInputs.append(i->data);
+            }
+
+            vc.fileWrite(tabs + "\t\t\t\t<Tool\r\n");
+            vc.fileWrite(tabs + "\t\t\t\t\tName=\"VCCustomBuildTool\"\r\n");
+            //vc.fileWrite(tabs + "\t\t\t\t\tDescription=\"description itschen\"\r\n");
+            vc.fileWrite(tabs + "\t\t\t\t\tDescription=\"" + xmlEscape(fileConfig.message.isEmpty() ? String() : fileConfig.message.getFirst()->data) + "\"\r\n");
+            //vc.fileWrite(tabs + "\t\t\t\t\tCommandLine=\"command line\"\r\n");
+            vc.fileWrite(tabs + "\t\t\t\t\tCommandLine=\"" + joinCommands(fileConfig.command) + "\"\r\n");
+            //vc.fileWrite(tabs + "\t\t\t\t\tAdditionalDependencies=\"dep2;dep3\"\r\n");
+            vc.fileWrite(tabs + "\t\t\t\t\tAdditionalDependencies=\"" + joinPaths(project.projectDir, additionalInputs) + "\"\r\n");
+            //vc.fileWrite(tabs + "\t\t\t\t\tOutputs=\"output1.cpp;output2.cpp\"\r\n");
+            vc.fileWrite(tabs + "\t\t\t\t\tOutputs=\"" + joinPaths(project.projectDir, fileConfig.outputs) + "\"\r\n");
+            vc.fileWrite(tabs + "\t\t\t\t/>\r\n");
+          }
+          else
+          {
+            vc.fileWrite(tabs + "\t\t\t\t<Tool\r\n");
+            vc.fileWrite(tabs + "\t\t\t\t\tName=\"VCCLCompilerTool\"\r\n");
+              for(const Map<String, String>::Node* i = fileConfig.cppOptions.getFirst(); i; i = i->getNext())
+                vc.fileWrite(tabs + String("\t\t\t\t\t") + i->key + "=\"" + i->data + "\"\r\n");
+            vc.fileWrite(tabs + "\t\t\t\t/>\r\n");
+          }
         }
         vc.fileWrite(tabs + "\t\t\t</FileConfiguration>\r\n");
       }
