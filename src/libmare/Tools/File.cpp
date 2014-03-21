@@ -2,6 +2,7 @@
 #include <cstring>
 #ifdef _WIN32
 #include <windows.h>
+#include <malloc.h>
 #else
 #include <cstdio>
 #include <cerrno>
@@ -79,8 +80,44 @@ bool File::open(const String& file, Flags flags)
       creationDisposition |= OPEN_EXISTING;
   }
   fp = CreateFileA(file.getData(), desiredAccess, FILE_SHARE_READ, NULL, creationDisposition, FILE_ATTRIBUTE_NORMAL, NULL);
-  if(fp == INVALID_HANDLE_VALUE)
-    return false;
+  if (fp == INVALID_HANDLE_VALUE)
+  {
+      if (GetLastError() == ERROR_PATH_NOT_FOUND) // path too long? try unicode stuff
+      {
+          String absFile = file;
+          if (!File::isPathAbsolute(file))
+          {
+              char curDir[MAX_PATH];;
+              DWORD curDirLen;
+              if ((curDirLen = GetCurrentDirectoryA(MAX_PATH, curDir)) == 0)
+              {
+                  SetLastError(ERROR_PATH_NOT_FOUND);
+                  return false;
+              }
+              absFile.clear();
+              absFile.setCapacity(curDirLen + 1 + file.getLength());
+              absFile.append(curDir, curDirLen);
+              absFile.append('\\');
+              absFile.append(file);
+              absFile = File::simplifyPath(absFile);
+          }
+
+          int wFileLen = MultiByteToWideChar(CP_ACP, 0, absFile.getData(), absFile.getLength(), 0, 0);
+          int wlen = 4 + wFileLen + 1;
+          WCHAR* path = (WCHAR*)alloca(wlen * sizeof(WCHAR));
+          memcpy(path, L"\\\\?\\", 4 * sizeof(WCHAR));
+          MultiByteToWideChar(CP_ACP, 0, absFile.getData(), absFile.getLength(), path + 4, wFileLen + 1);
+          path[4 + wFileLen] = L'\0';
+          for (WCHAR* p = path + 4; *p; ++p)
+            if (*p == L'/')
+                *p = L'\\';
+          fp = CreateFileW(path, desiredAccess, FILE_SHARE_READ, NULL, creationDisposition, FILE_ATTRIBUTE_NORMAL, NULL);
+          if (fp == INVALID_HANDLE_VALUE)
+              return false;
+      }
+      else
+          return false;
+  }
 #else
   if(fp)
     return false;
