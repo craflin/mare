@@ -102,7 +102,7 @@ bool Directory::open(const String& dirpath, const String& pattern, bool dirsOnly
   this->dirpath = dirpath;
   this->pattern = pattern;
 
-  dp = opendir(dirpath.getData());
+  dp = opendir(dirpath.isEmpty() ? "." : dirpath.getData());
   return dp != 0;
 #endif
 }
@@ -172,7 +172,8 @@ bool Directory::read(String& name, bool& isDir)
       else if(dent->d_type == DT_LNK || dent->d_type == DT_UNKNOWN)
       {
         String path = dirpath;
-        path.append('/');
+        if(!dirpath.isEmpty())
+          path.append('/');
         path.append(name);
         struct stat buff;
         if(stat(path.getData(), &buff) == 0)
