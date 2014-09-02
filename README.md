@@ -289,7 +289,7 @@ To differentiate between configurations and other environmental conditions, Mare
 * "host" – the name of the host platform (e.g. "Win32", "Linux", "MacOSX", ...) 
 * "tool" – the name of a translator (declared when the Marefile is translated into another format) (e.g. "vcxproj", "codelite", "codeblocks", "cmake", "netbeans") 
 * "target" – the name of the target currently handled
-* "architecture" – the architecture of the host system (e.g. "i686", "x86_64")
+* "architecture" – the architecture of the host system (e.g. "i686", "x86_64", "armv61")
 
 ### Including Files
 
@@ -380,7 +380,8 @@ These rules can be customized by overwriting or extending the following lists:
 * linkFlags, libPaths, libs - flags passed to the linker
 * cCompiler, cppCompiler – the compiler used to compile c/cpp files (default is "gcc" for cApplication, cDynamicLibrary or cStaticLibrary and "g++" for cppApplication, cppDynamicLibrary or cppStaticLibrary)
 * cFlags, cppFlags, defines, includePaths – flags passed to the compiler
-* buildDir – the directory used for intermediate files (default is "$(configuration)") 
+* buildDir – the directory used for intermediate files (default is "$(configuration)")
+* outputDir - the directory used for output files (default is "$(buildDir)")
 
 A simple Marefile like
 

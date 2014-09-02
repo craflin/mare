@@ -19,13 +19,14 @@ bool Mare::build(const Map<String, String>& userArgs)
   engine.addDefaultKey("configurations", "Debug Release");
   engine.addDefaultKey("targets"); // an empty target list exists per default
   engine.addDefaultKey("buildDir", "$(configuration)");
+  engine.addDefaultKey("outputDir", "$(buildDir)");
   engine.addDefaultKey("cFlags", "-Wall $(if $(Debug),-g,-Os -fomit-frame-pointer)");
   engine.addDefaultKey("cppFlags", "-Wall $(if $(Debug),-g,-Os -fomit-frame-pointer)");
   engine.addDefaultKey("linkFlags", "$(if $(Debug),,-s)");
   {
     Map<String, String> cppApplication;
     cppApplication.append("input", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
-    cppApplication.append("output", "$(buildDir)/$(target)$(if $(Win32),.exe)");
+    cppApplication.append("output", "$(outputDir)/$(target)$(if $(Win32),.exe)");
     cppApplication.append("command", "$(linker) -o $(output) $(input) $(linkFlags) $(LDFLAGS) $(patsubst %,-L%,$(libPaths)) $(patsubst %,-l%,$(libs))");
     cppApplication.append("message", "Linking $(target)...");
     cppApplication.append("linker", "$(if $(linker),$(linker),$(cppCompiler))");
@@ -34,7 +35,7 @@ bool Mare::build(const Map<String, String>& userArgs)
   {
     Map<String, String> cppDynamicLibrary;
     cppDynamicLibrary.append("input", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
-    cppDynamicLibrary.append("output", "$(buildDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.dll,.so)");
+    cppDynamicLibrary.append("output", "$(outputDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.dll,.so)");
     cppDynamicLibrary.append("__soFlags", "$(if $(Win32),,-fpic)");
     cppDynamicLibrary.append("command", "$(linker) -shared $(__soFlags) -o $(output) $(input) $(linkFlags) $(LDFLAGS) $(patsubst %,-L%,$(libPaths)) $(patsubst %,-l%,$(libs))");
     cppDynamicLibrary.append("message", "Linking $(target)...");
@@ -44,7 +45,7 @@ bool Mare::build(const Map<String, String>& userArgs)
   {
     Map<String, String> cppStaticLibrary;
     cppStaticLibrary.append("input", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
-    cppStaticLibrary.append("output", "$(buildDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.lib,.a)");
+    cppStaticLibrary.append("output", "$(outputDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.lib,.a)");
     cppStaticLibrary.append("command", "$(linker) rcs $(output) $(input)");
     cppStaticLibrary.append("message", "Creating $(target)...");
     cppStaticLibrary.append("linker", "$(if $(linker),$(linker),ar)");
@@ -53,7 +54,7 @@ bool Mare::build(const Map<String, String>& userArgs)
   {
     Map<String, String> cApplication;
     cApplication.append("input", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
-    cApplication.append("output", "$(buildDir)/$(target)$(if $(Win32),.exe)");
+    cApplication.append("output", "$(outputDir)/$(target)$(if $(Win32),.exe)");
     cApplication.append("command", "$(linker) -o $(output) $(input) $(linkFlags) $(LDFLAGS) $(patsubst %,-L%,$(libPaths)) $(patsubst %,-l%,$(libs))");
     cApplication.append("message", "Linking $(target)...");
     cApplication.append("linker", "$(if $(linker),$(linker),$(cCompiler))");
@@ -62,7 +63,7 @@ bool Mare::build(const Map<String, String>& userArgs)
   {
     Map<String, String> cDynamicLibrary;
     cDynamicLibrary.append("input", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
-    cDynamicLibrary.append("output", "$(buildDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.dll,.so)");
+    cDynamicLibrary.append("output", "$(outputDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.dll,.so)");
     cDynamicLibrary.append("__soFlags", "$(if $(Win32),,-fpic)");
     cDynamicLibrary.append("command", "$(linker) -shared $(__soFlags) -o $(output) $(input) $(linkFlags) $(LDFLAGS) $(patsubst %,-L%,$(libPaths)) $(patsubst %,-l%,$(libs))");
     cDynamicLibrary.append("message", "Linking $(target)...");
@@ -72,7 +73,7 @@ bool Mare::build(const Map<String, String>& userArgs)
   {
     Map<String, String> cStaticLibrary;
     cStaticLibrary.append("input", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
-    cStaticLibrary.append("output", "$(buildDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.lib,.a)");
+    cStaticLibrary.append("output", "$(outputDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.lib,.a)");
     cStaticLibrary.append("command", "$(linker) rcs $(output) $(input)");
     cStaticLibrary.append("message", "Creating $(target)...");
     cStaticLibrary.append("linker", "$(if $(linker),$(linker),ar)");

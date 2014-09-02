@@ -101,6 +101,7 @@ bool Vcproj::generate(const Map<String, String>& userArgs)
   engine.addDefaultKey("configurations", "Debug Release");
   engine.addDefaultKey("targets"); // an empty target list exists per default
   engine.addDefaultKey("buildDir", "$(configuration)");
+  engine.addDefaultKey("outputDir", "$(buildDir)");
   engine.addDefaultKey("cppFlags", "/W3 $(if $(Debug),/Od /ZI,/O2 /Oy)");
   engine.addDefaultKey("cFlags", "/W3 $(if $(Debug),/Od /ZI,/O2 /Oy)");
   engine.addDefaultKey("linkFlags", "$(if $(Debug),/INCREMENTAL /DEBUG,/OPT:REF /OPT:ICF)");
@@ -122,37 +123,37 @@ bool Vcproj::generate(const Map<String, String>& userArgs)
   {
     Map<String, String> cApplication;
     cApplication.append("command", "__cApplication");
-    cApplication.append("output", "$(buildDir)/$(target).exe");
+    cApplication.append("output", "$(outputDir)/$(target).exe");
     engine.addDefaultKey("cApplication", cApplication);
   }
   {
     Map<String, String> cppApplication;
     cppApplication.append("command", "__cppApplication");
-    cppApplication.append("output", "$(buildDir)/$(target).exe");
+    cppApplication.append("output", "$(outputDir)/$(target).exe");
     engine.addDefaultKey("cppApplication", cppApplication);
   }
   {
     Map<String, String> cDynamicLibrary;
     cDynamicLibrary.append("command", "__cDynamicLibrary");
-    cDynamicLibrary.append("output", "$(buildDir)/$(patsubst lib%,%,$(target)).dll");
+    cDynamicLibrary.append("output", "$(outputDir)/$(patsubst lib%,%,$(target)).dll");
     engine.addDefaultKey("cDynamicLibrary", cDynamicLibrary);
   }
   {
     Map<String, String> cppDynamicLibrary;
     cppDynamicLibrary.append("command", "__cppDynamicLibrary");
-    cppDynamicLibrary.append("output", "$(buildDir)/$(patsubst lib%,%,$(target)).dll");
+    cppDynamicLibrary.append("output", "$(outputDir)/$(patsubst lib%,%,$(target)).dll");
     engine.addDefaultKey("cppDynamicLibrary", cppDynamicLibrary);
   }
   {
     Map<String, String> cStaticLibrary;
     cStaticLibrary.append("command", "__cStaticLibrary");
-    cStaticLibrary.append("output", "$(buildDir)/$(patsubst lib%,%,$(target)).lib");
+    cStaticLibrary.append("output", "$(outputDir)/$(patsubst lib%,%,$(target)).lib");
     engine.addDefaultKey("cStaticLibrary", cStaticLibrary);
   }
   {
     Map<String, String> cppStaticLibrary;
     cppStaticLibrary.append("command", "__cppStaticLibrary");
-    cppStaticLibrary.append("output", "$(buildDir)/$(patsubst lib%,%,$(target)).lib");
+    cppStaticLibrary.append("output", "$(outputDir)/$(patsubst lib%,%,$(target)).lib");
     engine.addDefaultKey("cppStaticLibrary", cppStaticLibrary);
   }
 

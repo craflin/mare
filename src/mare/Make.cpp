@@ -32,6 +32,7 @@ bool Make::generate(const Map<String, String>& userArgs)
   engine.addDefaultKey("configurations", "Debug Release");
   engine.addDefaultKey("targets"); // an empty target list exists per default
   engine.addDefaultKey("buildDir", "$(configuration)");
+  engine.addDefaultKey("outputDir", "$(buildDir)");
   engine.addDefaultKey("cFlags", "-Wall $(if $(Debug),-g,-Os -fomit-frame-pointer)");
   engine.addDefaultKey("cppFlags", "-Wall $(if $(Debug),-g,-Os -fomit-frame-pointer)");
   engine.addDefaultKey("linkFlags", "$(if $(Debug),,-s)");
@@ -48,39 +49,39 @@ bool Make::generate(const Map<String, String>& userArgs)
   {
     Map<String, String> cApplication;
     cApplication.append("command", "__cApplication");
-    cApplication.append("output", "$(buildDir)/$(target)$(if $(Win32),.exe)");
+    cApplication.append("output", "$(outputDir)/$(target)$(if $(Win32),.exe)");
     engine.addDefaultKey("cApplication", cApplication);
   }
   {
     Map<String, String> cppApplication;
     cppApplication.append("command", "__cppApplication");
-    cppApplication.append("output", "$(buildDir)/$(target)$(if $(Win32),.exe)");
+    cppApplication.append("output", "$(outputDir)/$(target)$(if $(Win32),.exe)");
     engine.addDefaultKey("cppApplication", cppApplication);
   }
   {
     Map<String, String> cDynamicLibrary;
     cDynamicLibrary.append("command", "__cDynamicLibrary");
-    cDynamicLibrary.append("output", "$(buildDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.dll,.so)");
+    cDynamicLibrary.append("output", "$(outputDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.dll,.so)");
     cDynamicLibrary.append("__soFlags", "$(if $(Win32),,-fpic)");
     engine.addDefaultKey("cDynamicLibrary", cDynamicLibrary);
   }
   {
     Map<String, String> cppDynamicLibrary;
     cppDynamicLibrary.append("command", "__cppDynamicLibrary");
-    cppDynamicLibrary.append("output", "$(buildDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.dll,.so)");
+    cppDynamicLibrary.append("output", "$(outputDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.dll,.so)");
     cppDynamicLibrary.append("__soFlags", "$(if $(Win32),,-fpic)");
     engine.addDefaultKey("cppDynamicLibrary", cppDynamicLibrary);
   }
   {
     Map<String, String> cStaticLibrary;
     cStaticLibrary.append("command", "__cStaticLibrary");
-    cStaticLibrary.append("output", "$(buildDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.lib,.a)");
+    cStaticLibrary.append("output", "$(outputDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.lib,.a)");
     engine.addDefaultKey("cStaticLibrary", cStaticLibrary);
   }
   {
     Map<String, String> cppStaticLibrary;
     cppStaticLibrary.append("command", "__cppStaticLibrary");
-    cppStaticLibrary.append("output", "$(buildDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.lib,.a)");
+    cppStaticLibrary.append("output", "$(outputDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.lib,.a)");
     engine.addDefaultKey("cppStaticLibrary", cppStaticLibrary);
   }
 
