@@ -375,7 +375,10 @@ bool CodeLite::writeProject(const String& projectName, const Project& project)
       fileWrite("      <Compiler Options=\"\" C_Options=\"\" Required=\"no\" PreCompiledHeader=\"\"/>\n");
     else
     {
-      fileWrite(String("      <Compiler Options=\"") + join(target.cppFlags, ' ') + "\" C_Options=\"" + join(target.cFlags, ' ') +  "\" Required=\"yes\" PreCompiledHeader=\"\">\n");
+      if(firstCommand == "__cDynamicLibrary" || firstCommand == "__cppDynamicLibrary")
+        fileWrite(String("      <Compiler Options=\"-fpic ") + join(target.cppFlags, ' ') + "\" C_Options=\"-fpic " + join(target.cFlags, ' ') +  "\" Required=\"yes\" PreCompiledHeader=\"\">\n");
+      else
+        fileWrite(String("      <Compiler Options=\"") + join(target.cppFlags, ' ') + "\" C_Options=\"" + join(target.cFlags, ' ') +  "\" Required=\"yes\" PreCompiledHeader=\"\">\n");
       for(const List<String>::Node* i = target.includePaths.getFirst(); i; i = i->getNext())
         fileWrite(String("        <IncludePath Value=\"") + xmlEscape(i->data) + "\"/>\n");
       for(const List<String>::Node* i = target.defines.getFirst(); i; i = i->getNext())
