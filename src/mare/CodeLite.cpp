@@ -513,7 +513,7 @@ String CodeLite::xmlEscape(const String& text)
 {
   const char* str = text.getData();
   for(; *str; ++str)
-    if(*str == '<' || *str == '>' || *str == '&')
+    if(*str == '"' || *str == '<' || *str == '>' || *str == '&')
       goto escape;
   return text;
 escape:
@@ -522,6 +522,7 @@ escape:
   for(; *str; ++str)
     switch(*str)
     {
+    case '"': result.append("&quot;"); break;
     case '<': result.append("&lt;"); break;
     case '>': result.append("&gt;"); break;
     case '&': result.append("&amp;"); break;
