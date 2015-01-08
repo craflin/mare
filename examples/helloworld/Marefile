@@ -1,0 +1,12 @@
+
+linkFlags += {
+  if tool == "vcxproj" { "/SUBSYSTEM:CONSOLE" }
+}
+
+targets = {
+  helloworld = cppApplication + {
+    files = {
+      "*.cpp" = cppSource
+    }
+  }
+}
