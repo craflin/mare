@@ -1,0 +1,19 @@
+
+linkFlags += {
+  if tool == "vcxproj" { "/SUBSYSTEM:CONSOLE" }
+}
+
+targets = {
+  pch = cppApplication + {
+    if tool == "vcxproj" { cppFlags += "/Yu\"mypch.h\"" }
+    files = {
+      "*.cpp" = cppSource
+      "*.h"
+      if tool == "vcxproj" {
+        "mypch.cpp" = cppSource + {
+          cppFlags += "/Yc"
+        }
+      }
+    }
+  }
+}
