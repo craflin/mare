@@ -3,6 +3,7 @@
 #include <cstdarg>
 #include <cstdio>
 #include <ctype.h>
+#include <climits>
 
 #include "Assert.h"
 #include "String.h"
@@ -85,7 +86,6 @@ void String::grow(unsigned int size, unsigned int length)
     ((char*)data->str)[length] = '\0';
   }
 }
-
 
 String& String::operator=(const String& other)
 {
@@ -254,6 +254,51 @@ int String::subst(const String& from, const String& to)
   return i;
 }
 
+bool String::find(const String& str, unsigned& pos)
+{
+  const unsigned needleLength = str.getLength();
+
+  if(needleLength == 0)
+    return true;
+  else if(needleLength <= data->length)
+  {
+    // The Boyer–Moore–Horspool algorithm from http://en.wikipedia.org/wiki/Boyer-Moore-Horspool_algorithm
+
+    unsigned badCharShift[UCHAR_MAX + 1];
+    const unsigned char* needle = reinterpret_cast<const unsigned char*>(str.data->str);
+    const unsigned char* haystack = reinterpret_cast<const unsigned char*>(data->str);
+
+    for(unsigned i = 0; i <= UCHAR_MAX; ++i)
+      badCharShift[i] = needleLength;
+
+    const unsigned last = needleLength - 1;
+
+    for(unsigned i = 0; i < last; ++i)
+      badCharShift[needle[i]] = last - i;
+
+    unsigned haystackLength = data->length;
+
+    while(haystackLength >= needleLength)
+    {
+      for(unsigned i = last; haystack[i] == needle[i]; --i)
+        if(i == 0)
+        {
+          pos = static_cast<unsigned>(reinterpret_cast<const char*>(haystack) - data->str);
+          return true;
+        }
+
+      haystackLength -= badCharShift[haystack[last]];
+      haystack += badCharShift[haystack[last]];
+    }
+  }
+  return false;
+}
+
+bool String::contains(const String& str)
+{
+  unsigned pos;
+  return find(str, pos);
+}
 
 static bool szWildMatch7(const char* pat, const char* str);
 static bool szWildMatch1(const char* pat, const char* str, const char*& matchstart, const char*& matchend);
@@ -302,33 +347,36 @@ slightly modified wildcard matching functions based on Alessandro Cantatore's al
 http://xoomer.virgilio.it/acantato/dev/wildcard/wildmatch.html
 */
 
-static bool szWildMatch7(const char* pat, const char* str) {
-    const char* s, * p;
-    bool star = false;
+static bool szWildMatch7(const char* pat, const char* str)
+{
+  const char* s, * p;
+  bool star = false;
 
 loopStart:
-    for (s = str, p = pat; *s; ++s, ++p) {
-      switch (*p) {
-          case '%':
-            star = true;
-            str = s, pat = p;
-            do { ++pat; } while (*pat == '%');
-            if (!*pat) return true;
-            goto loopStart;
-          default:
-            if (*s != *p) goto starCheck;
-            break;
-      }
+  for(s = str, p = pat; *s; ++s, ++p)
+  {
+    switch(*p)
+    {
+      case '%':
+        star = true;
+        str = s, pat = p;
+        do { ++pat; }
+        while(*pat == '%');
+        if(!*pat) return true;
+        goto loopStart;
+      default:
+        if(*s != *p) goto starCheck;
+        break;
     }
-    while (*p == '%') ++p;
-    return !*p;
-   
-starCheck:
-    if (!star) return false;
-    str++;
-    goto loopStart;
-}
+  }
+  while(*p == '%') ++p;
+  return !*p;
 
+starCheck:
+  if(!star) return false;
+  str++;
+  goto loopStart;
+}
 
 static bool szWildMatch1(const char* pat, const char* str, const char*& matchstart, const char*& matchend)
 {
@@ -336,25 +384,26 @@ static bool szWildMatch1(const char* pat, const char* str, const char*& matchsta
   {
     switch(*pat)
     {
-    case '%':
-      matchstart = str;
-      do { ++pat; } while(*pat == '%');
-      if(!*pat)
-      {
-        matchend = matchstart + strlen(matchstart);
-        return true;
-      }
-      while(*str)
-        if(szWildMatch7(pat, str++))
+      case '%':
+        matchstart = str;
+        do { ++pat; }
+        while(*pat == '%');
+        if(!*pat)
         {
-          matchend = str - 1;
+          matchend = matchstart + strlen(matchstart);
           return true;
         }
-      return false;
-    default:
-      if(*str != *pat)
+        while(*str)
+          if(szWildMatch7(pat, str++))
+          {
+            matchend = str - 1;
+            return true;
+          }
         return false;
-      break;
+      default:
+        if(*str != *pat)
+          return false;
+        break;
     }
     ++pat, ++str;
   }
