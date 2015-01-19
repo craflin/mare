@@ -357,16 +357,16 @@ loopStart:
   {
     switch(*p)
     {
-      case '%':
-        star = true;
-        str = s, pat = p;
-        do { ++pat; }
-        while(*pat == '%');
-        if(!*pat) return true;
-        goto loopStart;
-      default:
-        if(*s != *p) goto starCheck;
-        break;
+    case '%':
+      star = true;
+      str = s, pat = p;
+      do { ++pat; }
+      while(*pat == '%');
+      if(!*pat) return true;
+      goto loopStart;
+    default:
+      if(*s != *p) goto starCheck;
+      break;
     }
   }
   while(*p == '%') ++p;
@@ -384,26 +384,26 @@ static bool szWildMatch1(const char* pat, const char* str, const char*& matchsta
   {
     switch(*pat)
     {
-      case '%':
-        matchstart = str;
-        do { ++pat; }
-        while(*pat == '%');
-        if(!*pat)
+    case '%':
+      matchstart = str;
+      do { ++pat; }
+      while(*pat == '%');
+      if(!*pat)
+      {
+        matchend = matchstart + strlen(matchstart);
+        return true;
+      }
+      while(*str)
+        if(szWildMatch7(pat, str++))
         {
-          matchend = matchstart + strlen(matchstart);
+          matchend = str - 1;
           return true;
         }
-        while(*str)
-          if(szWildMatch7(pat, str++))
-          {
-            matchend = str - 1;
-            return true;
-          }
         return false;
-      default:
-        if(*str != *pat)
-          return false;
-        break;
+    default:
+      if(*str != *pat)
+        return false;
+      break;
     }
     ++pat, ++str;
   }

@@ -607,14 +607,14 @@ bool Vcxproj::processData()
         List<String>* compilerFlags = 0;
         switch(language)
         {
-          case Project::Config::C:
-            if(fileConfig.hasCFlags)
-              compilerFlags = &fileConfig.cFlags;
-            break;
-          default:
-            if(fileConfig.hasCppFlags)
-              compilerFlags = &fileConfig.cppFlags;
-            break;
+        case Project::Config::C:
+          if(fileConfig.hasCFlags)
+            compilerFlags = &fileConfig.cFlags;
+          break;
+        default:
+          if(fileConfig.hasCppFlags)
+            compilerFlags = &fileConfig.cppFlags;
+          break;
         }
         if(!compilerFlags && language != projectConfig.language)
           compilerFlags = language == Project::Config::C ? &projectConfig.cFlags : &projectConfig.cppFlags;
@@ -1632,7 +1632,7 @@ String Vcxproj::joinCommands(const List<String>& commands)
           goto next;
         }
       result.append(xmlEscape(program));
-    next: ;
+    next:;
       for(i = i->getNext(); i; i = i->getNext())
       {
         result.append(' ');
@@ -1666,10 +1666,10 @@ escape:
   for(; *str; ++str)
     switch(*str)
     {
-      case '<': result.append("&lt;"); break;
-      case '>': result.append("&gt;"); break;
-      case '&': result.append("&amp;"); break;
-      default: result.append(*str); break;
+    case '<': result.append("&lt;"); break;
+    case '>': result.append("&gt;"); break;
+    case '&': result.append("&amp;"); break;
+    default: result.append(*str); break;
     }
   return result;
 }
