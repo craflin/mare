@@ -1269,8 +1269,8 @@ bool Vcxproj::generateVcxproj(Project& project)
         if(project.configs.getSize() == file.configs.getSize())
         {
           Map<String, String> handledOptions;
-          const Map<String, String>& fistCppOptions = file.configs.getFirst()->data.cppOptions;
-          for(const Map<String, String>::Node* option = fistCppOptions.getFirst(); option; option = option->getNext())
+          const Map<String, String>& firstCppOptions = file.configs.getFirst()->data.cppOptions;
+          for(const Map<String, String>::Node* option = firstCppOptions.getFirst(); option; option = option->getNext())
           {
             const String& optionKey = option->key;
             const String& optionValue = option->data;
@@ -1294,7 +1294,7 @@ bool Vcxproj::generateVcxproj(Project& project)
           {
             const String& configKey = config->key;
             const Project::File::Config& fileConfig = config->data;
-            if(handledOptions.getSize() != fistCppOptions.getSize() || fileConfig.cppOptions.getSize() != handledOptions.getSize())
+            if(handledOptions.getSize() != firstCppOptions.getSize() || fileConfig.cppOptions.getSize() != handledOptions.getSize())
               for(const Map<String, String>::Node* option = fileConfig.cppOptions.getFirst(); option; option = option->getNext())
               {
                 const String& optionKey = option->key;
