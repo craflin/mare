@@ -19,7 +19,7 @@ public:
   String(const char* str, int length);
 
   String(unsigned int size) {init(size, 0, 0);}
-  
+
   ~String();
 
   String& operator=(const String& other);
@@ -30,7 +30,7 @@ public:
   bool operator!=(const String& other) const;
 
   inline const char* getData() const {return data->str;}
-  
+
   char* getData(unsigned int size);
 
   void setCapacity(unsigned int capacity);
@@ -55,6 +55,16 @@ public:
   bool patsubst(const String& pattern, const String& replace);
 
   int subst(const String& from, const String& to);
+
+  /**
+   * Find str in this String. "" is always contained.
+   *
+   * @param str The string to find.
+   * @param pos The position of str in this String if contained, otherwise undefined.
+   * @return Returns whether str was found.
+   */
+  bool find(const String& str, unsigned& pos);
+  bool contains(const String& str);
 
   String& lowercase();
   String& uppercase();

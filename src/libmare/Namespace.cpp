@@ -101,7 +101,16 @@ String Namespace::evaluateString(const String& string) const
           i->data.patsubst(pattern, replace);
         Word::append(words, output);
       }
-      // TODO: strip, findstring
+      // TODO: strip
+      else if(cmd == "findstring")
+      {
+        String find, in;
+        handle(engine, input, find, ",)"); if(*input == ',') ++input;
+        handle(engine, input, in, ",)"); if(*input == ',') ++input;
+
+        if(in.contains(find))
+          output.append(find);
+      }
       else if(cmd == "filter" || cmd == "filter-out")
       {
         String pattern, text;

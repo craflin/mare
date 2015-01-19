@@ -363,7 +363,7 @@ bool Vcxproj::processData()
 
     // get display name and guid
     if(project.displayName.isEmpty())
-        project.displayName = i->key;
+      project.displayName = i->key;
     project.guid = createSomethingLikeGUID(i->key + project.displayName);
 
     // project dir?
@@ -508,10 +508,10 @@ bool Vcxproj::processData()
       if(projectConfig.vsOptions.find("UseDebugLibraries"))
       { // We do not have to set /Od because of "<UseDebugLibraries>true</UseDebugLibraries>".
         Map<String, String>::Node* node = projectConfig.cppOptions.find("Optimization");
-        if (node && node->data == "Disabled")
+        if(node && node->data == "Disabled")
           projectConfig.cppOptions.remove(node);
       }
-      
+
 
       // prepare link option list
       {
@@ -585,7 +585,7 @@ bool Vcxproj::processData()
             file.type = type;
             String basename = File::getBasename(fileName);
             Map<String, int>::Node* node = projectConfig.outputBasenames.find(basename);
-            if (node)
+            if(node)
             {
               int num = ++(node->data);
               String newExtension;
@@ -607,14 +607,14 @@ bool Vcxproj::processData()
         List<String>* compilerFlags = 0;
         switch(language)
         {
-        case Project::Config::C:
-          if(fileConfig.hasCFlags)
-            compilerFlags = &fileConfig.cFlags;
-          break;
-        default:
-          if(fileConfig.hasCppFlags)
-            compilerFlags = &fileConfig.cppFlags;
-          break;
+          case Project::Config::C:
+            if(fileConfig.hasCFlags)
+              compilerFlags = &fileConfig.cFlags;
+            break;
+          default:
+            if(fileConfig.hasCppFlags)
+              compilerFlags = &fileConfig.cppFlags;
+            break;
         }
         if(!compilerFlags && language != projectConfig.language)
           compilerFlags = language == Project::Config::C ? &projectConfig.cFlags : &projectConfig.cppFlags;
@@ -641,7 +641,8 @@ bool Vcxproj::processData()
                   // TODO: warning or error
                 }
                 else
-                  fileConfig.cppOptions.append(optionGroup.name, option.value);
+                  if(!optionGroup.name.isEmpty())
+                    fileConfig.cppOptions.append(optionGroup.name, option.value);
                 if(option.hasParam(i->key))
                 {
                   if(fileConfig.cppOptions.find(optionGroup.paramName))
@@ -709,7 +710,7 @@ bool Vcxproj::processData()
       }
   }
 
-  // resolve dependencies 
+  // resolve dependencies
   if(!resolveDependencies())
     return false;
 
@@ -1016,7 +1017,6 @@ bool Vcxproj::generateVcxproj(Project& project)
     {
       fileWrite("    <UseDebugLibraries>true</UseDebugLibraries>\r\n"); // This options changes some default compiler/linker settings, but I have no idea how it can be set up in the visual studio project settings.
                                                                         // Let's asume a configuration "uses debug libraries" when _DEBUG is set.
-
     }
     else
       fileWrite("    <UseDebugLibraries>false</UseDebugLibraries>\r\n");
@@ -1265,17 +1265,59 @@ bool Vcxproj::generateVcxproj(Project& project)
       else
       {
         fileWrite(String("    <") + file.type + " Include=\"" + path + "\">\r\n");
-        for(const Map<String, Project::Config>::Node* i = project.configs.getFirst(); i; i = i->getNext())
+        // If file configs and project configs are the same nothing has to be excluded and some optimizations can be done (the size should be enough to determine that).
+        if(project.configs.getSize() == file.configs.getSize())
         {
-          const String& configKey = i->key;
-          const Map<String, Project::File::Config>::Node* node = file.configs.find(configKey);
-          if(!node)
-            fileWrite(String("      <ExcludedFromBuild Condition=\"'$(Configuration)|$(Platform)'=='") + configKey + "'\">true</ExcludedFromBuild>\r\n");
-          else
+          Map<String, String> handledOptions;
+          const Map<String, String>& fistCppOptions = file.configs.getFirst()->data.cppOptions;
+          for(const Map<String, String>::Node* option = fistCppOptions.getFirst(); option; option = option->getNext())
           {
-            const Project::File::Config& fileConfig = node->data;
-            for(const Map<String, String>::Node* i = fileConfig.cppOptions.getFirst(); i; i = i->getNext())
-              fileWrite(String("      <") + i->key + " Condition=\"'$(Configuration)|$(Platform)'=='" + configKey + "'\">" + i->data + "</" + i->key + ">\r\n");
+            const String& optionKey = option->key;
+            const String& optionValue = option->data;
+            bool equalInAll = true;
+            for(const Map<String, Project::File::Config>::Node* otherConfig = file.configs.getFirst(); otherConfig; otherConfig = otherConfig->getNext())
+            {
+              const Map<String, String>::Node* otherOption = otherConfig->data.cppOptions.find(optionKey);
+              if(!otherOption || otherOption->data != optionValue)
+              {
+                equalInAll = false;
+                break;
+              }
+            }
+            if(equalInAll)
+            {
+              fileWrite(String("      <") + optionKey + ">" + optionValue + "</" + optionKey + ">\r\n");
+              handledOptions.append(optionKey, optionValue);
+            }
+          }
+          for(const Map<String, Project::File::Config>::Node* config = file.configs.getFirst(); config; config = config->getNext())
+          {
+            const String& configKey = config->key;
+            const Project::File::Config& fileConfig = config->data;
+            if(handledOptions.getSize() != fistCppOptions.getSize() || fileConfig.cppOptions.getSize() != handledOptions.getSize())
+              for(const Map<String, String>::Node* option = fileConfig.cppOptions.getFirst(); option; option = option->getNext())
+              {
+                const String& optionKey = option->key;
+                const String& optionValue = option->data;
+                if(!handledOptions.find(optionKey))
+                  fileWrite(String("      <") + optionKey + " Condition=\"'$(Configuration)|$(Platform)'=='" + configKey + "'\">" + optionValue + "</" + optionKey + ">\r\n");
+              }
+          }
+        }
+        else
+        {
+          for(const Map<String, Project::Config>::Node* i = project.configs.getFirst(); i; i = i->getNext())
+          {
+            const String& configKey = i->key;
+            const Map<String, Project::File::Config>::Node* node = file.configs.find(configKey);
+            if(!node)
+              fileWrite(String("      <ExcludedFromBuild Condition=\"'$(Configuration)|$(Platform)'=='") + configKey + "'\">true</ExcludedFromBuild>\r\n");
+            else
+            {
+              const Project::File::Config& fileConfig = node->data;
+              for(const Map<String, String>::Node* i = fileConfig.cppOptions.getFirst(); i; i = i->getNext())
+                fileWrite(String("      <") + i->key + " Condition=\"'$(Configuration)|$(Platform)'=='" + configKey + "'\">" + i->data + "</" + i->key + ">\r\n");
+            }
           }
         }
         fileWrite(String("    </") + file.type + ">\r\n");
@@ -1525,7 +1567,7 @@ String Vcxproj::join(const List<String>& items, char sep, const String& suffix)
         goto next;
       }
     result = xmlEscape(i->data);
-  next: ;
+  next:;
     result.append(suffix);
     for(i = i->getNext(); i; i = i->getNext())
     {
@@ -1539,7 +1581,7 @@ String Vcxproj::join(const List<String>& items, char sep, const String& suffix)
           goto next2;
         }
       result.append(xmlEscape(i->data));
-    next2: ;
+    next2:;
       result.append(suffix);
     }
   }
@@ -1589,8 +1631,8 @@ String Vcxproj::joinCommands(const List<String>& commands)
           result.append('"');
           goto next;
         }
-        result.append(xmlEscape(program));
-      next: ;
+      result.append(xmlEscape(program));
+    next: ;
       for(i = i->getNext(); i; i = i->getNext())
       {
         result.append(' ');
@@ -1624,10 +1666,10 @@ escape:
   for(; *str; ++str)
     switch(*str)
     {
-    case '<': result.append("&lt;"); break;
-    case '>': result.append("&gt;"); break;
-    case '&': result.append("&amp;"); break;
-    default: result.append(*str); break;
+      case '<': result.append("&lt;"); break;
+      case '>': result.append("&gt;"); break;
+      case '&': result.append("&amp;"); break;
+      default: result.append(*str); break;
     }
   return result;
 }
