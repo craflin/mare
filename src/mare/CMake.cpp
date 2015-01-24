@@ -475,9 +475,43 @@ bool CMake::generateProject(Project& project)
     //configUpName.uppercase();
 
     if(!config.cppCompiler.isEmpty())
-      fileWrite(String("set(CMAKE_CXX_COMPILER \"") + join(config.cppCompiler) + "\")\n");
+    {
+      String cppCompiler;
+      for(const List<String>::Node* i = config.cppCompiler.getFirst(); i; i = i->getNext())
+      {
+        const String& word = i->data;
+        unsigned int sep;
+        if(word.find('=', sep))
+          fileWrite(String("set(ENV{") + word.substr(0, sep) +  "} \"" + word.substr(sep + 1) + "\")\n");
+        else
+        {
+          cppCompiler = word;
+          break;
+        }
+      }
+
+      if(!cppCompiler.isEmpty())
+        fileWrite(String("set(CMAKE_CXX_COMPILER \"") + cppCompiler + "\")\n");
+    }
     if(!config.cCompiler.isEmpty())
-      fileWrite(String("set(CMAKE_C_COMPILER \"") + join(config.cCompiler) + "\")\n");
+    {
+      String cCompiler;
+      for(const List<String>::Node* i = config.cCompiler.getFirst(); i; i = i->getNext())
+      {
+        const String& word = i->data;
+        unsigned int sep;
+        if(word.find('=', sep))
+          fileWrite(String("set(ENV{") + word.substr(0, sep) +  "} \"" + word.substr(sep + 1) + "\")\n");
+        else
+        {
+          cCompiler = word;
+          break;
+        }
+      }
+
+      if(!cCompiler.isEmpty())
+        fileWrite(String("set(CMAKE_CXX_COMPILER \"") + cCompiler + "\")\n");
+    }
     if(!config.cppFlags.isEmpty())
       fileWrite(String("set(CMAKE_CXX_FLAGS \"") + join(config.cppFlags) + "\")\n");
     if(!config.cFlags.isEmpty())
