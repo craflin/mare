@@ -8,7 +8,7 @@ targets = {
       "mare"
     }
     libPaths = {
-      "$(buildDir)"
+      "$(buildDir)/libmare"
     }
     includePaths = {
       "src/libmare"
@@ -23,6 +23,7 @@ targets = {
     }
   }
   libmare = cppStaticLibrary + {
+    buildDir = "$(buildDir)/libmare"
     root = "src/libmare"
     files = {
       "src/libmare/**.cpp" = cppSource
