@@ -65,6 +65,7 @@ public:
    */
   bool find(const String& str, unsigned& pos);
   bool contains(const String& str);
+  bool find(char ch, unsigned int& pos) const;
 
   String& lowercase();
   String& uppercase();

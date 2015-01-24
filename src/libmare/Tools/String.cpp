@@ -300,6 +300,17 @@ bool String::contains(const String& str)
   return find(str, pos);
 }
 
+bool String::find(char ch, unsigned& pos) const
+{
+  const char* res = strchr(data->str, ch);
+  if(res)
+  {
+    pos = res - data->str;
+    return true;
+  }
+  return false;
+}
+
 static bool szWildMatch7(const char* pat, const char* str);
 static bool szWildMatch1(const char* pat, const char* str, const char*& matchstart, const char*& matchend);
 
