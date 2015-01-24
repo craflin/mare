@@ -161,9 +161,9 @@ bool CMake::readFile()
         engine.getKeys("libPaths", projectConfig.libPaths, true);
         engine.getKeys("libs", projectConfig.libs, true);
         
-        projectConfig.cppCompiler = engine.getFirstKey("cppCompiler", true);
-        projectConfig.cCompiler = engine.getFirstKey("cCompiler", true);
-        projectConfig.linker = engine.getFirstKey("linker", true);
+        engine.getKeys("cppCompiler", projectConfig.cppCompiler, true);
+        engine.getKeys("cCompiler", projectConfig.cCompiler, true);
+        engine.getKeys("linker", projectConfig.linker, true);
 
         if(engine.enterKey("files"))
         {
@@ -475,9 +475,9 @@ bool CMake::generateProject(Project& project)
     //configUpName.uppercase();
 
     if(!config.cppCompiler.isEmpty())
-      fileWrite(String("set(CMAKE_CXX_COMPILER \"") + config.cppCompiler + "\")\n");
+      fileWrite(String("set(CMAKE_CXX_COMPILER \"") + join(config.cppCompiler) + "\")\n");
     if(!config.cCompiler.isEmpty())
-      fileWrite(String("set(CMAKE_C_COMPILER \"") + config.cCompiler + "\")\n");
+      fileWrite(String("set(CMAKE_C_COMPILER \"") + join(config.cCompiler) + "\")\n");
     if(!config.cppFlags.isEmpty())
       fileWrite(String("set(CMAKE_CXX_FLAGS \"") + join(config.cppFlags) + "\")\n");
     if(!config.cFlags.isEmpty())
