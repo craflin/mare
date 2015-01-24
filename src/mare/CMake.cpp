@@ -491,7 +491,12 @@ bool CMake::generateProject(Project& project)
       }
 
       if(!cppCompiler.isEmpty())
-        fileWrite(String("set(CMAKE_CXX_COMPILER \"") + cppCompiler + "\")\n");
+      {
+        if(File::exists(cppCompiler))
+          fileWrite(String("set(CMAKE_CXX_COMPILER \"${CMAKE_CURRENT_SOURCE_DIR}/../") + cppCompiler + "\")\n");
+        else
+          fileWrite(String("set(CMAKE_CXX_COMPILER \"") + cppCompiler + "\")\n");
+      }
     }
     if(!config.cCompiler.isEmpty())
     {
@@ -510,7 +515,12 @@ bool CMake::generateProject(Project& project)
       }
 
       if(!cCompiler.isEmpty())
-        fileWrite(String("set(CMAKE_CXX_COMPILER \"") + cCompiler + "\")\n");
+      {
+        if(File::exists(cCompiler))
+          fileWrite(String("set(CMAKE_C_COMPILER \"${CMAKE_CURRENT_SOURCE_DIR}/../") + cCompiler + "\")\n");
+        else
+          fileWrite(String("set(CMAKE_C_COMPILER \"") + cCompiler + "\")\n");
+      }
     }
     if(!config.cppFlags.isEmpty())
       fileWrite(String("set(CMAKE_CXX_FLAGS \"") + join(config.cppFlags) + "\")\n");
