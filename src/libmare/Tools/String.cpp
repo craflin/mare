@@ -254,7 +254,7 @@ int String::subst(const String& from, const String& to)
   return i;
 }
 
-bool String::find(const String& str, unsigned& pos)
+bool String::find(const String& str, unsigned int& pos) const
 {
   const unsigned needleLength = str.getLength();
 
@@ -294,9 +294,9 @@ bool String::find(const String& str, unsigned& pos)
   return false;
 }
 
-bool String::contains(const String& str)
+bool String::contains(const String& str) const
 {
-  unsigned pos;
+  unsigned int pos;
   return find(str, pos);
 }
 

@@ -63,8 +63,8 @@ public:
    * @param pos The position of str in this String if contained, otherwise undefined.
    * @return Returns whether str was found.
    */
-  bool find(const String& str, unsigned& pos);
-  bool contains(const String& str);
+  bool find(const String& str, unsigned int& pos) const;
+  bool contains(const String& str) const;
   bool find(char ch, unsigned int& pos) const;
 
   String& lowercase();
