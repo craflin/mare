@@ -492,7 +492,7 @@ bool CMake::generateProject(Project& project)
 
       if(!cppCompiler.isEmpty())
       {
-        if(File::exists(cppCompiler))
+        if(!File::isPathAbsolute(cppCompiler) && File::exists(cppCompiler))
           fileWrite(String("set(CMAKE_CXX_COMPILER \"${CMAKE_CURRENT_SOURCE_DIR}/../") + cppCompiler + "\")\n");
         else
           fileWrite(String("set(CMAKE_CXX_COMPILER \"") + cppCompiler + "\")\n");
@@ -516,7 +516,7 @@ bool CMake::generateProject(Project& project)
 
       if(!cCompiler.isEmpty())
       {
-        if(File::exists(cCompiler))
+        if(!File::isPathAbsolute(cCompiler) && File::exists(cCompiler))
           fileWrite(String("set(CMAKE_C_COMPILER \"${CMAKE_CURRENT_SOURCE_DIR}/../") + cCompiler + "\")\n");
         else
           fileWrite(String("set(CMAKE_C_COMPILER \"") + cCompiler + "\")\n");
