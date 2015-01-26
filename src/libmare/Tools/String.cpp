@@ -256,39 +256,53 @@ int String::subst(const String& from, const String& to)
 
 bool String::find(const String& str, unsigned int& pos) const
 {
-  const unsigned needleLength = str.getLength();
-
+  unsigned int needleLength = str.data->length;
   if(needleLength == 0)
     return true;
-  else if(needleLength <= data->length)
+  else
   {
-    // The Boyer–Moore–Horspool algorithm from http://en.wikipedia.org/wiki/Boyer-Moore-Horspool_algorithm
-
-    unsigned badCharShift[UCHAR_MAX + 1];
-    const unsigned char* needle = reinterpret_cast<const unsigned char*>(str.data->str);
-    const unsigned char* haystack = reinterpret_cast<const unsigned char*>(data->str);
-
-    for(unsigned i = 0; i <= UCHAR_MAX; ++i)
-      badCharShift[i] = needleLength;
-
-    const unsigned last = needleLength - 1;
-
-    for(unsigned i = 0; i < last; ++i)
-      badCharShift[needle[i]] = last - i;
-
-    unsigned haystackLength = data->length;
-
-    while(haystackLength >= needleLength)
+    unsigned int haystackLength = data->length;
+    if(needleLength <= haystackLength)
     {
-      for(unsigned i = last; haystack[i] == needle[i]; --i)
-        if(i == 0)
-        {
-          pos = static_cast<unsigned>(reinterpret_cast<const char*>(haystack) - data->str);
-          return true;
-        }
+      if(needleLength * haystackLength > haystackLength + UCHAR_MAX + needleLength)
+      {
+        // The Boyer–Moore–Horspool algorithm from http://en.wikipedia.org/wiki/Boyer-Moore-Horspool_algorithm
 
-      haystackLength -= badCharShift[haystack[last]];
-      haystack += badCharShift[haystack[last]];
+        unsigned int badCharShift[UCHAR_MAX + 1];
+        const unsigned char* needle = (const unsigned char*)(str.data->str);
+        const unsigned char* haystack = (const unsigned char*)(data->str);
+
+        for(unsigned int i = 0; i <= UCHAR_MAX; ++i)
+          badCharShift[i] = needleLength;
+
+        const unsigned last = needleLength - 1;
+
+        for(unsigned int i = 0; i < last; ++i)
+          badCharShift[needle[i]] = last - i;
+
+        unsigned int haystackLength = data->length;
+
+        while(haystackLength >= needleLength)
+        {
+          for(unsigned int i = last; haystack[i] == needle[i]; --i)
+            if(i == 0)
+            {
+              pos = (unsigned int)((const char*)haystack - data->str);
+              return true;
+            }
+
+          haystackLength -= badCharShift[haystack[last]];
+          haystack += badCharShift[haystack[last]];
+        }
+      }
+      else
+      {
+        const char* res = strstr(data->str, str.data->str);
+        if(!res)
+          return false;
+        pos = (unsigned int)(res - data->str);
+        return true;
+      }
     }
   }
   return false;
