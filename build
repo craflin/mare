@@ -45,10 +45,10 @@ build()
   for file in $MARE_SOURCE_FILES; do
     OBJECT="$MARE_BUILD_DIR/$(basename ${file%.cpp}).o"
     MARE_OBJECTS="$MARE_OBJECTS $OBJECT"
-    echo "$file"
+    echo "$MARE_SOURCE_DIR/$file"
     $CXX -Wall -g -I"$MARE_SOURCE_DIR/libmare" -o "$OBJECT" -c "$MARE_SOURCE_DIR/$file"
   done
-  echo "Linking $MARE_OUTPUT_DIR/mare..."
+  echo "Linking mare..."
   $CXX -o "$MARE_OUTPUT_DIR/mare" $MARE_OBJECTS
 }
 
