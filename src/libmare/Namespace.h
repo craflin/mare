@@ -15,7 +15,8 @@ public:
   Namespace(Scope& scope, Namespace* parent, Engine* engine, Statement* statement, Namespace* next, unsigned int flags) : Scope::Object(scope), parent(parent), defaultStatement(0), statement(statement), next(next), engine(engine), flags(flags) {}
   
   inline Namespace* getParent() {return parent;}
-  bool resolveScript2(const String& name, Word*& word, Namespace*& space);
+  bool resolveScript2(const String& name, Word*& word, Namespace*& result);
+  bool resolveScript2(const String& name, Namespace* excludeStatements, Word*& word, Namespace*& result);
   Namespace* enterKey(const String& name, bool allowInheritance);
   Namespace* enterUnnamedKey(Statement* statement);
   Namespace* enterNewKey(const String& name);

@@ -74,6 +74,14 @@ bool Engine::resolveScript(const String& key, Word*& word, Namespace*& result)
   return false;
 }
 
+bool Engine::resolveScript(const String& key, Namespace* excludeStatements, Word*& word, Namespace*& result)
+{
+  for(Namespace* space = currentSpace->getParent(); space; space = space->getParent())
+    if(space->resolveScript2(key, excludeStatements, word, result))
+      return true;
+  return false;
+}
+
 bool Engine::leaveKey()
 {
   if(!currentSpace->getParent())

@@ -362,14 +362,29 @@ Namespace* Namespace::enterKey(const String& name, bool allowInheritance)
       return (j->data = new Namespace(*this, this, engine, 0, 0, 0));
     if(allowInheritance || !(j->data->flags & inheritedFlag))
     {
-      Namespace* result = j->data;
+      Namespace* lastSpace = j->data;
+      Namespace* result = lastSpace;
       do
       {
         if(!(result->flags & compilingFlag))
           return result;
+        lastSpace = result;
         result = result->next;
       } while(result);
+
+      if(allowInheritance)
+      {
+        Word* word;
+        Namespace* space;
+        if(engine->resolveScript(name, j->data, word, space))
+        {
+          Namespace* newSpace = space ? new Namespace(*this, this, engine, space->statement, space->next, inheritedFlag) : new Namespace(*this, this, engine, 0, 0, inheritedFlag);
+          lastSpace->next = lastSpace;
+          return newSpace;
+        }
+      }
     }
+    return 0;
   }
 
   if(allowInheritance)
@@ -436,6 +451,38 @@ bool Namespace::resolveScript2(const String& name, Word*& word, Namespace*& resu
     {
       if(!(result->flags & compilingFlag))
         return true;
+      result = result->next;
+    } while(result);
+  }
+
+  return false;
+}
+
+bool Namespace::resolveScript2(const String& name, Namespace* excludeStatements, Word*& word, Namespace*& result)
+{
+  ASSERT(!(flags & compilingFlag));
+  compile();
+
+  // try a local lookup
+  Word key(name, 0);
+  Map<Word, Namespace*>::Node* node = variables.find(key);
+  if(node)
+  {
+    result = node->data;
+    word = &node->key;
+    if(!result)
+      return true;
+    do
+    {
+      if(!(result->flags & compilingFlag))
+      {
+        if(result->statement)
+          for(Namespace* i = excludeStatements; i; i = i->next)
+            if(i->statement == result->statement)
+              goto findNext;
+        return true;
+      findNext:;
+      }
       result = result->next;
     } while(result);
   }

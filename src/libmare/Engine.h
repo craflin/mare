@@ -54,7 +54,8 @@ private:
   Namespace* currentSpace;
   List<Namespace*> stashedKeys;
 
-  bool resolveScript(const String& key, Word*& word, Namespace*& space);
+  bool resolveScript(const String& key, Word*& word, Namespace*& result);
+  bool resolveScript(const String& key, Namespace* excludeStatements, Word*& word, Namespace*& result);
   void setKey(const Word& key);
   void appendKeys(String& output);
   
