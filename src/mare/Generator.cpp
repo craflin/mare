@@ -75,6 +75,7 @@ bool Generator::readFile(Data& data)
           engine.error(String().format(256, "cannot find target \"%s\"", i->data.getData()));
           return false;
         }
+        engine.addDefaultKey("mareDir", engine.getMareDir());
 
         Target& target = configuration.targets.append(targetName);
 

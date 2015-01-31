@@ -154,6 +154,7 @@ bool Make::readFile()
           engine.error(String().format(256, "cannot find target \"%s\"", targetName.getData()));
           return false;
         }
+        engine.addDefaultKey("mareDir", engine.getMareDir());
 
         Platform::Config::Target& target = config.targets.append(targetName, Platform::Config::Target(targetName));
 

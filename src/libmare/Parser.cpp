@@ -7,7 +7,7 @@
 #include "Tools/Error.h"
 #include "Statement.h"
 
-Parser::Parser(Engine& engine) : engine(engine), readBufferPos(0), readBufferEnd(0), currentLine(1), currentChar(' ') {}
+Parser::Parser(Engine& engine) : engine(engine), readBufferPos(0), readBufferEnd(0), currentLine(1), currentChar(' '), includeFile(0) {}
 
 Statement* Parser::parse(const String& file, Engine::ErrorHandler errorHandler, void* userData)
 {
@@ -22,6 +22,8 @@ Statement* Parser::parse(const String& file, Engine::ErrorHandler errorHandler, 
       errorHandler(errorHandlerUserData, file, 0, Error::getString());
       throw false;
     }
+    includeFile = new IncludeFile(engine);
+    includeFile->fileDir = File::getDirname(file);
     nextChar(); // read first character
     nextToken(); // read first symbol
     return readFile();
@@ -293,7 +295,7 @@ void Parser::readString(String& string)
 
 Statement* Parser::readFile()
 {
-  BlockStatement* statement = new BlockStatement(engine);
+  BlockStatement* statement = new BlockStatement(*includeFile);
   while(currentToken.id != Token::eof)
     statement->statements.append(readStatement());
   return statement;
@@ -304,7 +306,7 @@ Statement* Parser::readStatements()
   if(currentToken.id == Token::leftBrace)
   {
     nextToken();
-    BlockStatement* blockStatement = new BlockStatement(engine);
+    BlockStatement* blockStatement = new BlockStatement(*includeFile);
     while(currentToken.id != Token::rightBrace)
       blockStatement->statements.append(readStatement());
     nextToken();
@@ -320,7 +322,7 @@ Statement* Parser::readStatement()
   if(currentToken.id == Token::string && currentToken.value == "if")
   {
     nextToken();
-    IfStatement* ifStatement = new IfStatement(engine);
+    IfStatement* ifStatement = new IfStatement(*includeFile);
     ifStatement->condition = readExpression();
     ifStatement->thenStatements = readStatements();
     if(currentToken.id == Token::string && currentToken.value == "else")
@@ -338,14 +340,15 @@ Statement* Parser::readStatement()
     readString(fileName);
     if(!File::isPathAbsolute(fileName))
     {
-      String parentDir = File::getDirname(filePath);
+      String parentDir = includeFile->fileDir;
       if(parentDir != ".")
         fileName = parentDir + "/" + fileName;
     }
 
     Parser parser(engine);
-    Statement* statement = parser.parse(fileName, errorHandler, errorHandlerUserData);
-    if(!statement)
+    WrapperStatement* statement = new WrapperStatement(*includeFile);
+    statement->statement = parser.parse(fileName, errorHandler, errorHandlerUserData);
+    if(!statement->statement)
       throw false;
     return statement;
   }
@@ -361,13 +364,13 @@ Statement* Parser::readAssignment()
   if(currentToken.id == Token::minus)
   {
     nextToken();
-    RemoveStatement* statement = new RemoveStatement(engine);
+    RemoveStatement* statement = new RemoveStatement(*includeFile);
     readString(statement->variable);
     return statement;
   }
   else
   {
-    AssignStatement* statement = new AssignStatement(engine);
+    AssignStatement* statement = new AssignStatement(*includeFile);
     readString(statement->variable);
     switch(currentToken.id)
     {
@@ -392,7 +395,7 @@ Statement* Parser::readExpression()
   if(currentToken.id == Token::interrogation)
   {
     nextToken();
-    IfStatement* ifStatement = new IfStatement(engine);
+    IfStatement* ifStatement = new IfStatement(*includeFile);
     ifStatement->condition = statement;
     ifStatement->thenStatements = readExpression();
     if(currentToken.id == Token::colon)
@@ -410,7 +413,7 @@ Statement* Parser::readOrForumla()
   Statement* statement = readAndFormula();
   while(currentToken.id == Token::or_)
   {
-    BinaryStatement* binaryStatement = new BinaryStatement(engine);
+    BinaryStatement* binaryStatement = new BinaryStatement(*includeFile);
     binaryStatement->operation = currentToken.id;
     nextToken();
     binaryStatement->leftOperand = statement;
@@ -425,7 +428,7 @@ Statement* Parser::readAndFormula()
   Statement* statement = readComparison();
   while(currentToken.id == Token::and_)
   {
-    BinaryStatement* binaryStatement = new BinaryStatement(engine);
+    BinaryStatement* binaryStatement = new BinaryStatement(*includeFile);
     binaryStatement->operation = currentToken.id;
     nextToken();
     binaryStatement->leftOperand = statement;
@@ -440,7 +443,7 @@ Statement* Parser::readComparison()
   Statement* statement = readRelation();
   while(currentToken.id == Token::equal || currentToken.id == Token::notEqual)
   {
-    BinaryStatement* binaryStatement = new BinaryStatement(engine);
+    BinaryStatement* binaryStatement = new BinaryStatement(*includeFile);
     binaryStatement->operation = currentToken.id;
     nextToken();
     binaryStatement->leftOperand = statement;
@@ -456,7 +459,7 @@ Statement* Parser::readRelation()
   while(currentToken.id == Token::greaterThan || currentToken.id == Token::lowerThan || 
     currentToken.id == Token::greaterEqualThan || currentToken.id == Token::lowerEqualThan)
   {
-    BinaryStatement* binaryStatement = new BinaryStatement(engine);
+    BinaryStatement* binaryStatement = new BinaryStatement(*includeFile);
     binaryStatement->operation = currentToken.id;
     nextToken();
     binaryStatement->leftOperand = statement;
@@ -471,7 +474,7 @@ Statement* Parser::readConcatination()
   Statement* statement = readValue();
   while(currentToken.id == Token::plus || currentToken.id == Token::minus)
   {
-    BinaryStatement* binaryStatement = new BinaryStatement(engine);
+    BinaryStatement* binaryStatement = new BinaryStatement(*includeFile);
     binaryStatement->operation = currentToken.id;
     nextToken();
     binaryStatement->leftOperand = statement;
@@ -487,7 +490,7 @@ Statement* Parser::readValue()
   {
   case Token::not_:
     {
-      UnaryStatement* statement = new UnaryStatement(engine);
+      UnaryStatement* statement = new UnaryStatement(*includeFile);
       statement->operation = currentToken.id;
       nextToken();
       statement->operand = readValue();
@@ -503,7 +506,7 @@ Statement* Parser::readValue()
   case Token::leftBrace:
     {
       nextToken();
-      BlockStatement* statements = new BlockStatement(engine);
+      BlockStatement* statements = new BlockStatement(*includeFile);
       while(currentToken.id != Token::rightBrace)
       {
         if(currentToken.id == Token::eof)
@@ -517,24 +520,24 @@ Statement* Parser::readValue()
     if(currentToken.value == "true")
     {
       nextToken();
-      StringStatement* statement = new StringStatement(engine);
+      StringStatement* statement = new StringStatement(*includeFile);
       statement->value = "true";
       return statement;
     }
     else if(currentToken.value == "false")
     {
       nextToken();
-      return new StringStatement(engine);
+      return new StringStatement(*includeFile);
     }
     else
     {
-      ReferenceStatement* statement = new ReferenceStatement(engine);
+      ReferenceStatement* statement = new ReferenceStatement(*includeFile);
       readString(statement->variable);
       return statement;
     }
   default: // quotedString
     {
-      StringStatement* statement = new StringStatement(engine);
+      StringStatement* statement = new StringStatement(*includeFile);
       readString(statement->value);
       return statement;
     }

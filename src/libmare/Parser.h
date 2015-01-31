@@ -17,10 +17,20 @@ public:
 
   Statement* parse(const String& file, Engine::ErrorHandler errorHandler, void* userData);
 
+public:
+  class IncludeFile : public Scope, Scope::Object
+  {
+  public:
+    IncludeFile(Scope& scope) : Scope::Object(scope) {}
+
+    String fileDir;
+  };
+
 private:
   Engine& engine;
   Engine::ErrorHandler errorHandler;
   void* errorHandlerUserData;
+  IncludeFile* includeFile;
   String filePath;
   File file;
 

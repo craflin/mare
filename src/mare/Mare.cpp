@@ -628,6 +628,7 @@ bool Mare::buildTargets(const String& platform, const String& configuration)
       engine.error(String().format(256, "cannot find target \"%s\"", i->data.getData()));
       return false;
     }
+    engine.addDefaultKey("mareDir", engine.getMareDir());
 
     Target& target = ruleSet.targets.append(i->data);
     if(activateTargets.find(i->data))

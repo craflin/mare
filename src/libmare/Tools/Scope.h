@@ -7,12 +7,14 @@ public:
   class Object
   {
   public:
+    Scope& scope;
+
+  public:
     Object(Scope& scope);
 
     virtual ~Object();
 
   private:
-    Scope& scope;
     Object* next;
     Object* previous;
   };

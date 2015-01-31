@@ -216,6 +216,7 @@ bool Vcproj::readFile()
           engine.error(String().format(256, "cannot find target \"%s\"", i->data.getData()));
           return false;
         }
+        engine.addDefaultKey("mareDir", engine.getMareDir());
 
         Map<String, Project>::Node* node = projects.find(i->data);
         Project& project = node ? node->data : projects.append(i->data, Project(i->data));

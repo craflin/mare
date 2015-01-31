@@ -11,6 +11,11 @@ void BlockStatement::execute(Namespace& space)
     i->data->execute(space);
 }
 
+void WrapperStatement::execute(Namespace& space)
+{
+  statement->execute(space);
+}
+
 void AssignStatement::execute(Namespace& space)
 {
   space.addKey(variable, flags, value, operation);

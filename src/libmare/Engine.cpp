@@ -146,6 +146,11 @@ bool Engine::getText(const String& key, List<String>& text, bool allowInheritanc
   return false;
 }
 
+String Engine::getMareDir() const
+{
+  return currentSpace->getMareDir();
+}
+
 void Engine::addDefaultKey(const String& key)
 {
   currentSpace->addDefaultKey(key);

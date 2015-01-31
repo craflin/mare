@@ -287,9 +287,11 @@ To differentiate between configurations and other environmental conditions, Mare
 * "configuration" – the name of the configuration currently built (e.g. "Debug", "Release", ...) 
 * "platform" – the name of the target platform (e.g. "Win32", "Linux", "MacOSX", ...) 
 * "host" – the name of the host platform (e.g. "Win32", "Linux", "MacOSX", ...) 
-* "tool" – the name of a translator (declared when the Marefile is translated into another format) (e.g. "vcxproj", "codelite", "codeblocks", "cmake", "netbeans") 
-* "target" – the name of the target currently handled
 * "architecture" – the architecture of the host system (e.g. "i686", "x86_64", "armv61")
+* "tool" – the name of a translator (declared when the Marefile is translated into another format) (e.g. "vcxproj", "vcproj", "codelite", "codeblocks", "cmake", "netbeans") 
+* "target" – the name of the currently handled target
+* "file" – the name of the currently handled file
+* "mareDir" - the directory of the target's Marefile
 
 ### Including Files
 

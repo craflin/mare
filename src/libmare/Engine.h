@@ -38,6 +38,7 @@ public:
   String getFirstKey(const String& key, bool allowInheritance = true);
   void getText(List<String>& text);
   bool getText(const String& key, List<String>& text, bool allowInheritance = true);
+  String getMareDir() const;
 
   void addDefaultKey(const String& key);
   void addDefaultKey(const String& key, const String& value);

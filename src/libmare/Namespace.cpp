@@ -9,6 +9,7 @@
 #include "Namespace.h"
 #include "Statement.h"
 #include "Engine.h"
+#include "Parser.h"
 
 String Namespace::evaluateString(const String& string) const
 {
@@ -597,9 +598,9 @@ void Namespace::addKeyRaw(const Word& key, Statement* value, Token::Id operation
     {
       Map<Word, Namespace*>::Node* node = variables.find(key);
       if(node)
-        node->data = value ? new Namespace(*this, this, engine, value, node->data, 0) : 0;
+        node->data = value ? new Namespace(node->data ? node->data->scope : *this, this, engine, value, node->data, 0) : 0;
       else
-        variables.append(key, value ? new Namespace(*this, this, engine, value, 0, 0) : 0);
+        variables.append(key, value ? new Namespace(value->scope, this, engine, value, 0, 0) : 0);
     }
     break;
   default:
@@ -801,6 +802,14 @@ String Namespace::getFirstKey()
     return node->key;
   }
   return String();
+}
+
+String Namespace::getMareDir() const
+{
+  Parser::IncludeFile* includeFile = dynamic_cast<Parser::IncludeFile*>(&scope);
+  if(includeFile)
+    return includeFile->fileDir;
+  return String(".");
 }
 
 void Namespace::compile()

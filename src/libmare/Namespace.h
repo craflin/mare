@@ -25,6 +25,7 @@ public:
   void getText(List<String>& text);
   void appendKeys(String& output);
   String getFirstKey();
+  String getMareDir() const;
   inline Engine& getEngine() {return *engine;}
 
   void addKey(const String& key, unsigned int flags, Statement* value, Token::Id operation = Token::assignment);

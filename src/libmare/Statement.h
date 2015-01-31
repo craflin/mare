@@ -27,6 +27,17 @@ private:
   virtual void execute(Namespace& space);
 };
 
+class WrapperStatement : public Statement
+{
+public:
+  Statement* statement;
+
+  WrapperStatement(Scope& scope) : Statement(scope), statement(0) {}
+
+private:
+  virtual void execute(Namespace& space);
+};
+
 class AssignStatement : public Statement
 {
 public:
