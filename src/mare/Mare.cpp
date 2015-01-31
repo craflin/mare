@@ -86,7 +86,7 @@ bool Mare::build(const Map<String, String>& userArgs)
     cppSource.append("input", "$(file) $(filter-out %.o: \\,$(readfile $(__dfile)))");
     cppSource.append("output", "$(__ofile) $(__dfile)");
     cppSource.append("command", "$(cppCompiler) -MMD $(__soFlags) -o $(__ofile) -c $(file) $(cppFlags) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) $(patsubst %,-D%,$(defines)) $(patsubst %,-I%,$(includePaths))");
-    cppSource.append("message", "$(file)");
+    cppSource.append("message", "$(notdir $(file))");
     engine.addDefaultKey("cppSource", cppSource);
   }
   {
@@ -96,7 +96,7 @@ bool Mare::build(const Map<String, String>& userArgs)
     cSource.append("input", "$(file) $(filter-out %.o: \\,$(readfile $(__dfile)))");
     cSource.append("output", "$(__ofile) $(__dfile)");
     cSource.append("command", "$(cCompiler) -MMD $(__soFlags) -o $(__ofile) -c $(file) $(cFlags) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(patsubst %,-D%,$(defines)) $(patsubst %,-I%,$(includePaths))");
-    cSource.append("message", "$(file)");
+    cSource.append("message", "$(notdir $(file))");
     engine.addDefaultKey("cSource", cSource);
   }
 #if defined(_WIN32) || defined(__CYGWIN__)
