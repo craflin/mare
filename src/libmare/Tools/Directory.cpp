@@ -373,7 +373,6 @@ bool Directory::create(const String& dir)
     return true;
   }
 
-
   const char* start = dir.getData();
   const char* pos = &start[dir.getLength() - 1];
   for(; pos >= start; --pos)
@@ -389,11 +388,16 @@ bool Directory::create(const String& dir)
   ++pos;
   bool result = false;
   if(*pos)
+  {
+    if(*pos == '.' && (pos[1] == '\0' || (pos[1] == '.' && pos[2] == '\0')))
+      result = true;
+    else
 #ifdef _WIN32
-    result = CreateDirectory(dir.getData(), NULL) == TRUE;
+      result = CreateDirectory(dir.getData(), NULL) == TRUE;
 #else
-    result = mkdir(dir.getData(), S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) == 0;
+      result = mkdir(dir.getData(), S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) == 0;
 #endif
+  }
   createdDirs.append(dir, result);
   return result;
 }
