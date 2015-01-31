@@ -25,7 +25,7 @@ bool Mare::build(const Map<String, String>& userArgs)
   engine.addDefaultKey("linkFlags", "$(if $(Debug),,-s)");
   {
     Map<String, String> cppApplication;
-    cppApplication.append("input", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
+    cppApplication.append("input", "$(addprefix $(buildDir)/,$(addsuffix .o,$(basename $(subst ../,,$(filter %.c%,$(files))))))");
     cppApplication.append("output", "$(outputDir)/$(target)$(if $(Win32),.exe)");
     cppApplication.append("command", "$(linker) -o $(output) $(input) $(linkFlags) $(LDFLAGS) $(patsubst %,-L%,$(libPaths)) $(patsubst %,-l%,$(libs))");
     cppApplication.append("message", "Linking $(target)...");
@@ -34,7 +34,7 @@ bool Mare::build(const Map<String, String>& userArgs)
   }
   {
     Map<String, String> cppDynamicLibrary;
-    cppDynamicLibrary.append("input", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
+    cppDynamicLibrary.append("input", "$(addprefix $(buildDir)/,$(addsuffix .o,$(basename $(subst ../,,$(filter %.c%,$(files))))))");
     cppDynamicLibrary.append("output", "$(outputDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.dll,.so)");
     cppDynamicLibrary.append("__soFlags", "$(if $(Win32),,-fpic)");
     cppDynamicLibrary.append("command", "$(linker) -shared $(__soFlags) -o $(output) $(input) $(linkFlags) $(LDFLAGS) $(patsubst %,-L%,$(libPaths)) $(patsubst %,-l%,$(libs))");
@@ -44,7 +44,7 @@ bool Mare::build(const Map<String, String>& userArgs)
   }
   {
     Map<String, String> cppStaticLibrary;
-    cppStaticLibrary.append("input", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
+    cppStaticLibrary.append("input", "$(addprefix $(buildDir)/,$(addsuffix .o,$(basename $(subst ../,,$(filter %.c%,$(files))))))");
     cppStaticLibrary.append("output", "$(outputDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.lib,.a)");
     cppStaticLibrary.append("command", "$(linker) rcs $(output) $(input)");
     cppStaticLibrary.append("message", "Creating $(target)...");
@@ -53,7 +53,7 @@ bool Mare::build(const Map<String, String>& userArgs)
   }
   {
     Map<String, String> cApplication;
-    cApplication.append("input", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
+    cApplication.append("input", "$(addprefix $(buildDir)/,$(addsuffix .o,$(basename $(subst ../,,$(filter %.c%,$(files))))))");
     cApplication.append("output", "$(outputDir)/$(target)$(if $(Win32),.exe)");
     cApplication.append("command", "$(linker) -o $(output) $(input) $(linkFlags) $(LDFLAGS) $(patsubst %,-L%,$(libPaths)) $(patsubst %,-l%,$(libs))");
     cApplication.append("message", "Linking $(target)...");
@@ -62,7 +62,7 @@ bool Mare::build(const Map<String, String>& userArgs)
   }
   {
     Map<String, String> cDynamicLibrary;
-    cDynamicLibrary.append("input", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
+    cDynamicLibrary.append("input", "$(addprefix $(buildDir)/,$(addsuffix .o,$(basename $(subst ../,,$(filter %.c%,$(files))))))");
     cDynamicLibrary.append("output", "$(outputDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.dll,.so)");
     cDynamicLibrary.append("__soFlags", "$(if $(Win32),,-fpic)");
     cDynamicLibrary.append("command", "$(linker) -shared $(__soFlags) -o $(output) $(input) $(linkFlags) $(LDFLAGS) $(patsubst %,-L%,$(libPaths)) $(patsubst %,-l%,$(libs))");
@@ -72,7 +72,7 @@ bool Mare::build(const Map<String, String>& userArgs)
   }
   {
     Map<String, String> cStaticLibrary;
-    cStaticLibrary.append("input", "$(foreach file,$(filter %.c%,$(files)),$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file))))");
+    cStaticLibrary.append("input", "$(addprefix $(buildDir)/,$(addsuffix .o,$(basename $(subst ../,,$(filter %.c%,$(files))))))");
     cStaticLibrary.append("output", "$(outputDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.lib,.a)");
     cStaticLibrary.append("command", "$(linker) rcs $(output) $(input)");
     cStaticLibrary.append("message", "Creating $(target)...");
@@ -81,7 +81,7 @@ bool Mare::build(const Map<String, String>& userArgs)
   }
   {
     Map<String, String> cppSource;
-    cppSource.append("__ofile", "$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file)))");
+    cppSource.append("__ofile", "$(buildDir)/$(basename $(subst ../,,$(file))).o");
     cppSource.append("__dfile", "$(patsubst %.o,%.d,$(__ofile))");
     cppSource.append("input", "$(file) $(filter-out %.o: \\,$(readfile $(__dfile)))");
     cppSource.append("output", "$(__ofile) $(__dfile)");
@@ -91,7 +91,7 @@ bool Mare::build(const Map<String, String>& userArgs)
   }
   {
     Map<String, String> cSource;
-    cSource.append("__ofile", "$(buildDir)/$(patsubst %.%,%.o,$(subst ../,,$(file)))");
+    cSource.append("__ofile", "$(buildDir)/$(basename $(subst ../,,$(file))).o");
     cSource.append("__dfile", "$(patsubst %.o,%.d,$(__ofile))");
     cSource.append("input", "$(file) $(filter-out %.o: \\,$(readfile $(__dfile)))");
     cSource.append("output", "$(__ofile) $(__dfile)");
