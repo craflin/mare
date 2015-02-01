@@ -1,4 +1,15 @@
 
+
+linkFlags += {
+  if tool == "vcxproj" { "/SUBSYSTEM:CONSOLE" }
+}
+
+cppFlags += { 
+  if tool == "vcxproj" && configuration == "Release" { -"/O2", "/O1 /MT /GF" }
+}
+
+buildDir = "build/$(configuration)/$(target)"
+
 targets = {
   mare = cppApplication + {
     dependencies = { 
@@ -8,7 +19,7 @@ targets = {
       "mare"
     }
     libPaths = {
-      "$(buildDir)/libmare"
+      "$(dir $(buildDir))/libmare"
     }
     includePaths = {
       "src/libmare"
@@ -23,19 +34,10 @@ targets = {
     }
   }
   libmare = cppStaticLibrary + {
-    buildDir = "$(buildDir)/libmare"
     root = "src/libmare"
     files = {
       "src/libmare/**.cpp" = cppSource
       "src/libmare/**.h"
     }
   }
-}
-
-linkFlags += {
-  if tool == "vcxproj" { "/SUBSYSTEM:CONSOLE" }
-}
-
-cppFlags += { 
-  if tool == "vcxproj" && configuration == "Release" { -"/O2", "/O1 /MT /GF" }
 }

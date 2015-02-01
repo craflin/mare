@@ -1,8 +1,8 @@
 @echo off
 setlocal
 
-set MARE_BUILD_DIR="Debug"
-set MARE_OUTPUT_DIR="Debug"
+set MARE_BUILD_DIR="build/Debug/mare"
+set MARE_OUTPUT_DIR="build/Debug/mare"
 set MARE_SOURCE_DIR="src"
 set MARE_SOURCE_FILES=mare/Generator.cpp mare/CMake.cpp mare/CodeBlocks.cpp mare/CodeLite.cpp mare/Main.cpp mare/Make.cpp mare/Mare.cpp mare/NetBeans.cpp mare/Vcproj.cpp mare/Vcxproj.cpp mare/Tools/md5.cpp mare/Tools/Win32/getopt.cpp libmare/Engine.cpp libmare/Namespace.cpp libmare/Parser.cpp libmare/Statement.cpp libmare/Tools/Directory.cpp libmare/Tools/Error.cpp libmare/Tools/File.cpp libmare/Tools/Process.cpp libmare/Tools/Scope.cpp libmare/Tools/String.cpp libmare/Tools/Word.cpp
 
@@ -86,9 +86,9 @@ set MARE_OBJECTS=
 for %%f in (%MARE_BUILD_DIR:"=%/*.obj) do (
   call set MARE_OBJECTS=%%MARE_OBJECTS%% %MARE_BUILD_DIR:"=%/%%f
 )
-echo Linking %MARE_BUILD_DIR:"=%/mare.exe...
+echo ^-^> %MARE_BUILD_DIR:"=%/mare.exe
 link /OUT:"%MARE_OUTPUT_DIR:"=%/mare.exe" /NOLOGO "kernel32.lib" "user32.lib" "gdi32.lib" "winspool.lib" "comdlg32.lib" "advapi32.lib" "shell32.lib" "ole32.lib" "oleaut32.lib" "uuid.lib" "odbc32.lib" "odbccp32.lib" /ALLOWISOLATION /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /DEBUG /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /MACHINE:X86 %MARE_OBJECTS%
-if exist %MARE_OUTPUT_DIR:"=%/mare.exe (echo done) else echo failed
+rem if exist %MARE_OUTPUT_DIR:"=%/mare.exe (echo done) else echo failed
 goto build_return
 
 
