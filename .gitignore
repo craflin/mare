@@ -1,9 +1,8 @@
-Debug
-Release
-VS2010/*.filters
-VS2010/*.sln
-VS2010/*.suo
-VS2010/*.user
-VS2010/*.vcxproj
-VS2010/*.*sdf
-VS2010/ipch/
+/build
+*.filters
+*.sln
+*.suo
+*.user
+*.vcproj
+*.vcxproj
+*.*sdf
