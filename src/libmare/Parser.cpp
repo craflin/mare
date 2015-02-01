@@ -7,7 +7,7 @@
 #include "Tools/Error.h"
 #include "Statement.h"
 
-Parser::Parser(Engine& engine) : engine(engine), readBufferPos(0), readBufferEnd(0), currentLine(1), currentChar(' '), includeFile(0) {}
+Parser::Parser(Engine& engine) : engine(engine), includeFile(0), readBufferPos(0), readBufferEnd(0), currentLine(1), currentChar(' ') {}
 
 Statement* Parser::parse(const String& file, Engine::ErrorHandler errorHandler, void* userData)
 {
