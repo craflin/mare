@@ -28,7 +28,7 @@ bool Mare::build(const Map<String, String>& userArgs)
     cppApplication.append("input", "$(addprefix $(buildDir)/,$(addsuffix .o,$(basename $(subst ../,,$(filter %.c%,$(files))))))");
     cppApplication.append("output", "$(outputDir)/$(target)$(if $(Win32),.exe)");
     cppApplication.append("command", "$(linker) -o $(output) $(input) $(linkFlags) $(LDFLAGS) $(patsubst %,-L%,$(libPaths)) $(patsubst %,-l%,$(libs))");
-    cppApplication.append("message", "Linking $(target)...");
+    cppApplication.append("message", "-> $(output)");
     cppApplication.append("linker", "$(if $(linker),$(linker),$(cppCompiler))");
     engine.addDefaultKey("cppApplication", cppApplication);
   }
@@ -38,7 +38,7 @@ bool Mare::build(const Map<String, String>& userArgs)
     cppDynamicLibrary.append("output", "$(outputDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.dll,.so)");
     cppDynamicLibrary.append("__soFlags", "$(if $(Win32),,-fpic)");
     cppDynamicLibrary.append("command", "$(linker) -shared $(__soFlags) -o $(output) $(input) $(linkFlags) $(LDFLAGS) $(patsubst %,-L%,$(libPaths)) $(patsubst %,-l%,$(libs))");
-    cppDynamicLibrary.append("message", "Linking $(target)...");
+    cppDynamicLibrary.append("message", "-> $(output)");
     cppDynamicLibrary.append("linker", "$(if $(linker),$(linker),$(cppCompiler))");
     engine.addDefaultKey("cppDynamicLibrary", cppDynamicLibrary);
   }
@@ -47,7 +47,7 @@ bool Mare::build(const Map<String, String>& userArgs)
     cppStaticLibrary.append("input", "$(addprefix $(buildDir)/,$(addsuffix .o,$(basename $(subst ../,,$(filter %.c%,$(files))))))");
     cppStaticLibrary.append("output", "$(outputDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.lib,.a)");
     cppStaticLibrary.append("command", "$(linker) rcs $(output) $(input)");
-    cppStaticLibrary.append("message", "Creating $(target)...");
+    cppStaticLibrary.append("message", "-> $(output)");
     cppStaticLibrary.append("linker", "$(if $(linker),$(linker),ar)");
     engine.addDefaultKey("cppStaticLibrary", cppStaticLibrary);
   }
@@ -56,7 +56,7 @@ bool Mare::build(const Map<String, String>& userArgs)
     cApplication.append("input", "$(addprefix $(buildDir)/,$(addsuffix .o,$(basename $(subst ../,,$(filter %.c%,$(files))))))");
     cApplication.append("output", "$(outputDir)/$(target)$(if $(Win32),.exe)");
     cApplication.append("command", "$(linker) -o $(output) $(input) $(linkFlags) $(LDFLAGS) $(patsubst %,-L%,$(libPaths)) $(patsubst %,-l%,$(libs))");
-    cApplication.append("message", "Linking $(target)...");
+    cApplication.append("message", "-> $(output)");
     cApplication.append("linker", "$(if $(linker),$(linker),$(cCompiler))");
     engine.addDefaultKey("cApplication", cApplication);
   }
@@ -66,7 +66,7 @@ bool Mare::build(const Map<String, String>& userArgs)
     cDynamicLibrary.append("output", "$(outputDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.dll,.so)");
     cDynamicLibrary.append("__soFlags", "$(if $(Win32),,-fpic)");
     cDynamicLibrary.append("command", "$(linker) -shared $(__soFlags) -o $(output) $(input) $(linkFlags) $(LDFLAGS) $(patsubst %,-L%,$(libPaths)) $(patsubst %,-l%,$(libs))");
-    cDynamicLibrary.append("message", "Linking $(target)...");
+    cDynamicLibrary.append("message", "-> $(output)");
     cDynamicLibrary.append("linker", "$(if $(linker),$(linker),$(cCompiler))");
     engine.addDefaultKey("cDynamicLibrary", cDynamicLibrary);
   }
@@ -75,7 +75,7 @@ bool Mare::build(const Map<String, String>& userArgs)
     cStaticLibrary.append("input", "$(addprefix $(buildDir)/,$(addsuffix .o,$(basename $(subst ../,,$(filter %.c%,$(files))))))");
     cStaticLibrary.append("output", "$(outputDir)/$(if $(Win32),,lib)$(patsubst lib%,%,$(target))$(if $(Win32),.lib,.a)");
     cStaticLibrary.append("command", "$(linker) rcs $(output) $(input)");
-    cStaticLibrary.append("message", "Creating $(target)...");
+    cStaticLibrary.append("message", "-> $(output)");
     cStaticLibrary.append("linker", "$(if $(linker),$(linker),ar)");
     engine.addDefaultKey("cStaticLibrary", cStaticLibrary);
   }
@@ -86,7 +86,7 @@ bool Mare::build(const Map<String, String>& userArgs)
     cppSource.append("input", "$(file) $(filter-out %.o: \\,$(readfile $(__dfile)))");
     cppSource.append("output", "$(__ofile) $(__dfile)");
     cppSource.append("command", "$(cppCompiler) -MMD $(__soFlags) -o $(__ofile) -c $(file) $(cppFlags) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) $(patsubst %,-D%,$(defines)) $(patsubst %,-I%,$(includePaths))");
-    cppSource.append("message", "$(notdir $(file))");
+    cppSource.append("message", "$(subst ./,,$(file))");
     engine.addDefaultKey("cppSource", cppSource);
   }
   {
@@ -96,7 +96,7 @@ bool Mare::build(const Map<String, String>& userArgs)
     cSource.append("input", "$(file) $(filter-out %.o: \\,$(readfile $(__dfile)))");
     cSource.append("output", "$(__ofile) $(__dfile)");
     cSource.append("command", "$(cCompiler) -MMD $(__soFlags) -o $(__ofile) -c $(file) $(cFlags) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(patsubst %,-D%,$(defines)) $(patsubst %,-I%,$(includePaths))");
-    cSource.append("message", "$(notdir $(file))");
+    cSource.append("message", "$(subst ./,,$(file))");
     engine.addDefaultKey("cSource", cSource);
   }
 #if defined(_WIN32) || defined(__CYGWIN__)
