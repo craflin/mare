@@ -59,7 +59,7 @@ The generated executable (mare) will be located in the directory "Debug". It can
 
 ```
 $ cd /your/working/directory/mare
-$ Debug/mare config=Release
+$ build/Debug/mare/mare config=Release
 ```
 
 The Marefile
