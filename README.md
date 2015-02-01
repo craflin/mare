@@ -362,7 +362,7 @@ command = "MYENV=hallo bash -c \"echo $$(MYENV)\""
 ### Functions
 
 Within keys, a functions can be used with the syntax "$(function arguments)". The functions available in Mare are similar to the functions that can be used in a (GNU-)Makefile (see http://www.gnu.org/software/make/manual/make.html#Functions) but some of these are not yet implemented. For now, the following functions can be used:
-* subst, patsubst, filter, filter-out, firstword, lastword, dir, notdir, suffix, basename, addsuffix, addprefix, if, foreach, origin 
+* subst, patsubst, findstring, filter, filter-out, firstword, lastword, dir, notdir, suffix, basename, addsuffix, addprefix, if, foreach, origin 
 
 Additionally, Mare introduces some new functions:
 * lower – transforms a string into lower case letters ("$(lower AbC)" becomes "abc")
