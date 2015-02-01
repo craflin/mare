@@ -1,4 +1,5 @@
 /build
+
 *.filters
 *.sln
 *.suo
@@ -6,3 +7,11 @@
 *.vcproj
 *.vcxproj
 *.*sdf
+
+.*
+Makefile
+*.mk
+*.project
+*.workspace
+*.txt
+
