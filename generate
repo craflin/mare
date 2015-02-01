@@ -1,5 +1,5 @@
 #!/bin/sh
 
-[ ! -f "Debug/mare" ] && ./build
+[ ! -f "Debug/mare" ] && ./compile
 [ ! -z "$1" ] && Debug/mare $@
 
