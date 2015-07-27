@@ -110,6 +110,9 @@ bool Vcxproj::generate(const Map<String, String>& userArgs)
   knownCppOptions.append("/Fp", Option(group, String()));
 
   // TODO: C/C++ output files tab?
+  group = &knownOptionGroups.append(OptionGroup(String(), String(), "ForcedIncludeFiles"));
+  knownCppOptions.append("/FI", Option(group, String()));
+
   // TODO: C/C++ browse information tab?
   // TODO: C/C++ advanced tab?
 
