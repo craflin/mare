@@ -707,7 +707,7 @@ bool Vcxproj::processData()
       if(i->data.type.isEmpty())
       {
         String extension = File::getExtension(i->key);
-        if(extension == "h" || extension == "hh" || extension == "hxx"  || extension == "hpp")
+        if(extension == "h" || extension == "hh" || extension == "hxx" || extension == "hpp")
           i->data.type = "ClInclude";
         else
           i->data.type = "None";
@@ -882,7 +882,7 @@ bool Vcxproj::generateSln()
     fileWrite("Microsoft Visual Studio Solution File, Format Version 11.00\r\n");
 
   if(version == 2015)
-	  fileWrite("# Visual Studio 14\r\n");
+    fileWrite("# Visual Studio 14\r\n");
   else if(version == 2013)
     fileWrite("# Visual Studio 2013\r\n");
   else if(version == 2012)
@@ -987,7 +987,7 @@ bool Vcxproj::generateVcxproj(Project& project)
 
   fileWrite("<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n");
   if(version == 2015)
-	fileWrite("<Project DefaultTargets=\"Build\" ToolsVersion=\"14.0\" xmlns=\"http://schemas.microsoft.com/developer/msbuild/2003\">\r\n");
+    fileWrite("<Project DefaultTargets=\"Build\" ToolsVersion=\"14.0\" xmlns=\"http://schemas.microsoft.com/developer/msbuild/2003\">\r\n");
   else if(version == 2013)
     fileWrite("<Project DefaultTargets=\"Build\" ToolsVersion=\"12.0\" xmlns=\"http://schemas.microsoft.com/developer/msbuild/2003\">\r\n");
   else
@@ -1031,8 +1031,8 @@ bool Vcxproj::generateVcxproj(Project& project)
       fileWrite("    <UseDebugLibraries>false</UseDebugLibraries>\r\n");
     if(config.vsOptions.find("PlatformToolset"))
       fileWrite(String("    <PlatformToolset>") + config.vsOptions.lookup("PlatformToolset") + "</PlatformToolset>\r\n");
-	else if (version == 2015)
-		fileWrite("    <PlatformToolset>v140</PlatformToolset>\r\n");
+    else if(version == 2015)
+      fileWrite("    <PlatformToolset>v140</PlatformToolset>\r\n");
     else if(version == 2013)
       fileWrite("    <PlatformToolset>v120</PlatformToolset>\r\n");
     else if(version == 2012)
@@ -1656,7 +1656,7 @@ String Vcxproj::joinCommands(const List<String>& commands)
             goto next2;
           }
         result.append(xmlEscape(i->data));
-      next2: ;
+      next2:;
       }
     }
   }
@@ -1677,10 +1677,10 @@ escape:
   for(; *str; ++str)
     switch(*str)
     {
-    case '<': result.append("&lt;"); break;
-    case '>': result.append("&gt;"); break;
-    case '&': result.append("&amp;"); break;
-    default: result.append(*str); break;
+      case '<': result.append("&lt;"); break;
+      case '>': result.append("&gt;"); break;
+      case '&': result.append("&amp;"); break;
+      default: result.append(*str); break;
     }
   return result;
 }
