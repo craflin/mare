@@ -1677,10 +1677,10 @@ escape:
   for(; *str; ++str)
     switch(*str)
     {
-      case '<': result.append("&lt;"); break;
-      case '>': result.append("&gt;"); break;
-      case '&': result.append("&amp;"); break;
-      default: result.append(*str); break;
+    case '<': result.append("&lt;"); break;
+    case '>': result.append("&gt;"); break;
+    case '&': result.append("&amp;"); break;
+    default: result.append(*str); break;
     }
   return result;
 }
