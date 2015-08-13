@@ -47,6 +47,11 @@ goto end
 :find_visual_studio
 if not "%VCINSTALLDIR%"=="" goto find_visual_studio_return
 
+if not "%VS140COMNTOOLS%"=="" (
+   call "%VS140COMNTOOLS%vsvars32.bat"
+   goto find_visual_studio_return
+)
+
 if not "%VS120COMNTOOLS%"=="" (
    call "%VS120COMNTOOLS%vsvars32.bat"
    goto find_visual_studio_return
