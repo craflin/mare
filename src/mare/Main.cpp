@@ -248,8 +248,8 @@ int main(int argc, char* argv[])
                 generateVcxproj = 2012;
               else if(strcmp(optarg, "2013") == 0)
                 generateVcxproj = 2013;
-			  else if (strcmp(optarg, "2015") == 0)
-				  generateVcxproj = 2015;
+              else if (strcmp(optarg, "2015") == 0)
+                generateVcxproj = 2015;
               else // unknown version
                 ::showHelp(argv[0]);
             }
