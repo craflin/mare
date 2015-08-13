@@ -284,13 +284,13 @@ cppFlags = {
 In the &lt;expr&gt; part of an if-statement, lists can be compared with another or with strings, using the operators ==, !=, &gt;, &lt;, &gt;= and &lt;=. Expressions can be enclosed in parenthesis and multiple expressions can be chained using boolean operators (&& and ||).
 
 To differentiate between configurations and other environmental conditions, Mare provides the following "variables":
-* "configuration" – the name of the configuration currently built (e.g. "Debug", "Release", ...) 
-* "platform" – the name of the target platform (e.g. "Win32", "Linux", "MacOSX", ...) 
-* "host" – the name of the host platform (e.g. "Win32", "Linux", "MacOSX", ...) 
-* "architecture" – the architecture of the host system (e.g. "i686", "x86_64", "armv61")
-* "tool" – the name of a translator (declared when the Marefile is translated into another format) (e.g. "vcxproj", "vcproj", "codelite", "codeblocks", "cmake", "netbeans") 
-* "target" – the name of the currently handled target
-* "file" – the name of the currently handled file
+* "configuration" - the name of the configuration currently built (e.g. "Debug", "Release", ...) 
+* "platform" - the name of the target platform (e.g. "Win32", "Linux", "MacOSX", ...) 
+* "host" - the name of the host platform (e.g. "Win32", "Linux", "MacOSX", ...) 
+* "architecture" - the architecture of the host system (e.g. "i686", "x86_64", "armv61")
+* "tool" - the name of a translator (declared when the Marefile is translated into another format) (e.g. "vcxproj", "vcproj", "codelite", "codeblocks", "cmake", "netbeans") 
+* "target" - the name of the currently handled target
+* "file" - the name of the currently handled file
 * "mareDir" - the directory of the target's Marefile
 
 ### Including Files
@@ -365,24 +365,24 @@ Within keys, a functions can be used with the syntax "$(function arguments)". Th
 * subst, patsubst, findstring, filter, filter-out, firstword, lastword, dir, notdir, suffix, basename, addsuffix, addprefix, if, foreach, origin 
 
 Additionally, Mare introduces some new functions:
-* lower – transforms a string into lower case letters ("$(lower AbC)" becomes "abc")
-* upper – transforms a string into upper case letters ("$(upper dDd)" becomes "DDD")
-* readfile – inserts the content of plain text file (e.g. "$(readfile anyfile.d)") 
+* lower - transforms a string into lower case letters ("$(lower AbC)" becomes "abc")
+* upper - transforms a string into upper case letters ("$(upper dDd)" becomes "DDD")
+* readfile - inserts the content of plain text file (e.g. "$(readfile anyfile.d)") 
 
 ### Build-in Rules
 
 Mare provides a set of build-in rules, which can be used for simple c and c++ applications, dynamic libraries and static libraries. The Translators (see section "Translators") interpret them accordingly to convert a Marefile as close to the target environment as possible.
 * cppSource, cSource - rules for c/cpp source files 
 * cppApplication, cApplication - rules for c/cpp executables
-* cppDynamicLibrary, cDynamicLibrary – rules for c/cpp DLLs or "shared objects" 
-* cppStaticLibrary, cStaticLibrary – rules for static c/cpp libraries 
+* cppDynamicLibrary, cDynamicLibrary - rules for c/cpp DLLs or "shared objects" 
+* cppStaticLibrary, cStaticLibrary - rules for static c/cpp libraries 
 
 These rules can be customized by overwriting or extending the following lists:
-* linker – the program used to link a c/cpp application or DLL/shared object (default is "gcc" for cApplication or cDynamicLibrary, "g++" for cppApplication or cppDynamicLibrary and "ar" for cppStaticLibrary or cStaticLibrary) 
+* linker - the program used to link a c/cpp application or DLL/shared object (default is "gcc" for cApplication or cDynamicLibrary, "g++" for cppApplication or cppDynamicLibrary and "ar" for cppStaticLibrary or cStaticLibrary) 
 * linkFlags, libPaths, libs - flags passed to the linker
-* cCompiler, cppCompiler – the compiler used to compile c/cpp files (default is "gcc" for cApplication, cDynamicLibrary or cStaticLibrary and "g++" for cppApplication, cppDynamicLibrary or cppStaticLibrary)
-* cFlags, cppFlags, defines, includePaths – flags passed to the compiler
-* buildDir – the directory used for intermediate files (default is "$(configuration)")
+* cCompiler, cppCompiler - the compiler used to compile c/cpp files (default is "gcc" for cApplication, cDynamicLibrary or cStaticLibrary and "g++" for cppApplication, cppDynamicLibrary or cppStaticLibrary)
+* cFlags, cppFlags, defines, includePaths - flags passed to the compiler
+* buildDir - the directory used for intermediate files (default is "$(configuration)")
 * outputDir - the directory used for output files (default is "$(buildDir)")
 
 A simple Marefile like
