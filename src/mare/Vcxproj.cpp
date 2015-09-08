@@ -1197,7 +1197,7 @@ bool Vcxproj::generateVcxproj(Project& project)
         fileWrite("    <CustomBuild>\r\n");
 
         if(!config.message.isEmpty())
-          fileWrite(String("      <Message>") + join(config.message, ' ') + "</Message>\r\n");
+          fileWrite(String("      <Message>") + xmlEscape(config.message.isEmpty() ? String() : config.message.getFirst()->data) + "</Message>\r\n");
         if(!config.command.isEmpty())
           fileWrite(String("      <Command>") + joinCommands(config.command) + "</Command>\r\n");
         else
@@ -1239,7 +1239,7 @@ bool Vcxproj::generateVcxproj(Project& project)
         {
           Project::File::Config& config = node->data;
           if(!config.message.isEmpty())
-            fileWrite(String("      <Message Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">" + join(config.message, ' ') + "</Message>\r\n");
+            fileWrite(String("      <Message Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">" + xmlEscape(config.message.isEmpty() ? String() : config.message.getFirst()->data) + "</Message>\r\n");
           if(!config.command.isEmpty())
             fileWrite(String("      <Command Condition=\"'$(Configuration)|$(Platform)'=='") + i->key + "'\">" + joinCommands(config.command) + "</Command>\r\n");
           else
@@ -1661,7 +1661,6 @@ String Vcxproj::joinCommands(const List<String>& commands)
     }
   }
   return result;
-  // TODO: something for more than a single command?
 }
 
 String Vcxproj::xmlEscape(const String& text)
