@@ -1313,7 +1313,7 @@ String Vcproj::createSomethingLikeGUID(const String& name)
   // create something like this: 8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942
 
   MD5 md5;
-  md5.update((const unsigned char*)name.getData(), name.getLength());
+  md5.update((const unsigned char*)name.getData(), static_cast<unsigned>(name.getLength()));
   unsigned char sum[16];
   md5.final(sum);
 
@@ -1510,7 +1510,7 @@ String Vcproj::Option::getParamValue(const String& flag)
       return String(a, strlen(a));
   }
   ++a;
-  int len = strlen(a);
+  size_t len = strlen(a);
   if(a[len - 1] == '"')
     --len;
   return flag.substr(a - flag.getData(), len);

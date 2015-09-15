@@ -102,11 +102,11 @@ bool File::open(const String& file, Flags flags)
               absFile = File::simplifyPath(absFile);
           }
 
-          int wFileLen = MultiByteToWideChar(CP_ACP, 0, absFile.getData(), absFile.getLength(), 0, 0);
+          int wFileLen = MultiByteToWideChar(CP_ACP, 0, absFile.getData(), static_cast<int>(absFile.getLength()), 0, 0);
           int wlen = 4 + wFileLen + 1;
           WCHAR* path = (WCHAR*)alloca(wlen * sizeof(WCHAR));
           memcpy(path, L"\\\\?\\", 4 * sizeof(WCHAR));
-          MultiByteToWideChar(CP_ACP, 0, absFile.getData(), absFile.getLength(), path + 4, wFileLen + 1);
+          MultiByteToWideChar(CP_ACP, 0, absFile.getData(), static_cast<int>(absFile.getLength()), path + 4, wFileLen + 1);
           path[4 + wFileLen] = L'\0';
           for (WCHAR* p = path + 4; *p; ++p)
             if (*p == L'/')
@@ -130,31 +130,31 @@ bool File::open(const String& file, Flags flags)
   return true;
 }
 
-int File::read(char* buffer, int len)
+size_t File::read(char* buffer, size_t len)
 {
 #ifdef _WIN32
   DWORD i;
-  if(!ReadFile((HANDLE)fp, buffer, len, &i, NULL))
+  if(!ReadFile((HANDLE)fp, buffer, static_cast<DWORD>(len), &i, NULL))
     return 0;
   return i;
 #else
   size_t i = fread(buffer, 1, len, (FILE*)fp);
   if(i == 0)
     return 0;
-  return (int)i;
+  return i;
 #endif
 }
 
-int File::write(const char* buffer, int len)
+size_t File::write(const char* buffer, size_t len)
 {
 #ifdef _WIN32
   DWORD i;
-  if(!WriteFile((HANDLE)fp, buffer, len, &i, NULL))
+  if(!WriteFile((HANDLE)fp, buffer, static_cast<DWORD>(len), &i, NULL))
     return 0;
   return i;
 #else
   size_t i = fwrite(buffer, 1, len, (FILE*)fp);
-  return (int)i;
+  return i;
 #endif
 }
 

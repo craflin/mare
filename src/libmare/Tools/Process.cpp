@@ -49,7 +49,7 @@ Process::~Process()
   {
     CloseHandle((HANDLE)hProcess);
 
-    int index = runningProcessHandles.find(hProcess);
+    ptrdiff_t index = runningProcessHandles.find(hProcess);
     if(index >= 0)
       runningProcessHandles.remove(index);
   }
@@ -175,7 +175,7 @@ unsigned int Process::start(const String& rawCommandLine)
           return success;
         const int len = 12 + MAX_PATH * 2 + 2;
         char buffer[len];
-        int i = file.read(buffer, len);
+        size_t i = file.read(buffer, len);
         if(i < 12 || strncmp(buffer, "!<symlink>\xff\xfe", 12) != 0)
           return success;
         i &= ~1;
@@ -270,7 +270,7 @@ unsigned int Process::start(const String& rawCommandLine)
   char* envblock = 0;
   if(!environmentVariables.isEmpty())
   {
-    int envlen = 1;
+    size_t envlen = 1;
     const String** envStrings = (const String**)_alloca(environmentVariables.getSize() * sizeof(String*));
     const String** j = envStrings;
     for(Map<String, String>::Node* i = environmentVariables.getFirst(); i; i = i->getNext())
@@ -291,7 +291,7 @@ unsigned int Process::start(const String& rawCommandLine)
     char* p = envblock; 
     for(const String** i = envStrings, ** end = envStrings + environmentVariables.getSize(); i < end; ++i)
     {
-      int varlen = (*i)->getLength() + 1;
+      size_t varlen = (*i)->getLength() + 1;
       memcpy(p, (*i)->getData(), varlen);
       p += varlen;
     }
@@ -529,7 +529,7 @@ unsigned int Process::waitOne()
     SetLastError(ERROR_NOT_READY);
     return 0;
   }
-  DWORD index = WaitForMultipleObjects(runningProcessHandles.getSize(), runningProcessHandles.getFirst(), FALSE, INFINITE);
+  DWORD index = WaitForMultipleObjects(static_cast<DWORD>(runningProcessHandles.getSize()), runningProcessHandles.getFirst(), FALSE, INFINITE);
   if(index == WAIT_FAILED)
     return 0;
   index -= WAIT_OBJECT_0;
@@ -603,7 +603,7 @@ const Map<String, String>& Process::getEnvironmentVariables()
   char* existingStrings = GetEnvironmentStrings();
   for(const char* p = existingStrings; *p;)
   {
-    int len = strlen(p);
+    size_t len = strlen(p);
     const char* sep = strchr(p, '=');
     if(sep)
       environmentVariables.append(String(p, sep - p), String(p, len));

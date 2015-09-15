@@ -320,7 +320,7 @@ String Namespace::evaluateString(const String& string) const
         if(file.open(filepath))
         {
           char buffer[2048];
-          int i;
+          size_t i;
           while((i = file.read(buffer, sizeof(buffer))) > 0)
             output.append(buffer, i);
         }

@@ -16,9 +16,9 @@ public:
 
   template <int N> String(const char (&str)[N]) {init(N - 1, str, N - 1);}
 
-  String(const char* str, int length);
+  String(const char* str, ptrdiff_t length);
 
-  String(unsigned int capacity) {init(capacity, 0, 0);}
+  String(size_t capacity) {init(capacity, 0, 0);}
 
   ~String();
 
@@ -31,25 +31,25 @@ public:
 
   inline const char* getData() const {return data->str;}
 
-  char* getData(unsigned int capacity);
+  char* getData(size_t capacity);
 
-  void setCapacity(unsigned int capacity);
+  void setCapacity(size_t capacity);
 
-  void setLength(unsigned int length);
-  inline unsigned int getLength() const {return data->length;}
+  void setLength(size_t length);
+  inline size_t getLength() const {return data->length;}
 
-  String& format(unsigned int capacity, const char* format, ...);
+  String& format(size_t capacity, const char* format, ...);
 
   String& prepend(const String& str);
 
   String& append(char c);
   String& append(const String& str);
-  String& append(const char* str, unsigned int length);
+  String& append(const char* str, size_t length);
 
   void clear();
   bool isEmpty() const {return data->length == 0;}
 
-  String substr(int start, int length = -1) const;
+  String substr(ptrdiff_t start, ptrdiff_t length = -1) const;
 
   bool patmatch(const String& pattern) const;
   bool patsubst(const String& pattern, const String& replace);
@@ -63,9 +63,9 @@ public:
    * @param pos The position of str in this String if contained, otherwise undefined.
    * @return Returns whether str was found.
    */
-  bool find(const String& str, unsigned int& pos) const;
+  bool find(const String& str, size_t& pos) const;
   bool contains(const String& str) const;
-  bool find(char ch, unsigned int& pos) const;
+  bool find(char ch, size_t& pos) const;
 
   String& lowercase();
   String& uppercase();
@@ -75,14 +75,14 @@ private:
   {
   public:
     const char* str;
-    unsigned int length; // size TODO: rename
-    unsigned int capacity;
+    size_t length; // size TODO: rename
+    size_t capacity;
     unsigned int refs;
     Data* next;
 
     Data() {}
 
-    template <int N> Data(const char (&str)[N]) : str(str), length(N - 1), capacity(0), refs(1) {}
+    template <size_t N> Data(const char (&str)[N]) : str(str), length(N - 1), capacity(0), refs(1) {}
   };
 
   Data* data;
@@ -90,7 +90,7 @@ private:
   static Data emptyData;
   static Data* firstFreeData;
 
-  void init(unsigned int capacity, const char* str, unsigned int length);
+  void init(size_t capacity, const char* str, size_t length);
   void free();
-  void grow(unsigned int capacity, unsigned int length);
+  void grow(size_t capacity, size_t length);
 };

@@ -11,7 +11,7 @@
 String::Data String::emptyData("");
 String::Data* String::firstFreeData = 0;
 
-String::String(const char* str, int length)
+String::String(const char* str, ptrdiff_t length)
 {
   if(length < 0)
     length = strlen(str);
@@ -23,7 +23,7 @@ String::~String()
   free();
 }
 
-void String::init(unsigned int capacity, const char* str, unsigned int length)
+void String::init(size_t capacity, const char* str, size_t length)
 {
   ASSERT(capacity >= length);
   if(firstFreeData)
@@ -62,7 +62,7 @@ void String::free()
   }
 }
 
-void String::grow(unsigned int capacity, unsigned int length)
+void String::grow(size_t capacity, size_t length)
 {
   ASSERT(capacity >= length);
   ASSERT(length <= data->capacity);
@@ -105,20 +105,20 @@ bool String::operator!=(const String& other) const
   return data->length != other.data->length || memcmp(data->str, other.data->str, data->length) != 0;
 }
 
-char* String::getData(unsigned int capacity)
+char* String::getData(size_t capacity)
 {
   grow(capacity, 0);
   return (char*)data->str;
 }
 
-void String::setCapacity(unsigned int capacity)
+void String::setCapacity(size_t capacity)
 {
   grow(capacity < data->length ? data->length : capacity, data->length); // enforce detach
 }
 
 String& String::append(char c)
 {
-  unsigned int newLength = data->length + 1;
+  size_t newLength = data->length + 1;
   grow(newLength, data->length);
   ((char*)data->str)[data->length] = c;
   ((char*)data->str)[newLength] = '\0';
@@ -128,7 +128,7 @@ String& String::append(char c)
 
 String& String::append(const String& str)
 {
-  unsigned int newLength = data->length + str.data->length;
+  size_t newLength = data->length + str.data->length;
   grow(newLength, data->length);
   memcpy(((char*)data->str) + data->length, str.data->str, str.data->length);
   ((char*)data->str)[newLength] = '\0';
@@ -136,9 +136,9 @@ String& String::append(const String& str)
   return *this;
 }
 
-String& String::append(const char* str, unsigned int length)
+String& String::append(const char* str, size_t length)
 {
-  unsigned int newLength = data->length + length;
+  size_t newLength = data->length + length;
   grow(newLength, data->length);
   memcpy(((char*)data->str) + data->length, str, length);
   ((char*)data->str)[newLength] = '\0';
@@ -150,7 +150,7 @@ String& String::prepend(const String& str)
 {
   // TODO: optimize this using memmove when possible?
   String old(*this);
-  unsigned int newLength = data->length + str.data->length;
+  size_t newLength = data->length + str.data->length;
   grow(newLength, 0);
   memcpy((char*)data->str, str.data->str, str.data->length);
   memcpy(((char*)data->str) + str.data->length, old.data->str, old.data->length);
@@ -174,14 +174,14 @@ void String::clear()
   }
 }
 
-void String::setLength(unsigned int length)
+void String::setLength(size_t length)
 {
   grow(length, length); // detach
   ((char*)data->str)[length] = '\0';
   data->length = length;
 }
 
-String& String::format(unsigned int capacity, const char* format, ...)
+String& String::format(size_t capacity, const char* format, ...)
 {
   int length;
   va_list ap;
@@ -199,22 +199,22 @@ String& String::format(unsigned int capacity, const char* format, ...)
   return *this;
 }
 
-String String::substr(int start, int length) const
+String String::substr(ptrdiff_t start, ptrdiff_t length) const
 {
   if(start < 0)
   {
-    start = (int)data->length + start;
+    start = data->length + start;
     if(start < 0)
       start = 0;
   }
-  else if((unsigned int)start > data->length)
+  else if(static_cast<size_t>(start) > data->length)
     start = data->length;
 
-  int end;
+  size_t end;
   if(length >= 0)
   {
     end = start + length;
-    if((unsigned int)end > data->length)
+    if(end > data->length)
       end = data->length;
   }
   else
@@ -233,7 +233,7 @@ int String::subst(const String& from, const String& to)
   String result(data->length + to.data->length * 2);
   const char* str = data->str;
   const char* f = from.data->str;
-  unsigned int flen = from.data->length;
+  size_t flen = from.data->length;
   const char* start = str;
   int i = 0;
   while(*str)
@@ -254,40 +254,40 @@ int String::subst(const String& from, const String& to)
   return i;
 }
 
-bool String::find(const String& str, unsigned int& pos) const
+bool String::find(const String& str, size_t& pos) const
 {
-  unsigned int needleLength = str.data->length;
+  size_t needleLength = str.data->length;
   if(needleLength == 0)
     return true;
   else
   {
-    unsigned int haystackLength = data->length;
+    size_t haystackLength = data->length;
     if(needleLength <= haystackLength)
     {
       if(needleLength * haystackLength > haystackLength + UCHAR_MAX + needleLength)
       {
         // The Boyer–Moore–Horspool algorithm from http://en.wikipedia.org/wiki/Boyer-Moore-Horspool_algorithm
 
-        unsigned int badCharShift[UCHAR_MAX + 1];
+        size_t badCharShift[UCHAR_MAX + 1];
         const unsigned char* needle = (const unsigned char*)(str.data->str);
         const unsigned char* haystack = (const unsigned char*)(data->str);
 
         for(unsigned int i = 0; i <= UCHAR_MAX; ++i)
           badCharShift[i] = needleLength;
 
-        const unsigned last = needleLength - 1;
+        const size_t last = needleLength - 1;
 
-        for(unsigned int i = 0; i < last; ++i)
+        for(size_t i = 0; i < last; ++i)
           badCharShift[needle[i]] = last - i;
 
-        unsigned int haystackLength = data->length;
+        size_t haystackLength = data->length;
 
         while(haystackLength >= needleLength)
         {
-          for(unsigned int i = last; haystack[i] == needle[i]; --i)
+          for(size_t i = last; haystack[i] == needle[i]; --i)
             if(i == 0)
             {
-              pos = (unsigned int)((const char*)haystack - data->str);
+              pos = static_cast<size_t>((const char*)haystack - data->str);
               return true;
             }
 
@@ -300,7 +300,7 @@ bool String::find(const String& str, unsigned int& pos) const
         const char* res = strstr(data->str, str.data->str);
         if(!res)
           return false;
-        pos = (unsigned int)(res - data->str);
+        pos = (size_t)(res - data->str);
         return true;
       }
     }
@@ -310,11 +310,11 @@ bool String::find(const String& str, unsigned int& pos) const
 
 bool String::contains(const String& str) const
 {
-  unsigned int pos;
+  size_t pos;
   return find(str, pos);
 }
 
-bool String::find(char ch, unsigned& pos) const
+bool String::find(char ch, size_t& pos) const
 {
   const char* res = strchr(data->str, ch);
   if(res)
@@ -340,7 +340,7 @@ bool String::patsubst(const String& pattern, const String& replace)
   if(!szWildMatch1(pattern.data->str, data->str, matchstart, matchend))
     return false;
 
-  unsigned int matchlen = matchend - matchstart;
+  size_t matchlen = matchend - matchstart;
   String result(matchlen + replace.data->length);
   char* dest = (char*)result.data->str;
   for(const char* src = replace.data->str; *src; ++src)
@@ -354,7 +354,7 @@ bool String::patsubst(const String& pattern, const String& replace)
       memcpy(dest, matchstart, matchlen);
       dest += matchlen;
       ++src;
-      unsigned int left = replace.data->length - (src - replace.data->str);
+      size_t left = replace.data->length - (src - replace.data->str);
       memcpy(dest, src, left);
       dest += left;
       break;

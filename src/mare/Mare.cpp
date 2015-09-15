@@ -686,7 +686,7 @@ bool Mare::buildTargets(const String& platform, const String& configuration)
 
 String Mare::join(const List<String>& words)
 {
-  int totalLen = words.getSize() * 3;
+  size_t totalLen = words.getSize() * 3;
   for(const List<String>::Node* i = words.getFirst(); i; i = i->getNext())
     totalLen += i->data.getLength();
 
@@ -695,7 +695,7 @@ String Mare::join(const List<String>& words)
   {
     if(!result.isEmpty())
       result.append(' ');
-    int len = result.getLength();
+    size_t len = result.getLength();
     char* dest = result.getData(len) + len; 
     for(const char* str = i->data.getData(); *str; ++str)
       if(isspace(*(unsigned char*)str))

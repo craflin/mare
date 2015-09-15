@@ -17,8 +17,8 @@ public:
 
   bool open(const String& file, Flags flags = readFlag);
   void close();
-  int read(char* buffer, int len);
-  int write(const char* buffer, int len);
+  size_t read(char* buffer, size_t len);
+  size_t write(const char* buffer, size_t len);
   bool write(const String& data);
 
   static String getDirname(const String& file);
