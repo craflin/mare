@@ -18,7 +18,7 @@ public:
 
   String(const char* str, int length);
 
-  String(unsigned int size) {init(size, 0, 0);}
+  String(unsigned int capacity) {init(capacity, 0, 0);}
 
   ~String();
 
@@ -31,14 +31,14 @@ public:
 
   inline const char* getData() const {return data->str;}
 
-  char* getData(unsigned int size);
+  char* getData(unsigned int capacity);
 
   void setCapacity(unsigned int capacity);
 
   void setLength(unsigned int length);
   inline unsigned int getLength() const {return data->length;}
 
-  String& format(unsigned int size, const char* format, ...);
+  String& format(unsigned int capacity, const char* format, ...);
 
   String& prepend(const String& str);
 
@@ -76,13 +76,13 @@ private:
   public:
     const char* str;
     unsigned int length; // size TODO: rename
-    unsigned int size; // capacity TODO: rename
+    unsigned int capacity;
     unsigned int refs;
     Data* next;
 
     Data() {}
 
-    template <int N> Data(const char (&str)[N]) : str(str), length(N - 1), size(0), refs(1) {}
+    template <int N> Data(const char (&str)[N]) : str(str), length(N - 1), capacity(0), refs(1) {}
   };
 
   Data* data;
@@ -90,7 +90,7 @@ private:
   static Data emptyData;
   static Data* firstFreeData;
 
-  void init(unsigned int size, const char* str, unsigned int length);
+  void init(unsigned int capacity, const char* str, unsigned int length);
   void free();
-  void grow(unsigned int size, unsigned int length);
+  void grow(unsigned int capacity, unsigned int length);
 };

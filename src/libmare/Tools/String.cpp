@@ -23,28 +23,28 @@ String::~String()
   free();
 }
 
-void String::init(unsigned int size, const char* str, unsigned int length)
+void String::init(unsigned int capacity, const char* str, unsigned int length)
 {
-  ASSERT(size >= length);
+  ASSERT(capacity >= length);
   if(firstFreeData)
   {
     data = firstFreeData;
     firstFreeData = firstFreeData->next;
     data->refs = 1;
 
-    if(data->size < size)
+    if(data->capacity < capacity)
     {
       delete[] (char*)data->str;
-      data->size = size + 16 + (size >> 1); // badass growing strategy
-      data->str = new char[data->size + 1];
+      data->capacity = capacity + 16 + (capacity >> 1); // badass growing strategy
+      data->str = new char[data->capacity + 1];
     }
   }
   else
   {
     data = new Data;
     data->refs = 1;
-    data->size = size + 16 + (size >> 1); // badass growing strategy
-    data->str = new char[data->size + 1];
+    data->capacity = capacity + 16 + (capacity >> 1); // badass growing strategy
+    data->str = new char[data->capacity + 1];
   }
   if(length)
     memcpy((char*)data->str, str, length);
@@ -62,22 +62,22 @@ void String::free()
   }
 }
 
-void String::grow(unsigned int size, unsigned int length)
+void String::grow(unsigned int capacity, unsigned int length)
 {
-  ASSERT(size >= length);
-  ASSERT(length <= data->size);
+  ASSERT(capacity >= length);
+  ASSERT(length <= data->capacity);
   if(data->refs > 1)
   {
     Data* otherData = data;
     --otherData->refs;
 
-    init(size, otherData->str, length);
+    init(capacity, otherData->str, length);
   }
-  else if(data->size < size)
+  else if(data->capacity < capacity)
   {
     char* otherStr = (char*)data->str;
-    data->size = size + 16 + (size >> 1); // badass growing strategy
-    data->str = new char[data->size + 1];
+    data->capacity = capacity + 16 + (capacity >> 1); // badass growing strategy
+    data->str = new char[data->capacity + 1];
     if(length)
       memcpy((char*)data->str, otherStr, length);
     delete[] otherStr;
@@ -105,15 +105,15 @@ bool String::operator!=(const String& other) const
   return data->length != other.data->length || memcmp(data->str, other.data->str, data->length) != 0;
 }
 
-char* String::getData(unsigned int size)
+char* String::getData(unsigned int capacity)
 {
-  grow(size, 0);
+  grow(capacity, 0);
   return (char*)data->str;
 }
 
-void String::setCapacity(unsigned int size)
+void String::setCapacity(unsigned int capacity)
 {
-  grow(size < data->length ? data->length : size, data->length); // enforce detach
+  grow(capacity < data->length ? data->length : capacity, data->length); // enforce detach
 }
 
 String& String::append(char c)
@@ -181,17 +181,17 @@ void String::setLength(unsigned int length)
   data->length = length;
 }
 
-String& String::format(unsigned int size, const char* format, ...)
+String& String::format(unsigned int capacity, const char* format, ...)
 {
   int length;
   va_list ap;
   va_start(ap, format);
 #ifdef _MSC_VER
-  length = vsprintf_s(getData(size), size, format, ap);
+  length = vsprintf_s(getData(capacity), capacity, format, ap);
 #else
-  length = ::vsnprintf(getData(size), size, format, ap);
+  length = ::vsnprintf(getData(capacity), capacity, format, ap);
   if(length < 0)
-    length = size;
+    length = capacity;
 #endif
   va_end(ap);
   ((char*)data->str)[length] = '\0';
