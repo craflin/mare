@@ -160,7 +160,7 @@ size_t File::write(const char* buffer, size_t len)
 
 bool File::write(const String& data)
 {
-  return write(data.getData(), data.getLength()) == (int)data.getLength();
+  return write(data.getData(), data.getLength()) == data.getLength();
 }
 
 String File::getDirname(const String& file)

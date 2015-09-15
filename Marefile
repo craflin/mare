@@ -7,7 +7,7 @@ linkFlags += {
   if tool == "vcxproj" { "/SUBSYSTEM:CONSOLE" }
 }
 
-cppFlags += { 
+cppFlags += {
   if tool == "vcxproj" && configuration == "Release" { -"/O2", "/O1 /MT /GF" }
 }
 

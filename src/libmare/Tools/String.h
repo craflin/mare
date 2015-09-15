@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <cstddef> // for ptrdiff_t and size_t on Linux
+
 class String
 {
 public:
