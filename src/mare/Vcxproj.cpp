@@ -347,6 +347,21 @@ bool Vcxproj::readFile()
           engine.leaveKey();
         }
 
+        List<String> visualizers;
+        engine.getKeys("visualizers", visualizers, true);
+        for(const List<String>::Node* i = visualizers.getFirst(); i; i = i->getNext())
+        {
+          bool contained = false;
+          for(const List<String>::Node* j = project.visualizers.getFirst(); j; j = j->getNext())
+            if(i->data == j->data)
+            {
+              contained = true;
+              break;
+            }
+          if(!contained)
+            project.visualizers.append(i->data);
+        }
+
         engine.leaveKey();
         engine.leaveKey();
         engine.leaveKey();
@@ -1357,6 +1372,18 @@ bool Vcxproj::generateVcxproj(Project& project)
     fileWrite("  </ItemGroup>\r\n");
   }
 
+  // write visualizers
+  if(!project.visualizers.isEmpty())
+  {
+    fileWrite("  <ItemGroup>\r\n");
+    for(List<String>::Node* i = project.visualizers.getFirst(); i; i = i->getNext())
+    {
+      const String path = relativePath(project.projectDir, i->data);
+      fileWrite(String("    <Natvis Include=\"") + path + "\" />\r\n");
+    }
+    fileWrite("  </ItemGroup>\r\n");
+  }
+
   fileWrite("  <Import Project=\"$(VCTargetsPath)\\Microsoft.Cpp.targets\" />\r\n");
   fileWrite("  <ImportGroup Label=\"ExtensionTargets\">\r\n");
   fileWrite("  </ImportGroup>\r\n");
@@ -1446,8 +1473,13 @@ bool Vcxproj::generateVcxprojFilter(Project& project)
         file.filter = filterName;
     }
   }
+  if(!project.visualizers.isEmpty())
+  {
+    const String vStr("Visualizers");
+    filters.append(vStr, createSomethingLikeGUID("Visualizers"));
+  }
 
-
+  // write filters
   fileWrite("  <ItemGroup>\r\n");
   for(const Map<String, String>::Node* i = filters.getFirst(); i; i = i->getNext())
   {
@@ -1457,7 +1489,7 @@ bool Vcxproj::generateVcxprojFilter(Project& project)
   }
   fileWrite("  </ItemGroup>\r\n");
 
-
+  // write files
   fileWrite("  <ItemGroup>\r\n");
   for(const Map<String, Project::File>::Node* i = project.files.getFirst(); i; i = i->getNext())
   {
@@ -1472,8 +1504,21 @@ bool Vcxproj::generateVcxprojFilter(Project& project)
       fileWrite(String("    </") + file.type + ">\r\n");
     }
   }
-
   fileWrite("  </ItemGroup>\r\n");
+
+  // write visualizers
+  if(!project.visualizers.isEmpty())
+  {
+    fileWrite("  <ItemGroup>\r\n");
+    for(List<String>::Node* i = project.visualizers.getFirst(); i; i = i->getNext())
+    {
+      const String path = relativePath(project.projectDir, i->data);
+      fileWrite(String("    <Natvis Include=\"") + path + "\">\r\n");
+      fileWrite(String("      <Filter>Visualizers</Filter>\r\n"));
+      fileWrite(String("    </Natvis>\r\n"));
+    }
+    fileWrite("  </ItemGroup>\r\n");
+  }
 
   //fileWrite("</Project>\r\n");
   fileWrite("</Project>");
