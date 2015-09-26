@@ -9,8 +9,6 @@ public:
   CMake(Engine& engine) : Generator(engine) {}
 
 private:
-
-  /*
   class Library
   {
   public:
@@ -24,7 +22,6 @@ private:
     String name;
     Type type;
   };
-  */
 
   class ProjectConfiguration
   {
@@ -42,7 +39,7 @@ private:
     Type type;
     List<String> sourceFiles;
     List<const File*> customBuildFiles;
-    //List<Library> libs;
+    List<Library> libs;
   };
 
   class Project

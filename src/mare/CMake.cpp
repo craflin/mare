@@ -164,7 +164,6 @@ bool CMake::processData(const Data& data)
     }
   }
 
-  /*
   // find local lib dependencies
   for(Map<String, Project>::Node* i = projects.getFirst(); i; i = i->getNext())
   {
@@ -220,7 +219,6 @@ bool CMake::processData(const Data& data)
       }
     }
   }
-   */
 
   return true;
 }
@@ -344,8 +342,13 @@ bool CMake::writeProject(const String& targetName, Project& project)
     fileWrite(String("target_link_libraries(") + targetName + " " + join(libs) + ")\n");
   }
   */
-    if(!target.libs.isEmpty())
-      fileWrite(String("target_link_libraries(") + targetName + " " + join(target.libs) + ")\n");
+    if(!config.libs.isEmpty())
+    {
+      List<String> libs;
+      for(const List<Library>::Node* i = config.libs.getFirst(); i; i = i->getNext())
+        libs.append(i->data.name);
+      fileWrite(String("target_link_libraries(") + targetName + " " + join(libs) + ")\n");
+    }
 
     if(!target.cppCompiler.isEmpty())
     {
