@@ -418,7 +418,7 @@ int main(int argc, char* argv[])
     // generate codeblocks mode?
     if(generateCMake)
     {
-      CMake cMake(engine, inputConfigs);
+      CMake cMake(engine);
       if(!cMake.generate(userArgs))
         return EXIT_FAILURE;
       return EXIT_SUCCESS;

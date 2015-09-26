@@ -1,111 +1,73 @@
 
 #pragma once
 
-#include "Tools/Map.h"
-#include "Tools/List.h"
-#include "Tools/String.h"
-#include "Tools/File.h"
+#include "Generator.h"
 
-class Engine;
-
-class CMake
+class CMake : public Generator
 {
 public:
-
-  CMake(Engine& engine, List<String>& inputConfigs) : engine(engine), inputConfigs(inputConfigs) {}
-
-  bool generate(const Map<String, String>& userArgs);
+  CMake(Engine& engine) : Generator(engine) {}
 
 private:
+
+  /*
+  class Library
+  {
+  public:
+    enum Type
+    {
+      localType,
+      externalType,
+    };
+
+  public:
+    String name;
+    Type type;
+  };
+  */
+
+  class ProjectConfiguration
+  {
+  public:
+    enum Type
+    {
+      applicationType,
+      dynamicLibraryType,
+      staticLibraryType,
+      customTargetType,
+    };
+
+  public:
+    const Target* target;
+    Type type;
+    List<String> sourceFiles;
+    List<const File*> customBuildFiles;
+    //List<Library> libs;
+  };
 
   class Project
   {
   public:
-    class Config
-    {
-    public:
-      String name; /**< The name of the configuration without the platform extension */
-
-      String buildDir;
-      List<String> command;
-      List<String> message;
-      List<String> input;
-      List<String> output;
-      List<String> defines;
-      List<String> includePaths;
-      List<String> libPaths;
-      List<String> libs;
-      List<String> cppFlags;
-      List<String> cFlags;
-      List<String> linkFlags;
-      List<String> dependencies;
-      
-      List<String> cppCompiler;
-      List<String> cCompiler;
-      List<String> linker;
-      
-      Config(const String& name) : name(name) {}
-    };
-
-    class File
-    {
-    public:
-      class Config
-      {
-      public:
-        List<String> command;
-        List<String> input;
-        List<String> output;
-        List<String> message;
-      };
-
-      String name;
-      Map<String, Config> configs;
-
-      //
-      String type; /*< combined type */
-
-      File(const String& name) : name(name) {}
-    };
-
-    String name;
-    Map<String, Config> configs;
-    Map<String, File> files;
-
-    String type; /*< combined type */
-    List<String> sourceFiles;
-    List<String> includePaths;
-    List<String> linkPaths;
-    List<String> libs;
-    List<String> dependencies;
-
-    Project(const String& name) : name(name) {}
+    Map<String, ProjectConfiguration> configurations;
   };
 
-  Engine& engine;
-  List<String>& inputConfigs;
+private:
+  bool writeWorkspace();
+  bool writeProjects();
+  bool writeProject(const String& targetName, Project& project);
 
-  File file;
-
-  String workspaceName;
-  Map<String, void*> configs;
-  Map<String, Project> projects;
-  
-  String openedFile; /**< The file that is currently written */
-
-  bool readFile();
-
-  bool processData();
-
-  bool generateWorkspace();
-  bool generateProjects();
-  bool generateProject(Project& project);
-
-  void fileOpen(const String& name);
-  void fileWrite(const String& data);
-  void fileClose();
-
+private:
   static String join(const List<String>& items);
-  static String relative2absolute(const String& path);
-};
+  static String joinPaths(const List<String>& items);
+  static String translatePath(const String& path, bool absolute = true);
 
+private: // Generator
+  virtual void addDefaultKeys(Engine& engine);
+  virtual bool processData(const Data& data);
+  virtual bool writeFiles();
+
+private:
+  String workspaceName;
+  List<String> configurations;
+  Map<String, Project> projects;
+};

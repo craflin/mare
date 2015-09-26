@@ -55,6 +55,8 @@ protected:
     List<String> libPaths;
     List<String> libs;
     List<String> root;
+    List<String> cppCompiler;
+    List<String> cCompiler;
     Map<String, File> files;
   };
 

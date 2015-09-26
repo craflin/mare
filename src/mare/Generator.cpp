@@ -108,6 +108,9 @@ bool Generator::readFile(Data& data)
 
         engine.getKeys("root", target.root, true);
 
+        engine.getKeys("cppCompiler", target.cppCompiler, true);
+        engine.getKeys("cCompiler", target.cCompiler, true);
+
         if(engine.enterKey("files"))
         {
           List<String> files;
