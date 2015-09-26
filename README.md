@@ -445,7 +445,7 @@ A Marefile can be translated into project files for Visual Studio, CodeLite, Cod
     <td>works</td>
     <td>works</td>
     <td>works</td>
-    <td></td>
+    <td>works&nbsp;2)</td>
     <td>works</td>
   </tr>
   <tr>
@@ -456,7 +456,7 @@ A Marefile can be translated into project files for Visual Studio, CodeLite, Cod
     <td>works</td>
     <td>?</td>
     <td>?</td>
-    <td></td>
+    <td>works&nbsp;3)</td>
     <td></td>
   </tr>
   <tr>
@@ -506,3 +506,5 @@ A Marefile can be translated into project files for Visual Studio, CodeLite, Cod
 </table>
 
 1) not a translator
+2) in single-configuration generators
+3) mapped to a configuration type
