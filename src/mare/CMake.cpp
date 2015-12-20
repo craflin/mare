@@ -171,8 +171,6 @@ bool CMake::processData(const Data& data)
     for(Map<String, ProjectConfiguration>::Node* i = project.configurations.getFirst(); i; i = i->getNext())
     {
       ProjectConfiguration& projectConfiguration = i->data;
-      const Target &target = *projectConfiguration.target;
-
       for(List<const File*>::Node* i = projectConfiguration.customBuildFiles.getFirst(); i; i = i->getNext())
       {
         const File& file = *i->data;
@@ -328,6 +326,17 @@ bool CMake::writeProject(const String& targetName, Project& project)
       const File& file = *i->data;
       fileWrite("add_custom_command(\n");
       fileWrite(String("  OUTPUT ") + joinPaths(file.output, true) + "\n");
+
+      Map<String, void*> outputDirs;
+      for(const List<String>::Node* i = file.output.getFirst(); i; i = i->getNext())
+      {
+        String dir = ::File::getDirname(i->data);
+        if(dir != "." && !outputDirs.find(dir))
+          outputDirs.append(dir);
+      }
+      for(Map<String, void*>::Node* i = outputDirs.getFirst(); i; i = i->getNext())
+        fileWrite(String("  COMMAND ${CMAKE_COMMAND} -E make_directory ") + translatePath(i->key, true) + "\n");
+
       for(const List<String>::Node* i = file.command.getFirst(); i; i = i->getNext())
         fileWrite(String("  COMMAND ") + i->data + "\n");
       fileWrite(String("  DEPENDS ") + joinPaths(file.input) + "\n");
@@ -351,6 +360,17 @@ bool CMake::writeProject(const String& targetName, Project& project)
         {
           fileWrite("add_custom_command(\n");
           fileWrite(String("  OUTPUT ") + joinPaths(target.output, true) + "\n");
+
+          Map<String, void*> outputDirs;
+          for(const List<String>::Node* i = target.output.getFirst(); i; i = i->getNext())
+          {
+            String dir = ::File::getDirname(i->data);
+            if(dir != "." && !outputDirs.find(dir))
+              outputDirs.append(dir);
+          }
+          for(Map<String, void*>::Node* i = outputDirs.getFirst(); i; i = i->getNext())
+            fileWrite(String("  COMMAND ${CMAKE_COMMAND} -E make_directory ") + translatePath(i->key, true) + "\n");
+
           for(const List<String>::Node* i = target.command.getFirst(); i; i = i->getNext())
             fileWrite(String("  COMMAND ") + i->data + "\n");
           fileWrite(String("  DEPENDS ") + joinPaths(target.input) + "\n");
