@@ -242,6 +242,15 @@ bool CMake::writeWorkspace()
   fileWrite(String("set(CMAKE_CONFIGURATION_TYPES ") + join(configurations) + ")\n");
   fileWrite("set(CMAKE_CONFIGURATION_TYPES \"${CMAKE_CONFIGURATION_TYPES}\" CACHE STRING \"Supported configuration types\" FORCE)\n\n");
 
+  // set default configuration
+  if(!configurations.isEmpty())
+  {
+    const String& defaultConfigName = configurations.getFirst()->data;
+    fileWrite(String("if(CMAKE_BUILD_TYPE STREQUAL \"\")\n"));
+    fileWrite(String("set(CMAKE_BUILD_TYPE \"") + defaultConfigName + "\")\n");
+    fileWrite(String("endif()\n\n"));
+  }
+
   // set solution name
   fileWrite(String("project(") + workspaceName + ")\n\n");
 
