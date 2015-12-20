@@ -55,7 +55,7 @@ private:
 
 private:
   static String join(const List<String>& items);
-  static String joinPaths(const List<String>& items);
+  static String joinPaths(const List<String>& items, bool absolute = false);
   static String translatePath(const String& path, bool absolute = true);
 
 private: // Generator

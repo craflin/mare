@@ -164,6 +164,34 @@ bool CMake::processData(const Data& data)
     }
   }
 
+  // remove custom build output files from list of source files
+  for(Map<String, Project>::Node* i = projects.getFirst(); i; i = i->getNext())
+  {
+    Project& project = i->data;
+    for(Map<String, ProjectConfiguration>::Node* i = project.configurations.getFirst(); i; i = i->getNext())
+    {
+      ProjectConfiguration& projectConfiguration = i->data;
+      const Target &target = *projectConfiguration.target;
+
+      for(List<const File*>::Node* i = projectConfiguration.customBuildFiles.getFirst(); i; i = i->getNext())
+      {
+        const File& file = *i->data;
+        for(const List<String>::Node* i = file.output.getFirst(); i; i = i->getNext())
+        {
+          const String& outputFile = i->data;
+          for(List<String>::Node* i = projectConfiguration.sourceFiles.getFirst(); i; i = i->getNext())
+          {
+            if(i->data == outputFile)
+            {
+              projectConfiguration.sourceFiles.remove(i);
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+
   // find local lib dependencies
   for(Map<String, Project>::Node* i = projects.getFirst(); i; i = i->getNext())
   {
@@ -294,11 +322,12 @@ bool CMake::writeProject(const String& targetName, Project& project)
     if(!target.libPaths.isEmpty())
       fileWrite(String("link_directories(") + joinPaths(target.libPaths) + ")\n");
 
+    List<String> customBuildOutput;
     for(const List<const File*>::Node* i = config.customBuildFiles.getFirst(); i; i = i->getNext())
     {
       const File& file = *i->data;
       fileWrite("add_custom_command(\n");
-      fileWrite(String("  OUTPUT ") + joinPaths(file.output) + "\n");
+      fileWrite(String("  OUTPUT ") + joinPaths(file.output, true) + "\n");
       for(const List<String>::Node* i = file.command.getFirst(); i; i = i->getNext())
         fileWrite(String("  COMMAND ") + i->data + "\n");
       fileWrite(String("  DEPENDS ") + joinPaths(file.input) + "\n");
@@ -306,30 +335,32 @@ bool CMake::writeProject(const String& targetName, Project& project)
       if(!file.message.isEmpty())
         fileWrite(String("  COMMENT \"") + file.message.getFirst()->data + "\"\n");
       fileWrite("  )\n");
+      for(const List<String>::Node* i = file.output.getFirst(); i; i = i->getNext())
+        customBuildOutput.append(i->data);
     }
 
     if(config.type == ProjectConfiguration::applicationType)
-      fileWrite(String("add_executable(") + targetName + " " + joinPaths(config.sourceFiles) + ")\n");
+      fileWrite(String("add_executable(") + targetName + " " + joinPaths(config.sourceFiles) + " " + joinPaths(customBuildOutput, true) + ")\n");
     else if(config.type == ProjectConfiguration::dynamicLibraryType)
-      fileWrite(String("add_library(") + targetName + " SHARED " + joinPaths(config.sourceFiles) + ")\n");
+      fileWrite(String("add_library(") + targetName + " SHARED " + joinPaths(config.sourceFiles) + " " + joinPaths(customBuildOutput, true) + ")\n");
     else if(config.type == ProjectConfiguration::staticLibraryType)
-      fileWrite(String("add_library(") + targetName + " STATIC " + joinPaths(config.sourceFiles) + ")\n");
+      fileWrite(String("add_library(") + targetName + " STATIC " + joinPaths(config.sourceFiles) + " " + joinPaths(customBuildOutput, true) + ")\n");
     else if(config.type == ProjectConfiguration::customTargetType)
     {
         if(!target.output.isEmpty() && !target.command.isEmpty())
         {
           fileWrite("add_custom_command(\n");
-          fileWrite(String("  OUTPUT ") + joinPaths(target.output) + "\n");
+          fileWrite(String("  OUTPUT ") + joinPaths(target.output, true) + "\n");
           for(const List<String>::Node* i = target.command.getFirst(); i; i = i->getNext())
             fileWrite(String("  COMMAND ") + i->data + "\n");
           fileWrite(String("  DEPENDS ") + joinPaths(target.input) + "\n");
-          fileWrite("  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/..\n");
+          fileWrite("  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../..\n");
           if(!target.message.isEmpty())
             fileWrite(String("  COMMENT \"") + target.message.getFirst()->data + "\"\n");
           fileWrite("  )\n");
         }
         fileWrite(String("add_custom_target(") + targetName + " ALL\n");
-        fileWrite(String("  DEPENDS ") + join(config.sourceFiles) + "\n");
+        fileWrite(String("  DEPENDS ") + join(config.sourceFiles) + " " + joinPaths(customBuildOutput, true) + "\n");
         fileWrite("  )\n");
     }
     /*
@@ -466,17 +497,17 @@ String CMake::join(const List<String>& items)
   return result;
 }
 
-String CMake::joinPaths(const List<String>& items)
+String CMake::joinPaths(const List<String>& items, bool absolute)
 {
   String result;
   const List<String>::Node* i = items.getFirst();
   if(i)
   {
-    result = translatePath(i->data, false);
+    result = translatePath(i->data, absolute);
     for(i = i->getNext(); i; i = i->getNext())
     {
       result.append(' ');
-      result.append(translatePath(i->data, false));
+      result.append(translatePath(i->data, absolute));
     }
   }
   return result;
