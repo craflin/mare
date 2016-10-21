@@ -332,6 +332,8 @@ String Namespace::evaluateString(const String& string) const
         handle(engine, input, filepath, ",)"); if(*input == ',') ++input;
         handle(engine, input, contents, ",)"); if(*input == ',') ++input;
 
+        Directory::create(File::getDirname(filepath));
+
         File file;
         if(file.open(filepath, File::writeFlag) && file.write(contents))
         {
