@@ -328,20 +328,22 @@ String Namespace::evaluateString(const String& string) const
       else if(cmd == "writefile")
       {
         String filepath;
-				String contents;
+        String contents;
         handle(engine, input, filepath, ",)"); if(*input == ',') ++input;
         handle(engine, input, contents, ",)"); if(*input == ',') ++input;
 
         File file;
         if(file.open(filepath, File::writeFlag) && file.write(contents))
-				{
-					// everything went well
-        } else {
-					// something went wrong.
-					// but apparently you are not supposed to report errors here.
-					// so I don't care. sorry.
-				}
-				output.append(filepath);
+        {
+          // everything went well
+        } 
+        else
+        {
+          // something went wrong.
+          // but apparently you are not supposed to report errors here.
+          // so I don't care. sorry.
+        }
+        output.append(filepath);
       }
     }
     static void handleVariable(Engine& engine, const String& variable, String& output)
