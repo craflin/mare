@@ -367,6 +367,7 @@ bool CMake::writeProject(const String& targetName, Project& project)
             String dir = ::File::getDirname(i->data);
             if(dir != "." && !outputDirs.find(dir))
               outputDirs.append(dir);
+            customBuildOutput.append(i->data);
           }
           for(Map<String, void*>::Node* i = outputDirs.getFirst(); i; i = i->getNext())
             fileWrite(String("  COMMAND ${CMAKE_COMMAND} -E make_directory ") + translatePath(i->key, true) + "\n");
@@ -380,7 +381,8 @@ bool CMake::writeProject(const String& targetName, Project& project)
           fileWrite("  )\n");
         }
         fileWrite(String("add_custom_target(") + targetName + " ALL\n");
-        fileWrite(String("  DEPENDS ") + join(config.sourceFiles) + " " + joinPaths(customBuildOutput, true) + "\n");
+        fileWrite(String("  DEPENDS ") + joinPaths(customBuildOutput, true) + "\n");
+        fileWrite(String("  SOURCES ") + join(config.sourceFiles) + "\n");
         fileWrite("  )\n");
     }
     /*
