@@ -382,7 +382,7 @@ bool CMake::writeProject(const String& targetName, Project& project)
         }
         fileWrite(String("add_custom_target(") + targetName + " ALL\n");
         fileWrite(String("  DEPENDS ") + joinPaths(customBuildOutput, true) + "\n");
-        fileWrite(String("  SOURCES ") + join(config.sourceFiles) + "\n");
+        fileWrite(String("  SOURCES ") + joinPaths(config.sourceFiles) + "\n");
         fileWrite("  )\n");
     }
     /*
