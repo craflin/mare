@@ -110,6 +110,7 @@ private:
     Map<String, File> files;
     Map<String, void*> dependencies;
     List<String> root;
+    List<String> visualizers;
 
     Project(const String& name) : name(name) {}
   };

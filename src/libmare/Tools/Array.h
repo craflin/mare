@@ -16,7 +16,7 @@ public:
   const T* getFirst() const {return data;}
 
   const T* getData() const {return data;}
-  T* getData(unsigned int size) const
+  T* getData(size_t size) const
   {
     grow(size, 0);
     return data;
@@ -24,7 +24,7 @@ public:
 
   T& append(const T& elem = T())
   {
-    unsigned int newSize = size + 1;
+    size_t newSize = size + 1;
     grow(newSize, size);
     T& result = data[size];
     result = elem;
@@ -32,7 +32,7 @@ public:
     return result;
   }
 
-  void remove(unsigned int index)
+  void remove(size_t index)
   {
     if(index < size)
     {
@@ -42,7 +42,7 @@ public:
     }
   }
 
-  int find(const T& elem)
+  ptrdiff_t find(const T& elem)
   {
     for(T* pos = data, * end = data + size; pos < end; ++pos)
       if(*pos == elem)
@@ -50,25 +50,25 @@ public:
     return -1;
   }
 
-  inline unsigned int getSize() const {return size;}
-  void setSize(unsigned int size)
+  inline size_t getSize() const {return size;}
+  void setSize(size_t size)
   {
     grow(size, size);
     this->size = size;
   }
   
-  inline unsigned int getCapacity() const {return capacity;}
-  inline void setCapacity(unsigned int capacity) {grow(capacity, size);}
+  inline size_t getCapacity() const {return capacity;}
+  inline void setCapacity(size_t capacity) {grow(capacity, size);}
 
   inline void clear() {size = 0;}
   inline bool isEmpty() const {return size == 0;}
 
 private:
   T* data;
-  unsigned int size;
-  unsigned int capacity;
+  size_t size;
+  size_t capacity;
 
-  void grow(unsigned int capacity, unsigned int size)
+  void grow(size_t capacity, size_t size)
   {
     if(this->capacity < capacity)
     {

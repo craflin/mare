@@ -1,14 +1,17 @@
 
+if (tool == "vcxproj") {
+  platforms = { "x64", "Win32" }
+}
 
 linkFlags += {
   if tool == "vcxproj" { "/SUBSYSTEM:CONSOLE" }
 }
 
-cppFlags += { 
+cppFlags += {
   if tool == "vcxproj" && configuration == "Release" { -"/O2", "/O1 /MT /GF" }
 }
 
-buildDir = "build/$(configuration)/$(target)"
+buildDir = "build/$(platform)/$(configuration)/$(target)"
 
 targets = {
   mare = cppApplication + {
@@ -29,7 +32,7 @@ targets = {
       "src/mare/**.cpp" = cppSource
       "src/mare/**.h"
     }
-    if platform != "Win32" {
+    if (platform != "Win32" && platform != "x64") {
       files -= "src/mare/Tools/Win32/**"
     }
   }

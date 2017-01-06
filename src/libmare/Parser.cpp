@@ -40,8 +40,8 @@ void Parser::nextChar()
   {
     if(currentChar == '\0')
       return;
-    int i = file.read(readBuffer, sizeof(readBuffer));
-    if(i <= 0)
+    size_t i = file.read(readBuffer, sizeof(readBuffer));
+    if(i == 0)
     {
       currentChar = '\0';
       return;

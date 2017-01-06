@@ -76,7 +76,7 @@ void Word::append(const List<Word>& words, String& text)
   if(words.isEmpty())
     return;
 
-  int totalLen = words.getSize() * 3;
+  size_t totalLen = words.getSize() * 3;
   for(const List<Word>::Node* i = words.getFirst(); i; i = i->getNext())
     totalLen += i->data.getLength();
   text.setCapacity(totalLen + 16);
