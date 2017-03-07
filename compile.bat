@@ -47,6 +47,14 @@ goto end
 :find_visual_studio
 if not "%VCINSTALLDIR%"=="" goto find_visual_studio_return
 
+for /f "usebackq tokens=1* delims=: " %%i in (`vswhere\vswhere.exe -latest -version 15 -requires Microsoft.Component.MSBuild`) do (
+  if /i "%%i"=="installationPath" set VSInstDir=%%j
+)
+if not "%VSInstDir%"=="" (
+   call "%VSInstDir%\VC\Auxiliary\Build\vcvars32.bat"
+   goto find_visual_studio_return
+)
+
 if not "%VS140COMNTOOLS%"=="" (
    call "%VS140COMNTOOLS%vsvars32.bat"
    goto find_visual_studio_return
