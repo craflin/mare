@@ -47,6 +47,13 @@ goto end
 :find_visual_studio
 if not "%VCINSTALLDIR%"=="" goto find_visual_studio_return
 
+FOR /F "usebackq skip=2 tokens=2*" %%A IN (`reg query HKLM\SOFTWARE\Wow6432Node\Microsoft\VisualStudio\SxS\VS7 /v 15.0 2^>nul`) DO (
+  if exist "%%B" (
+    call "%%B\VC\Auxiliary\Build\vcvars32.bat"
+    goto find_visual_studio_return
+  )
+)
+
 if not "%VS140COMNTOOLS%"=="" (
    call "%VS140COMNTOOLS%vsvars32.bat"
    goto find_visual_studio_return
