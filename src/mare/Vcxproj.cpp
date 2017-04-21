@@ -86,6 +86,8 @@ bool Vcxproj::generate(const Map<String, String>& userArgs)
   group = &knownOptionGroups.append(OptionGroup("EnableEnhancedInstructionSet", String())); // TODO: unsetValue
   knownCppOptions.append("/arch:SSE", Option(group, "StreamingSIMDExtensions"));
   knownCppOptions.append("/arch:SSE2", Option(group, "StreamingSIMDExtensions2"));
+  knownCppOptions.append("/arch:AVX", Option(group, "AdvancedVectorExtensions"));
+  knownCppOptions.append("/arch:AVX2", Option(group, "AdvancedVectorExtensions2"));
   group = &knownOptionGroups.append(OptionGroup("FloatingPointModel", String())); // TODO: unsetValue
   knownCppOptions.append("/fp:precise", Option(group, "Precise"));
   knownCppOptions.append("/fp:strict", Option(group, "Strict"));
