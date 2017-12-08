@@ -4,7 +4,7 @@
 MARE_BUILD_DIR="build/Debug/mare"
 MARE_OUTPUT_DIR="build/Debug/mare"
 MARE_SOURCE_DIR="src"
-MARE_SOURCE_FILES="mare/Generator.cpp mare/CMake.cpp mare/CodeBlocks.cpp mare/CodeLite.cpp mare/Main.cpp mare/Make.cpp mare/Mare.cpp mare/NetBeans.cpp mare/Vcproj.cpp mare/Vcxproj.cpp mare/Tools/md5.cpp libmare/Engine.cpp libmare/Namespace.cpp libmare/Parser.cpp libmare/Statement.cpp libmare/Tools/Directory.cpp libmare/Tools/Error.cpp libmare/Tools/File.cpp libmare/Tools/Process.cpp libmare/Tools/Scope.cpp libmare/Tools/String.cpp libmare/Tools/Word.cpp"
+MARE_SOURCE_FILES="mare/Generator.cpp mare/CMake.cpp mare/CodeBlocks.cpp mare/CodeLite.cpp mare/JsonDb.cpp mare/Main.cpp mare/Make.cpp mare/Mare.cpp mare/NetBeans.cpp mare/Vcproj.cpp mare/Vcxproj.cpp mare/Tools/md5.cpp libmare/Engine.cpp libmare/Namespace.cpp libmare/Parser.cpp libmare/Statement.cpp libmare/Tools/Directory.cpp libmare/Tools/Error.cpp libmare/Tools/File.cpp libmare/Tools/Process.cpp libmare/Tools/Scope.cpp libmare/Tools/String.cpp libmare/Tools/Word.cpp"
 
 
 [ -z "$CXX" ] && CXX=g++

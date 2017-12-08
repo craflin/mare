@@ -4,7 +4,7 @@ setlocal
 set MARE_BUILD_DIR="build/Debug/mare"
 set MARE_OUTPUT_DIR="build/Debug/mare"
 set MARE_SOURCE_DIR="src"
-set MARE_SOURCE_FILES=mare/Generator.cpp mare/CMake.cpp mare/CodeBlocks.cpp mare/CodeLite.cpp mare/Main.cpp mare/Make.cpp mare/Mare.cpp mare/NetBeans.cpp mare/Vcproj.cpp mare/Vcxproj.cpp mare/Tools/md5.cpp mare/Tools/Win32/getopt.cpp libmare/Engine.cpp libmare/Namespace.cpp libmare/Parser.cpp libmare/Statement.cpp libmare/Tools/Directory.cpp libmare/Tools/Error.cpp libmare/Tools/File.cpp libmare/Tools/Process.cpp libmare/Tools/Scope.cpp libmare/Tools/String.cpp libmare/Tools/Word.cpp
+set MARE_SOURCE_FILES=mare/Generator.cpp mare/CMake.cpp mare/CodeBlocks.cpp mare/CodeLite.cpp mare/JsonDb.cpp mare/Main.cpp mare/Make.cpp mare/Mare.cpp mare/NetBeans.cpp mare/Vcproj.cpp mare/Vcxproj.cpp mare/Tools/md5.cpp mare/Tools/Win32/getopt.cpp libmare/Engine.cpp libmare/Namespace.cpp libmare/Parser.cpp libmare/Statement.cpp libmare/Tools/Directory.cpp libmare/Tools/Error.cpp libmare/Tools/File.cpp libmare/Tools/Process.cpp libmare/Tools/Scope.cpp libmare/Tools/String.cpp libmare/Tools/Word.cpp
 
 :main
 goto get_args
