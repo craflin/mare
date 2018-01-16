@@ -100,6 +100,10 @@ bool Vcxproj::generate(const Map<String, String>& userArgs)
   group = &knownOptionGroups.append(OptionGroup("TreatWChar_tAsBuiltInType", String())); // TODO: unsetValue
   knownCppOptions.append("/Zc:wchar_t", Option(group, "true"));
   knownCppOptions.append("/Zc:wchar_t-", Option(group, "false"));
+  group = &knownOptionGroups.append(OptionGroup("LanguageStandard", String()));
+  knownCppOptions.append("/std:c++14", Option(group, "stdcpp14"));
+  knownCppOptions.append("/std:c++17", Option(group, "stdcpp17"));
+  knownCppOptions.append("/std:c++latest", Option(group, "stdcpplatest"));
   // TODO: force conformance in for loop scope
   // TODO: enable rtti
   // TODO: openmp
