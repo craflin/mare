@@ -1,3 +1,4 @@
+whom = "world"
 
 linkFlags += {
   if tool == "vcxproj" { "/SUBSYSTEM:CONSOLE" }
@@ -8,5 +9,8 @@ targets = {
     files = {
       "*.cpp" = cppSource
     }
+  }
+  command_test = {
+    command = "echo Hello, $(whom)!"
   }
 }
