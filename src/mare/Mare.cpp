@@ -257,6 +257,13 @@ public:
     }
 
     // determine whether to build this rule
+    
+    // Command-only rules
+    if (outputs.isEmpty() && inputs.isEmpty() && !(command.isEmpty()))
+    {
+	  goto run;
+	}
+    
     for(Map<Rule*, String>::Node* i = ruleDependencies.getFirst(); i; i = i->getNext())
       if(i->key->rebuild)
       {
@@ -364,6 +371,8 @@ clean:
     // create output directories
     for(const List<String>::Node* i = outputs.getFirst(); i; i = i->getNext())
       Directory::create(File::getDirname(i->data));
+    
+    run:
 
     nextCommand = command.getFirst();
     return continueExecution(pid);

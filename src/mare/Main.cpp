@@ -22,6 +22,7 @@
 #include "CodeBlocks.h"
 #include "CMake.h"
 #include "NetBeans.h"
+#include "JsonDb.h"
 
 static const char* VERSION   = "0.3";
 static const char* COPYRIGHT = "Copyright (C) 2011-2013 Colin Graf";
@@ -90,6 +91,9 @@ static void showUsage(const char* executable)
   puts("");
   puts("    --netbeans");
   puts("        Generate project files for NetBeans. (experimental)");
+  puts("");
+  puts("    --jsondb");
+  puts("        Generate JSON compilation database.");
   puts("");
   puts("    config=<config>, --config=<config>");
   puts("        Build using configuration <config> as declared in the marefile (Debug");
@@ -163,6 +167,7 @@ int main(int argc, char* argv[])
   bool generateCodeBlocks = false;
   bool generateCMake = false;
   bool generateNetBeans = false;
+  bool generateJsonDb = false;
 
   // parse args
   {
@@ -182,6 +187,7 @@ int main(int argc, char* argv[])
       {"codeblocks", no_argument , 0, 0},
       {"cmake", no_argument , 0, 0},
       {"netbeans", no_argument , 0, 0},
+      {"jsondb", no_argument , 0, 0},
       {0, 0, 0, 0}
     };
 
@@ -275,6 +281,8 @@ int main(int argc, char* argv[])
             generateCMake = true;
           else if(opt == "netbeans")
             generateNetBeans = true;
+          else if(opt == "jsondb")
+            generateJsonDb = true;
           else if(opt == "clean")
             clean = true;
           else if(opt == "rebuild")
@@ -431,6 +439,15 @@ int main(int argc, char* argv[])
     {
       NetBeans netBeans(engine);
       if(!netBeans.generate(userArgs))
+        return EXIT_FAILURE;
+      return EXIT_SUCCESS;
+    }
+
+    // generate JSON compilation database mode?
+    if(generateJsonDb)
+    {
+      JsonDb jsonDb(engine);
+      if(!jsonDb.generate(userArgs))
         return EXIT_FAILURE;
       return EXIT_SUCCESS;
     }
