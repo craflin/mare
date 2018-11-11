@@ -27,7 +27,7 @@ A Marefile consists of three lists: "configurations", "targets" and "platforms".
 Here is an example of a Marefile for a simple c++ application where all source files are stored in the directory "src":
 
 ```
-configurations = { Debug, Relase }
+configurations = { Debug, Release }
 targets = {
   myApplication = cppApplication + {
     files = {
