@@ -902,7 +902,9 @@ bool Vcxproj::generateSln()
   else
     fileWrite("Microsoft Visual Studio Solution File, Format Version 11.00\r\n");
 
-  if(version == 2017)
+  if(version == 2019)
+    fileWrite("# Visual Studio Version 16\r\n");
+  else if(version == 2017)
     fileWrite("# Visual Studio 15\r\n");
   else if(version == 2015)
     fileWrite("# Visual Studio 14\r\n");
@@ -1009,7 +1011,9 @@ bool Vcxproj::generateVcxproj(Project& project)
   fileOpen(project.projectFile);
 
   fileWrite("<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n");
-  if(version == 2017)
+  if(version == 2019)
+    fileWrite("<Project DefaultTargets=\"Build\" ToolsVersion=\"16.0\" xmlns=\"http://schemas.microsoft.com/developer/msbuild/2003\">\r\n");
+  else if(version == 2017)
     fileWrite("<Project DefaultTargets=\"Build\" ToolsVersion=\"15.0\" xmlns=\"http://schemas.microsoft.com/developer/msbuild/2003\">\r\n");
   else if(version == 2015)
     fileWrite("<Project DefaultTargets=\"Build\" ToolsVersion=\"14.0\" xmlns=\"http://schemas.microsoft.com/developer/msbuild/2003\">\r\n");
@@ -1056,6 +1060,8 @@ bool Vcxproj::generateVcxproj(Project& project)
       fileWrite("    <UseDebugLibraries>false</UseDebugLibraries>\r\n");
     if(config.vsOptions.find("PlatformToolset"))
       fileWrite(String("    <PlatformToolset>") + config.vsOptions.lookup("PlatformToolset") + "</PlatformToolset>\r\n");
+    else if(version == 2019)
+      fileWrite("    <PlatformToolset>v142</PlatformToolset>\r\n");
     else if(version == 2017)
       fileWrite("    <PlatformToolset>v141</PlatformToolset>\r\n");
     else if(version == 2015)

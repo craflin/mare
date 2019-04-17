@@ -68,7 +68,7 @@ static void showUsage(const char* executable)
   puts("");
   puts("    --vcxproj[=<version>]");
   puts("        Convert the marefile into a .sln and .vcxproj files for Visual Studio.");
-  puts("        <version> can be set to 2010, 2012, 2013, 2015 or 2017.");
+  puts("        <version> can be set to 2010, 2012, 2013, 2015, 2017 or 2019.");
   puts("");
   puts("    --vcproj[=<version>]");
   puts("        Convert the marefile into a .sln and .vcproj files for Visual Studio.");
@@ -258,6 +258,8 @@ int main(int argc, char* argv[])
                 generateVcxproj = 2015;
               else if(strcmp(optarg, "2017") == 0)
                 generateVcxproj = 2017;
+              else if(strcmp(optarg, "2019") == 0)
+                generateVcxproj = 2019;
               else // unknown version
                 ::showHelp(argv[0]);
             }

@@ -47,6 +47,13 @@ goto end
 :find_visual_studio
 if not "%VCINSTALLDIR%"=="" goto find_visual_studio_return
 
+FOR /F "usebackq tokens=*" %%A IN (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) DO (
+  if exist "%%A" (
+    call "%%A\VC\Auxiliary\Build\vcvars32.bat"
+    goto find_visual_studio_return
+  )
+)
+
 FOR /F "usebackq skip=2 tokens=2*" %%A IN (`reg query HKLM\SOFTWARE\Wow6432Node\Microsoft\VisualStudio\SxS\VS7 /v 15.0 2^>nul`) DO (
   if exist "%%B" (
     call "%%B\VC\Auxiliary\Build\vcvars32.bat"
@@ -92,7 +99,7 @@ set DEL_FILE=%MARE_OUTPUT_DIR:"=%/mare.exe
 del %DEL_FILE:/=\% 2>NUL
 endlocal
 for %%f in (%MARE_SOURCE_FILES%) do (
-  cl /I"%MARE_SOURCE_DIR:"=%/libmare" /Zi /nologo /W3 /WX- /Od /Oy- /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /Gm /EHsc /RTC1 /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fd"%MARE_BUILD_DIR:"=%/" /Fo"%MARE_BUILD_DIR:"=%/" /Gd /analyze- /c "%MARE_SOURCE_DIR:"=%/%%f"
+  cl /I"%MARE_SOURCE_DIR:"=%/libmare" /Zi /nologo /W3 /WX- /Od /Oy- /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /EHsc /RTC1 /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fd"%MARE_BUILD_DIR:"=%/" /Fo"%MARE_BUILD_DIR:"=%/" /Gd /analyze- /c "%MARE_SOURCE_DIR:"=%/%%f"
 )
 set MARE_OBJECTS=
 for %%f in (%MARE_BUILD_DIR:"=%/*.obj) do (
